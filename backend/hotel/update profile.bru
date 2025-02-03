@@ -1,0 +1,15 @@
+meta {
+  name: update profile
+  type: http
+  seq: 5
+}
+
+get {
+  url: http://127.0.0.1:8000/users/profile/
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MzY5NTA0MDZ9.PcKivHD52JK9Le1Gmf6IKJtGhh9mJTMqBG0Naw7RLqs
+}

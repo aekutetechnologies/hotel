@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { Button } from "@/components/ui/button"
@@ -20,6 +20,7 @@ export default function BookProperty() {
   const params = useParams()
   const router = useRouter()
   const propertyId = Number(params.id)
+  const searchParams = useSearchParams()
 
   const [property, setProperty] = useState<Property | null>(null)
   const [selectedRoom, setSelectedRoom] = useState<any>(null) // type it later
@@ -40,11 +41,17 @@ export default function BookProperty() {
     })
   }, [propertyId])
 
+  const checkInDateParam = searchParams.get('checkInDate') || '';
+  const checkOutDateParam = searchParams.get('checkOutDate') || '';
+  const guestsParam = searchParams.get('guests') || '1';
+
   const [booking, setBooking] = useState({
-    checkIn: '',
-    checkOut: '',
-    guests: '1',
+    checkIn: checkInDateParam,
+    checkOut: checkOutDateParam,
+    guests: guestsParam,
     roomId: selectedRoom?.id, // Initialize with selectedRoom id if available
+    checkInDate: checkInDateParam,
+    checkOutDate: checkOutDateParam,
   })
 
   useEffect(() => {
@@ -98,7 +105,7 @@ export default function BookProperty() {
       const response = await bookProperty(bookingData)
       console.log("Booking Response:", response)
       if (response) {
-        router.push('/booking-confirmation') // Redirect to confirmation on success
+        router.push('/bookingconfirmation') // Redirect to confirmation on success
       } else {
         alert(`Booking failed}`) // Show error message
       }
@@ -143,6 +150,7 @@ export default function BookProperty() {
                     id="checkIn"
                     name="checkIn"
                     value={booking.checkIn}
+                    defaultValue={checkInDateParam}
                     onChange={handleInputChange}
                     required
                     className="mt-1"

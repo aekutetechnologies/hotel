@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { 
@@ -12,96 +12,128 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Search, Plus, Edit, FileText } from 'lucide-react'
-import { expenses } from '@/lib/dummy-data'
 import { ExpenseModal } from '@/components/ExpenseModal'
 import { DocumentModal } from '@/components/DocumentModal'
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination"
+import { toast } from 'react-toastify'
+import { Spinner } from '@/components/ui/spinner'
+import { type Expense } from '@/types/expense'
+import { fetchExpenseCategory } from '@/lib/api/fetchExpenseCategory'
+import { listExpenseDoc } from '@/lib/api/listExpenseDocs'
+import { uploadExpenseDoc } from '@/lib/api/uploadExpenseDoc'
+import { updateExpense } from '@/lib/api/updateExpense'
+import { createExpense } from '@/lib/api/createExpense'
+import { fetchExpenses } from '@/lib/api/fetchExpenses'
+import { fetchProperties } from '@/lib/api/fetchProperties'
+import { type Property } from '@/types/property'
 
 export default function Expenses() {
   const [searchTerm, setSearchTerm] = useState('')
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDocumentModalOpen, setIsDocumentModalOpen] = useState(false)
-  const [selectedExpense, setSelectedExpense] = useState(null)
-  const [currentPage, setCurrentPage] = useState(1)
+  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null)
+  const [expenses, setExpenses] = useState<Expense[]>([])
+  const [isLoadingExpenses, setIsLoadingExpenses] = useState(false)
+  const [expenseCategories, setExpenseCategories] = useState([])
+  const [properties, setProperties] = useState<Property[]>([])
+  const fetchExpensesData = useCallback(async () => {
+    setIsLoadingExpenses(true)
+    try {
+      const expensesData = await fetchExpenses()
+      setExpenses(expensesData)
+      const propertiesData = await fetchProperties()
+      setProperties(propertiesData)
+    } catch (error: any) {
+      console.error('Error fetching expenses:', error)
+      toast.error(`Failed to fetch expenses: ${error.message}`)
+      setExpenses([])
+    } finally {
+      setIsLoadingExpenses(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchExpensesData()
+  }, [fetchExpensesData])
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const categories = await fetchExpenseCategory()
+        setExpenseCategories(categories)
+      } catch (error: any) {
+        console.error('Error fetching expense categories:', error)
+        toast.error(`Failed to load expense categories: ${error.message}`)
+      }
+    }
+
+    loadCategories()
+  }, [])
 
   const filteredExpenses = expenses.filter(expense =>
-    expense.propertyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    expense.category.toLowerCase().includes(searchTerm.toLowerCase())
+    expense.property.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    expense.category.name.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const itemsPerPage = 10
-  const totalPages = Math.ceil(filteredExpenses.length / itemsPerPage)
-
-  const paginatedExpenses = filteredExpenses.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  )
-
-  const handleAddExpense = (newExpense) => {
-    // In a real app, you would add the expense to your backend here
-    console.log('Adding new expense:', newExpense)
-    setIsAddModalOpen(false)
+  const handleAddExpense = async (newExpense: ExpenseFormData) => {
+    try {
+      const response = await createExpense(newExpense)
+      if (response.success) {
+        toast.success('Expense created successfully!')
+        fetchExpensesData() // Refresh data to include new expense
+        setIsAddModalOpen(false)
+      } else {
+        toast.error('Failed to create expense.')
+      }
+    } catch (error: any) {
+      console.error('Expense creation failed:', error)
+      toast.error(error.message || 'Failed to create expense.')
+    }
   }
 
-  const handleEditExpense = (updatedExpense) => {
-    // In a real app, you would update the expense in your backend here
-    console.log('Updating expense:', updatedExpense)
-    setIsEditModalOpen(false)
+  const handleEditExpense = async (updatedExpense: Expense) => {
+    if (!selectedExpense) return; // Ensure selectedExpense is not null
+
+    try {
+      const response = await updateExpense(selectedExpense.id.toString(), updatedExpense)
+      if (response.success) {
+        toast.success('Expense updated successfully!')
+        fetchExpensesData() // Refresh data to reflect updates
+        setIsEditModalOpen(false)
+        setSelectedExpense(null) // Clear selected expense after edit
+      } else {
+        toast.error('Failed to update expense.')
+      }
+    } catch (error: any) {
+      console.error('Expense update failed:', error)
+      toast.error(error.message || 'Failed to update expense.')
+    }
   }
 
-  const handleStatusChange = (expenseId, newStatus) => {
+  const handleStatusChange = (expenseId: any, newStatus: any) => {
     // In a real app, you would update the status in your backend here
     console.log(`Changing status of expense ${expenseId} to ${newStatus}`)
   }
 
-  const handleDocumentUpload = (expenseId, file) => {
-    // In a real app, you would upload the document to your backend here
-    console.log(`Uploading document for expense ${expenseId}:`, file)
-    setIsDocumentModalOpen(false)
-  }
+  const handleDocumentUpload = async (file: File) => {
+    if (!selectedExpense) return;
 
-  const generatePageNumbers = () => {
-    const pageNumbers = []
-    const maxVisiblePages = 5
+    try {
+      const formData = new FormData();
+      formData.append('document', file);
+      formData.append('expense_id', selectedExpense.id.toString());
 
-    if (totalPages <= maxVisiblePages) {
-      for (let i = 1; i <= totalPages; i++) {
-        pageNumbers.push(i)
-      }
-    } else {
-      if (currentPage <= 3) {
-        for (let i = 1; i <= 4; i++) {
-          pageNumbers.push(i)
-        }
-        pageNumbers.push('ellipsis')
-        pageNumbers.push(totalPages)
-      } else if (currentPage >= totalPages - 2) {
-        pageNumbers.push(1)
-        pageNumbers.push('ellipsis')
-        for (let i = totalPages - 3; i <= totalPages; i++) {
-          pageNumbers.push(i)
-        }
+      const response = await uploadExpenseDoc(formData);
+      if (response.success) {
+        toast.success('Document uploaded successfully!')
+        setIsDocumentModalOpen(false)
       } else {
-        pageNumbers.push(1)
-        pageNumbers.push('ellipsis')
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-          pageNumbers.push(i)
-        }
-        pageNumbers.push('ellipsis')
-        pageNumbers.push(totalPages)
+        toast.error('Failed to upload document.');
       }
+    } catch (error: any) {
+      console.error('Document upload failed:', error);
+      toast.error(error.message || 'Failed to upload document.');
     }
-
-    return pageNumbers
   }
 
   return (
@@ -141,73 +173,57 @@ export default function Expenses() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedExpenses.map((expense) => (
-              <TableRow key={expense.id}>
-                <TableCell className="font-medium">{expense.propertyName}</TableCell>
-                <TableCell>{expense.category}</TableCell>
-                <TableCell>{expense.description}</TableCell>
-                <TableCell>₹{expense.amount}</TableCell>
-                <TableCell>{expense.date}</TableCell>
-                <TableCell>
-                  <select
-                    value={expense.status}
-                    onChange={(e) => handleStatusChange(expense.id, e.target.value)}
-                    className="border rounded px-2 py-1"
-                  >
-                    <option value="Paid">Paid</option>
-                    <option value="Pending">Pending</option>
-                  </select>
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => {
-                      setSelectedExpense(expense)
-                      setIsEditModalOpen(true)
-                    }}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => {
-                      setSelectedExpense(expense)
-                      setIsDocumentModalOpen(true)
-                    }}>
-                      <FileText className="h-4 w-4" />
-                    </Button>
-                  </div>
+            {isLoadingExpenses ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-6">
+                  <Spinner />
                 </TableCell>
               </TableRow>
-            ))}
+            ) : filteredExpenses.length === 0 && !isLoadingExpenses ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-4 text-gray-500">
+                  No expenses found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredExpenses.map((expense) => (
+                <TableRow key={expense.id}>
+                  <TableCell className="font-medium">{expense.property.name}</TableCell>
+                  <TableCell>{expense.category.name}</TableCell>
+                  <TableCell>{expense.description}</TableCell>
+                  <TableCell>₹{expense.amount}</TableCell>
+                  <TableCell>{new Date(expense.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</TableCell>
+                  <TableCell>
+                    <select
+                      value={expense.status}
+                      onChange={(e) => handleStatusChange(expense.id, e.target.value)}
+                      className="border rounded px-2 py-1"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="paid">Paid</option>
+                    </select>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button variant="ghost" size="icon" onClick={() => {
+                        setSelectedExpense(expense)
+                        setIsEditModalOpen(true)
+                      }}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => {
+                        setSelectedExpense(expense)
+                        setIsDocumentModalOpen(true)
+                      }}>
+                        <FileText className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
-        <Pagination className="mt-8">
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-              />
-            </PaginationItem>
-            {generatePageNumbers().map((pageNumber, index) => (
-              <PaginationItem key={index}>
-                {pageNumber === 'ellipsis' ? (
-                  <PaginationEllipsis />
-                ) : (
-                  <PaginationLink
-                    onClick={() => setCurrentPage(pageNumber as number)}
-                    isActive={currentPage === pageNumber}
-                  >
-                    {pageNumber}
-                  </PaginationLink>
-                )}
-              </PaginationItem>
-            ))}
-            <PaginationItem>
-              <PaginationNext
-                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
       </div>
 
       <ExpenseModal
@@ -215,6 +231,7 @@ export default function Expenses() {
         onClose={() => setIsAddModalOpen(false)}
         onSubmit={handleAddExpense}
         title="Add New Expense"
+        properties={properties}
       />
 
       {selectedExpense && (
@@ -224,6 +241,7 @@ export default function Expenses() {
           onSubmit={handleEditExpense}
           title="Edit Expense"
           initialData={selectedExpense}
+          properties={properties}
         />
       )}
 
@@ -231,7 +249,7 @@ export default function Expenses() {
         <DocumentModal
           isOpen={isDocumentModalOpen}
           onClose={() => setIsDocumentModalOpen(false)}
-          onUpload={(file) => handleDocumentUpload(selectedExpense.id, file)}
+          onUpload={(file) => handleDocumentUpload(file)}
           title="Upload Document"
         />
       )}

@@ -43,7 +43,9 @@ function AdminLogin() {
       console.log(data)
       localStorage.setItem('accessToken', data.access_token)
       localStorage.setItem('role', data.user_role)
-      localStorage.setItem('userId', data.user_id)
+      localStorage.setItem('userId', data.id)
+      localStorage.setItem('permissions', data.permissions)
+      localStorage.setItem('name', data.name)
       router.push('/admin/dashboard')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to verify OTP')

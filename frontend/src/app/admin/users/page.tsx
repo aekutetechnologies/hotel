@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Search, Plus, Edit, FileText } from 'lucide-react'
+import { Search, Plus, Edit, FileText, User } from 'lucide-react'
 import { UserModal } from '@/components/UserModal'
 import { DocumentModal } from '@/components/DocumentModal'
 import {
@@ -27,6 +27,9 @@ import { fetchUsers } from '@/lib/api/fetchUsers'
 import { toast } from 'react-toastify'
 import { Spinner } from '@/components/ui/spinner'
 import { type User } from '@/types/user'
+import { fetchGroupRoles } from '@/lib/api/fetchGroupRoles'
+import { updateUserRole } from '@/lib/api/updateUserRole'
+import { UserGroupModal } from '@/components/UserGroupModal'
 
 export default function Users() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -37,12 +40,15 @@ export default function Users() {
   const [currentPage, setCurrentPage] = useState(1)
   const [users, setUsers] = useState<User[]>([])
   const [isLoadingUsers, setIsLoadingUsers] = useState(false)
-
+  const [isUserRoleModalOpen, setIsUserRoleModalOpen] = useState(false)
+  const [groups, setGroups] = useState<GroupRole[]>([])
   const fetchUsersData = useCallback(async () => {
     setIsLoadingUsers(true)
     try {
       const usersData = await fetchUsers()
       setUsers(usersData)
+      const groupsData = await fetchGroupRoles()
+      setGroups(groupsData)
     } catch (error: any) {
       console.error('Error fetching users:', error)
       toast.error(`Failed to fetch users: ${error.message}`)
@@ -121,6 +127,18 @@ export default function Users() {
   const handleDocumentUpload = (userId: any, file: any) => {
     console.log(`Uploading document for user ${userId}:`, file)
     setIsDocumentModalOpen(false)
+  }
+
+  const handleUserRoleSubmit = async (userId: any, groupId: any) => {
+    console.log(`Assigning group ${groupId} to user ${userId}`)
+    console.log(userId)
+    const response = await updateUserRole(userId)
+    if (response.success) {
+      toast.success('User role assigned successfully')
+    } else {
+      toast.error('Failed to assign user role')
+    }
+    setIsUserRoleModalOpen(false)
   }
 
   return (
@@ -204,6 +222,12 @@ export default function Users() {
                       }}>
                         <FileText className="h-4 w-4" />
                       </Button>
+                      <Button variant="ghost" size="icon" onClick={() => {
+                        setSelectedUser(user)
+                        setIsUserRoleModalOpen(true)
+                      }}>
+                        <User className="h-4 w-4" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -266,6 +290,17 @@ export default function Users() {
           onClose={() => setIsDocumentModalOpen(false)}
           onUpload={(file) => handleDocumentUpload(selectedUser.id, file)}
           title="Upload Document"
+        />
+      )}
+
+      {selectedUser && (
+        <UserGroupModal
+          isOpen={isUserRoleModalOpen}
+          onClose={() => setIsUserRoleModalOpen(false)}
+          onSubmit={handleUserRoleSubmit}
+          title="Assign User Role"
+          initialData={selectedUser}
+          groups={groups}
         />
       )}
     </div>

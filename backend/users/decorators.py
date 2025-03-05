@@ -12,18 +12,12 @@ def custom_authentication_and_permissions(required_permissions=None, exempt_get_
         exempt_get_views = []
 
     def decorator(view_func):
-        print("here")
-        print(exempt_get_views)
         @wraps(view_func)
         def wrapper(request, *args, **kwargs):
             # Check if the current view is in the exempt list for GET requests
-            print("here2")
-            print(request.path)
             if request.method == 'GET':
                 for pattern in exempt_get_views:
-                    print(pattern)
                     if re.fullmatch(pattern, request.path):
-                        print("matched")
                         return view_func(request, *args, **kwargs)
 
             auth = request.headers.get('Authorization')
@@ -47,7 +41,7 @@ def custom_authentication_and_permissions(required_permissions=None, exempt_get_
             
             # Check for required permissions
             if required_permissions:
-                user_permissions = UserHsPermission.objects.filter(user=user).values_list('permission__name', flat=True)
+                user_permissions = UserHsPermission.objects.filter(user=user).values_list('permission_group__permissions__name', flat=True)
                 user_permissions_set = set(user_permissions)  # Convert to set for faster lookup
                 
                 for perm in required_permissions:

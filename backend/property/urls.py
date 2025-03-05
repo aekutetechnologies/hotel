@@ -18,5 +18,11 @@ urlpatterns = [
     path('replies/<int:pk>/', views.reply_detail, name='reply-detail'),
     path('images/upload/', views.image_upload, name='image-upload'),
     path('images/<int:pk>/', views.image_detail, name='image-detail'),
+    path('room/images/upload/', views.room_image_upload, name='room-image-upload'),
+    path('search/<str:location>/', views.search_properties_by_location, name='search-properties-by-location'),
+    path('city/', views.list_cities, name='list-cities'),
+    path('country/', views.list_countries, name='list-countries'),
+    path('state/', views.list_states, name='list-states'),
+    path('areas/<str:city_name>/', views.unique_areas_by_city, name='unique-areas-by-city'),
 ]
 

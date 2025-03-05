@@ -30,6 +30,7 @@ export function SignIn({ onClose, setIsLoggedIn }: { onClose: () => void, setIsL
       localStorage.setItem('role', response.user_role)
       localStorage.setItem('userId', String(response.id))
       localStorage.setItem('name', response.name)
+      localStorage.setItem('permissions', String(response.permissions))
       setIsLoggedIn(true)
       onClose()
     } catch (err) {

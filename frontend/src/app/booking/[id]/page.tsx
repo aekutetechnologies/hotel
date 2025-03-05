@@ -55,7 +55,7 @@ export default function Booking() {
   const handleProceedToPayment = () => {
     // In a real application, you would redirect to a payment gateway here
     console.log('Proceeding to payment')
-    router.push('/booking-confirmation')
+    router.push('/bookingconfirmation')
   }
 
   if (!property || !selectedRoom) {

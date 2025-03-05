@@ -4,8 +4,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.conf import settings
 from django.core.cache import cache
-from .models import HsUser, UserSession, HsPermission
-from .serializers import UserSerializer, UserViewSerializer
+from .models import HsUser, UserSession, HsPermission, HsPermissionGroup, UserHsPermission
+from .serializers import UserSerializer, UserViewSerializer, HsPermissionSerializer, HsPermissionGroupSerializer
 from django.shortcuts import get_object_or_404
 import logging
 from .decorators import custom_authentication_and_permissions
@@ -56,18 +56,22 @@ def verify_otp(request):
     }
     access_token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
 
-    return Response({'access_token': access_token, 'user_role': user_role, "name": user.name, "id": user.id}, status=status.HTTP_200_OK)
+    user_permissions = UserHsPermission.objects.filter(user=user).values_list('permission_group__permissions__name', flat=True)
+    user_permissions_set = set(user_permissions)  # Convert to set for faster lookup
+
+    return Response({'access_token': access_token, 'user_role': user_role, "name": user.name, "id": user.id, "permissions": user_permissions_set}, status=status.HTTP_200_OK)
 
 
 @api_view(['GET', 'PUT'])
 @custom_authentication_and_permissions()
 def profile(request):
     if request.method == 'GET':
+        user = request.user
         serializer = UserSerializer(user)
-        print(serializer.data)
         logger.info(f"Profile viewed for user: {user.mobile}")
         return Response(serializer.data, status=status.HTTP_200_OK)
     elif request.method == 'PUT':
+        user = request.user
         serializer = UserSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -94,25 +98,27 @@ def admin_profile(request, user_id):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
-@custom_authentication_and_permissions(required_permissions=['admin:user'])
-def assign_permissions(request, user_id):
-    user = get_object_or_404(HsUser, id=user_id)
-    permission_names = request.data.get('permissions', [])
-    
-    if not isinstance(permission_names, list):
-        return Response({'error': 'Permissions must be a list'}, status=status.HTTP_400_BAD_REQUEST)
-    
-    permissions = []
-    for name in permission_names:
-        try:
-            permission = HsPermission.objects.get(name=name)
-            permissions.append(permission)
-        except HsPermission.DoesNotExist:
-            return Response({'error': f'Permission {name} does not exist'}, status=status.HTTP_400_BAD_REQUEST)
-    
-    user.hspermission_set.set(permissions)
-    logger.info(f"Permissions assigned to user: {user.mobile}")
-    return Response({'message': 'Permissions assigned successfully'}, status=status.HTTP_200_OK)
+@custom_authentication_and_permissions()
+def assign_group_permission_to_user(request):
+    data = request.data.get('userId', [])
+    user_id = data.get('user_id')
+    group_id = data.get('group_id')
+    if not user_id or not group_id:
+        return Response({'error': 'User ID and Group ID are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        user = get_object_or_404(HsUser, id=user_id)
+        permission_group = get_object_or_404(HsPermissionGroup, id=group_id)
+    except Exception as e:
+        logger.error(f"Error retrieving user or permission group: {e}")
+        return Response({'error': 'Invalid User ID or Group ID'}, status=status.HTTP_400_BAD_REQUEST)
+
+    UserHsPermission.objects.update_or_create(
+        user=user,
+        defaults={'permission_group': permission_group, 'is_active': True}
+    )
+    logger.info(f"Permission group '{permission_group.name}' assigned to user: {user.mobile}")
+    return Response({'message': 'Permission group assigned successfully'}, status=status.HTTP_200_OK)
 
 
 @api_view(['GET', 'POST'])
@@ -132,25 +138,57 @@ def list_permissions(request):
 
 @api_view(['GET', 'POST'])
 @custom_authentication_and_permissions()
-def list_user_permissions(request, id):
+def list_group_permissions(request):
     if request.method == 'GET':
-        permissions = user.hspermission_set.all()
-        serializer = HsPermissionSerializer(permissions, many=True)
+        groups = HsPermissionGroup.objects.all()
+        serializer = HsPermissionGroupSerializer(groups, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     elif request.method == 'POST':
-        permission_names = request.data.get('permissions', [])
-        if not isinstance(permission_names, list):
+        permission_ids = request.data.get('permissions', [])
+        if not isinstance(permission_ids, list):
             return Response({'error': 'Permissions must be a list'}, status=status.HTTP_400_BAD_REQUEST)
         permissions = []
-        for name in permission_names:
+        for id in permission_ids:
             try:
-                permission = HsPermission.objects.get(name=name)
+                permission = HsPermission.objects.get(id=int(id))
                 permissions.append(permission)
             except HsPermission.DoesNotExist:
-                return Response({'error': f'Permission {name} does not exist'}, status=status.HTTP_400_BAD_REQUEST)
-        user.hspermission_set.set(permissions)
-        logger.info(f"Permissions assigned to user: {user.mobile}")
+                return Response({'error': f'Permission {id} does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+
+        group = HsPermissionGroup.objects.create(name=request.data.get('name'))
+        group.permissions.set(permissions)
+        logger.info(f"Permissions assigned to group: {group.name}")
         return Response({'message': 'Permissions assigned successfully'}, status=status.HTTP_200_OK)
+
+@api_view(['GET', 'PUT', 'DELETE'])
+@custom_authentication_and_permissions()
+def view_group_permissions(request, id):
+    group = HsPermissionGroup.objects.get(id=id)
+    if request.method == 'GET':
+        permissions = group.permissions.all()
+        serializer = HsPermissionSerializer(permissions, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    elif request.method == 'PUT':
+        group.is_active = request.data.get('is_active', group.is_active)
+        permission_ids = request.data.get('permissions', [])
+        if not isinstance(permission_ids, list):
+            return Response({'error': 'Permissions must be a list'}, status=status.HTTP_400_BAD_REQUEST)
+        permissions = []
+        for id in permission_ids:
+            try:
+                permission = HsPermission.objects.get(id=int(id))
+                permissions.append(permission)
+            except HsPermission.DoesNotExist:
+                return Response({'error': f'Permission {id} does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        group.permissions.set(permissions)
+        group.save()
+        logger.info(f"Group permissions updated: {group.name}")
+        return Response({'message': 'Permissions updated successfully'}, status=status.HTTP_200_OK)
+    elif request.method == 'DELETE':
+        group.delete()
+        logger.info(f"Group permissions deleted: {group.name}")
+        return Response({'message': 'Group permissions deleted successfully'}, status=status.HTTP_200_OK)
+        
         
 
 @api_view(['GET'])

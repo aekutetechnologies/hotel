@@ -1,27 +1,49 @@
-'use client'
+"use client"
 
-import { useState, useEffect } from 'react'
-import Image from 'next/image'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useState, useEffect } from "react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
+import { Card } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { fetchProperties } from '@/lib/api/fetchProperties'
+import { Spinner } from '@/components/ui/spinner'
+import { useRouter } from 'next/navigation'
 
-const properties = [
-  { id: 1, name: "Luxury Suite", type: "Hotel", image: "/placeholder.svg?height=300&width=400&text=Luxury+Suite" },
-  { id: 2, name: "Cozy Hostel", type: "Hostel", image: "/placeholder.svg?height=300&width=400&text=Cozy+Hostel" },
-  { id: 3, name: "Business Hotel", type: "Hotel", image: "/placeholder.svg?height=300&width=400&text=Business+Hotel" },
-  { id: 4, name: "Budget Hostel", type: "Hostel", image: "/placeholder.svg?height=300&width=400&text=Budget+Hostel" },
-  { id: 5, name: "Boutique Hotel", type: "Hotel", image: "/placeholder.svg?height=300&width=400&text=Boutique+Hotel" },
-  { id: 6, name: "Student Hostel", type: "Hostel", image: "/placeholder.svg?height=300&width=400&text=Student+Hostel" },
-]
+interface Property {
+  id: number
+  name: string
+  location: string
+  images: { image: string }[]
+  property_type: string
+}
 
-export function PropertySlider() {
+export function PropertiesSlider() {
+  const router = useRouter()
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [properties, setProperties] = useState<Property[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
+    setIsLoading(true)
+    fetchProperties()
+      .then(data => {
+        setProperties(data)
+        setIsLoading(false)
+      })
+      .catch(error => {
+        console.error("Error fetching properties:", error)
+        setIsLoading(false)
+      })
+  }, [])
+
+  useEffect(() => {
+    if (!properties.length) return
+
     const timer = setInterval(() => {
       setCurrentIndex((prevIndex) => (prevIndex + 1) % properties.length)
     }, 5000)
+
     return () => clearInterval(timer)
-  }, [])
+  }, [properties.length])
 
   const nextSlide = () => {
     setCurrentIndex((prevIndex) => (prevIndex + 1) % properties.length)
@@ -31,35 +53,85 @@ export function PropertySlider() {
     setCurrentIndex((prevIndex) => (prevIndex - 1 + properties.length) % properties.length)
   }
 
+  const handlePropertyClick = (propertyId: number) => {
+    router.push(`/property/${propertyId}`)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-12 flex justify-center">
+        <Spinner />
+      </div>
+    )
+  }
+
+  if (!properties.length) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        <p className="text-center text-gray-500">No properties available.</p>
+      </div>
+    )
+  }
+
+  // Create an array with duplicated items for endless scroll effect
+  const displayProperties = [...properties, ...properties, ...properties]
+  const offset = properties.length
+  const adjustedIndex = currentIndex + offset
+
   return (
-    <section className="py-16 bg-gray-50">
-      <div className="container mx-auto px-4">
-        <h2 className="text-3xl font-bold mb-8 text-center text-[#B11E43]">Our Properties in Mumbai</h2>
-        <div className="relative">
-          <div className="overflow-hidden">
-            <div className="flex transition-transform duration-500 ease-in-out" style={{ transform: `translateX(-${currentIndex * (100 / 3)}%)` }}>
-              {properties.map((property, index) => (
-                <div key={property.id} className="w-1/3 flex-shrink-0 px-2">
-                  <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-                    <Image src={property.image} alt={property.name} width={400} height={300} className="w-full h-48 object-cover" />
-                    <div className="p-4">
-                      <h3 className="text-lg font-semibold mb-2">{property.name}</h3>
-                      <p className="text-gray-600">{property.type}</p>
-                    </div>
+    <div className="max-w-7xl mx-auto px-4 py-12">
+      <h2 className="text-2xl font-bold mb-6 text-center">Our Properties</h2>
+      <div className="relative">
+        <div className="flex overflow-hidden">
+          <div
+            className="flex transition-transform duration-500 ease-in-out"
+            style={{
+              transform: `translateX(-${(adjustedIndex * 100) / 3}%)`,
+              width: `${displayProperties.length * 100 / 3}%`
+            }}
+          >
+            {displayProperties.map((property, index) => (
+              <Card
+                key={`${property.id}-${index}`}
+                className="flex-shrink-0 w-1/3 px-2 cursor-pointer hover:shadow-lg transition-shadow duration-300"
+                onClick={() => handlePropertyClick(property.id)}
+              >
+                <div className="relative h-[320px] p-2">
+                  <div className="absolute inset-x-2 top-2 h-14 bg-gradient-to-b from-black to-transparent"></div>
+                  <img
+                    src={property.images[0]?.image || "/placeholder.svg"}
+                    alt={property.name}
+                    style={{ objectFit: 'cover', width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}
+                    className="rounded-md"
+                  />
+                  <div className="absolute inset-x-2 bottom-2 h-20 bg-gradient-to-t from-black to-transparent"></div>
+                  <div className="absolute top-4 left-4">
+                    <Badge variant="secondary" className="bg-white text-gray-800">
+                      {property.property_type}
+                    </Badge>
+                  </div>
+                  <div className="absolute inset-x-2 bottom-2 p-4">
+                    <h3 className="text-lg font-semibold text-white mb-1">{property.name}</h3>
+                    <p className="text-sm text-gray-200">{property.location}</p>
                   </div>
                 </div>
-              ))}
-            </div>
+              </Card>
+            ))}
           </div>
-          <button onClick={prevSlide} className="absolute top-1/2 -left-4 transform -translate-y-1/2 bg-white p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors duration-300">
-            <ChevronLeft size={24} className="text-[#B11E43]" />
-          </button>
-          <button onClick={nextSlide} className="absolute top-1/2 -right-4 transform -translate-y-1/2 bg-white p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors duration-300">
-            <ChevronRight size={24} className="text-[#B11E43]" />
-          </button>
         </div>
+        <button
+          onClick={prevSlide}
+          className="absolute top-1/2 left-4 transform -translate-y-1/2 bg-white p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors z-10"
+        >
+          <ChevronLeft className="h-6 w-6 text-gray-600" />
+        </button>
+        <button
+          onClick={nextSlide}
+          className="absolute top-1/2 right-4 transform -translate-y-1/2 bg-white p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors z-10"
+        >
+          <ChevronRight className="h-6 w-6 text-gray-600" />
+        </button>
       </div>
-    </section>
+    </div>
   )
 }
-

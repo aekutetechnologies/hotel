@@ -1,33 +1,21 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Star, MapPin, ChevronLeft, ChevronRight, Wifi, Coffee, Tv, Car, Utensils, Building2, BatteryCharging, Dumbbell, BellRing, ShieldCheck, UserRoundCheck, Beer, Soup, Building, Heater, ChefHat, AirVent } from 'lucide-react'
 import Image from 'next/image'
-import { Property, Hotel, Hostel, Amenity } from '@/types/property'
+import { Property, Review } from '@/types/property'
 import { fetchProperty } from '@/lib/api/fetchProperty'
 import { ReviewSection } from '@/components/ReviewSection'
 import { BookingCard } from '@/components/BookingCard'
 import ShowMap from '@/components/ShowMap'
 import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog"
 import { GalleryModal } from '@/components/GalleryModal'
-
-// Sample reviews data
-const reviews = [
-  {
-    id: 1,
-    userName: "shivam kumar jha",
-    date: "31 Aug 2024",
-    rating: 5,
-    comment: "I had a pleasant stay at this hotel. The room was clean, spacious, and well-maintained, with a comfortable bed and modern amenities. The staff were friendly and attentive, always ready to assist with a smile. The location was convenient, close to key attractions and public transport, making it easy to explore the area. Breakfast was good, offering a decent variety of options to start the day. While the hotel was mostly quiet, there was some occasional noise from the outside road. Overall, it was a comfortable and enjoyable experience, and I would consider staying here again.",
-    images: ["/placeholder.svg?height=200&width=300&text=Room+Photo"]
-  },
-  // Add more reviews as needed
-]
+import { Spinner } from '@/components/ui/spinner'
 
 interface PropertyDetailsProps {
   property: Property;
@@ -36,21 +24,67 @@ interface PropertyDetailsProps {
 export default function PropertyDetails() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [selectedRoom, setSelectedRoom] = useState<any>(null)
+  const [currentRoomImageIndex, setCurrentRoomImageIndex] = useState(0)
+  const [currentRoomImageIndices, setCurrentRoomImageIndices] = useState<{ [key: string]: number }>({});
+
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const bookingType = searchParams.get('bookingType') || 'fulltime'
   const propertyId = Number(params.id)
+  const checkInDateParam = searchParams.get('checkInDate')
+  const checkOutDateParam = searchParams.get('checkOutDate')
+  const checkInTimeParam = searchParams.get('checkInTime')
+  const checkOutTimeParam = searchParams.get('checkOutTime')
+  const selectedGuests = searchParams.get('guests')
+  const selectedRooms = searchParams.get('rooms')
 
   const [property, setProperty] = useState<Property | null>(null)
   const [isGalleryOpen, setIsGalleryOpen] = useState(false)
   const [galleryStartIndex, setGalleryStartIndex] = useState(0)
   const [showGallery, setShowGallery] = useState(false)
+  const [isMainImageLoaded, setIsMainImageLoaded] = useState(false);
+  const [checkInDate, setCheckInDate] = useState<Date | undefined>(checkInDateParam ? new Date(checkInDateParam) : undefined)
+  const [checkOutDate, setCheckOutDate] = useState<Date | undefined>(checkOutDateParam ? new Date(checkOutDateParam) : undefined)
+  const [checkInTime, setCheckInTime] = useState<string | null>(checkInTimeParam)
+  const [checkOutTime, setCheckOutTime] = useState<string | null>(checkOutTimeParam)
+
+  // Calculate required occupancy per room
+  const guestsPerRoom = selectedGuests && selectedRooms 
+    ? Math.ceil(parseInt(selectedGuests) / parseInt(selectedRooms))
+    : selectedGuests 
+      ? parseInt(selectedGuests) 
+      : 0
+
+  // Filter rooms based on max occupancy
+  const getFilteredRooms = (rooms: any[]) => {
+    if (!guestsPerRoom) return rooms
+    
+    return rooms.filter(room => {
+      // For hotel rooms
+      if ('maxoccupancy' in room) {
+        return room.maxoccupancy >= guestsPerRoom
+      }
+      // For hostel rooms
+      if ('occupancytype' in room) {
+        // Convert occupancyType (e.g., "2-Sharing") to number
+        const occupancy = parseInt(room.occupancytype.split('-')[0])
+        return occupancy >= guestsPerRoom
+      }
+      return false
+    })
+  }
 
   useEffect(() => {
     fetchProperty(propertyId.toString()).then((data) => {
       console.log("data", data)
       setProperty(data)
       if (data && data.rooms.length > 0) {
-        setSelectedRoom(data.rooms[0])
+        const filteredRooms = getFilteredRooms(data.rooms)
+        // Set first eligible room as selected, if any
+        if (filteredRooms.length > 0) {
+          setSelectedRoom(filteredRooms[0])
+        }
       }
     })
   }, [propertyId])
@@ -89,6 +123,22 @@ export default function PropertyDetails() {
   console.log("PropertyDetails Render", {
     latitude: property?.latitude, longitude: property?.longitude
   })
+
+  // Function to handle next room image
+  const nextRoomImage = (roomId: string) => {
+    setCurrentRoomImageIndices((prev) => ({
+      ...prev,
+      [roomId]: (prev[roomId] || 0) + 1 % (property.rooms.find(room => room.id === roomId)?.images.length || 1),
+    }));
+  };
+
+  // Function to handle previous room image
+  const prevRoomImage = (roomId: string) => {
+    setCurrentRoomImageIndices((prev) => ({
+      ...prev,
+      [roomId]: (prev[roomId] || 0) - 1 < 0 ? (property.rooms.find(room => room.id === roomId)?.images.length || 1) - 1 : prev[roomId] - 1,
+    }));
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -132,7 +182,7 @@ export default function PropertyDetails() {
                 <Image
                   src={property.images[currentImageIndex].image}
                   alt={`View ${currentImageIndex + 1}`}
-                  fill
+                  fill={true}
                   className="object-cover"
                 />
                 <Button
@@ -157,9 +207,8 @@ export default function PropertyDetails() {
                   <button
                     key={index}
                     onClick={() => openGalleryModal(index)}
-                    className={`relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden ${
-                      index === currentImageIndex ? 'ring-2 ring-primary' : ''
-                    }`}
+                    className={`relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden ${index === currentImageIndex ? 'ring-2 ring-primary' : ''
+                      }`}
                   >
                     <img
                       src={image.image}
@@ -209,34 +258,122 @@ export default function PropertyDetails() {
             <section>
               <h2 className="text-2xl font-semibold mb-4">Available Rooms</h2>
               <div className="space-y-4">
-                {property.rooms.map((room) => (
+                {getFilteredRooms(property.rooms).map((room) => (
                   <div key={'name' in room ? room.name : room.occupancyType} className="border rounded-lg p-4">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="text-xl font-semibold mb-2">{'name' in room ? room.name : room.occupancyType}</h3>
-                        <p className="text-gray-600 mb-2">{'size' in room ? `Room size: ${room.size}` : `Available beds: ${room.availableBeds}/${room.totalBeds}`}</p>
-                        <div className="flex gap-2">
-                          {room.amenities.map((amenity, index) => (
-                            <Badge key={index} variant="outline">{(amenity as string)}</Badge>
-                          ))}
-                        </div>
+                    <div className="flex space-x-4">
+                      {/* Image Slider (Left Side) */}
+                      <div className="w-1/3 relative">
+                        {room.images && room.images.length > 0 ? (
+                          <div className="relative w-full h-48 overflow-hidden rounded-lg mb-2">
+                            <Image
+                              src={room.images[currentRoomImageIndices[room.id] || 0]?.image}
+                              alt={`Room Image ${currentRoomImageIndices[room.id] + 1}`}
+                              fill={true}
+                              className="object-cover"
+                            />
+                            {/* Navigation Arrows */}
+                            <div className="absolute inset-0 flex items-center justify-between p-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 rounded-full bg-white/80 hover:bg-white"
+                                onClick={() => prevRoomImage(room.id)}
+                                disabled={(currentRoomImageIndices[room.id] || 0) === 0}
+                              >
+                                <ChevronLeft className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 rounded-full bg-white/80 hover:bg-white"
+                                onClick={() => nextRoomImage(room.id)}
+                                disabled={(currentRoomImageIndices[room.id] || 0) === room.images.length - 1}
+                              >
+                                <ChevronRight className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="relative w-full h-48 overflow-hidden rounded-lg mb-2 bg-gray-100 flex justify-center items-center">
+                            <p className="text-gray-500">No images</p>
+                          </div>
+                        )}
                       </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-[#B11E43]">
-                          ₹{(room.price ? parseFloat(room.price) * (1 - (parseFloat(room.discount || '0') / 100)) : 0).toFixed(2)}
+
+                      {/* Room Details (Right Side) */}
+                      <div className="w-2/3">
+                        <div className="flex justify-between h-full flex-col">
+                          <div className="flex justify-between">
+                            <div>
+                              <h3 className="text-xl font-semibold mb-2">{'name' in room ? room.name : room.occupancyType}</h3>
+                              <p className="text-gray-600 mb-2">{'size' in room ? `Room size: ${room.size} sq. ft` : `Available beds: ${room.availableBeds}/${room.totalBeds} sq. ft`}</p>
+                            </div>
+                            <div className="flex flex-col items-end gap-1 text-sm text-gray-700">
+                              {room.bed_type && <div><span className="text-black-900 font-semibold">Bed Type:</span> <span className="text-gray-700">{room.bed_type}</span></div>}
+                              {room.private_bathroom !== undefined && <div><span className="text-black-900 font-semibold">Private Bathroom:</span> <span className="text-gray-700">{room.private_bathroom ? 'Yes' : 'No'}</span></div>}
+                              {room.smoking !== undefined && <div><span className="text-black-900 font-semibold">Smoking:</span> <span className="text-gray-700">{room.smoking ? 'Yes' : 'No'}</span></div>}
+                            </div>
+                          </div>
+                          <div className="flex gap-2 mb-2">
+                            {room.amenities.map((amenity, index) => {
+                              const amenityIcons: { [key: string]: React.ReactNode } = {
+                                "Security": <ShieldCheck className="h-5 w-5" />,
+                                "Caretaker": <UserRoundCheck className="h-5 w-5" />,
+                                "Reception": <BellRing className="h-5 w-5" />,
+                                "Bar": < Beer className="h-5 w-5" />,
+                                "Gym": <Dumbbell className="h-5 w-5" />,
+                                "In-house Restaurant": <Soup className="h-5 w-5" />,
+                                "Elevator": < Building className="h-5 w-5" />,
+                                "Power backup": <BatteryCharging className="h-5 w-5" />,
+                                "Geyser": <Heater className="h-5 w-5" />,
+                                "Kitchen": <ChefHat className="h-5 w-5" />,
+                                "Free Wifi": <Wifi className="h-5 w-5" />,
+                                "AC": < AirVent className="h-5 w-5" />,
+                                "TV": <Tv className="h-5 w-5" />,
+                                "Coffee": <Coffee className="h-5 w-5" />,
+                                "Utensils": <Utensils className="h-5 w-5" />,
+                              }
+                              const IconComponent = amenityIcons[(amenity.name as string)] || null
+
+                              return (
+                                <Badge key={index} variant="outline" className="flex items-center gap-1">
+                                  {IconComponent}
+                                  {amenity.name}
+                                </Badge>
+                              )
+                            })}
+                          </div>
+                          <div className="mt-4">
+                            <div className="flex flex-col items-end gap-1 text-sm text-gray-700">
+                              {room.security_deposit !== undefined && <div>Security Deposit: {room.security ? 'Yes' : 'No'}</div>}
+                            </div>
+                          </div>
+                          <div className="text-right mb-4">
+                            <div className="text-2xl font-bold text-[#B11E43]">
+                              ₹{(bookingType === 'hourly' ? parseFloat(room.hourly_rate) : parseFloat(room.daily_rate)) * (1 - (parseFloat(room.discount || '0') / 100)) }
+                            </div>
+                            <div className="text-gray-500 line-through">₹{bookingType === 'hourly' ? room.hourly_rate : room.daily_rate}</div>
+                            <Button
+                              onClick={() => setSelectedRoom(room)}
+                              variant={selectedRoom === room ? "default" : "outline"}
+                              className={selectedRoom === room ? "bg-[#B11E43] hover:bg-[#8f1836]" : ""}
+                            >
+                              {selectedRoom === room ? "Selected" : "Select"}
+                            </Button>
+                          </div>
                         </div>
-                        <div className="text-gray-500 line-through">₹{room.price}</div>
-                        <Button
-                          onClick={() => setSelectedRoom(room)}
-                          variant={selectedRoom === room ? "default" : "outline"}
-                          className={selectedRoom === room ? "bg-[#B11E43] hover:bg-[#8f1836]" : ""}
-                        >
-                          {selectedRoom === room ? "Selected" : "Select"}
-                        </Button>
                       </div>
                     </div>
                   </div>
                 ))}
+                {getFilteredRooms(property.rooms).length === 0 && (
+                  <div className="text-center p-4 border rounded-lg bg-gray-50">
+                    <p className="text-gray-500">
+                      No rooms available for {selectedGuests} guest{parseInt(selectedGuests || '0') > 1 ? 's' : ''} 
+                      {selectedRooms && ` in ${selectedRooms} room${parseInt(selectedRooms) > 1 ? 's' : ''}`}
+                    </p>
+                  </div>
+                )}
               </div>
             </section>
 
@@ -260,7 +397,7 @@ export default function PropertyDetails() {
             {/* Reviews */}
             <section>
               <h2 className="text-2xl font-semibold mb-4">Ratings and reviews</h2>
-              <ReviewSection reviews={reviews} />
+              <ReviewSection reviews={property.reviews.slice(0, 2)} />
             </section>
 
             {/* Policies */}
@@ -292,11 +429,16 @@ export default function PropertyDetails() {
           {/* Right Column - Booking Card */}
           <div className="lg:col-span-1">
             <BookingCard
-              propertyId={property.id}
-              propertyType={property.property_type}
-              rooms={property.rooms}
+              bookingType={bookingType}
+              property={property}
+              checkInDate={checkInDate}
+              checkOutDate={checkOutDate}
+              checkInTime={checkInTime}
+              checkOutTime={checkOutTime}
               selectedRoom={selectedRoom}
-              onRoomSelect={setSelectedRoom}
+              selectedGuests={selectedGuests}
+              selectedRooms={selectedRooms}
+              searchParams={searchParams}
             />
           </div>
         </div>
@@ -313,4 +455,3 @@ export default function PropertyDetails() {
     </div>
   )
 }
-

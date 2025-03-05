@@ -1,0 +1,123 @@
+meta {
+  name: create property
+  type: http
+  seq: 10
+}
+
+post {
+  url: http://localhost:8000/property/properties/
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3Mzg2MDI0OTF9.zdoVeR-tUeKM4-LszZabAxJoPR-JkdwBXGer7E_fb9o
+}
+
+body:json {
+  {
+    "name": "Hotel O Royal Grand Near Chhatrapati Shivaji International Airport",
+    "property_type": "hotel",
+    "location": "Juhu, Mumbai",
+    "latitude": "19.123436",
+    "longitude": "72.830257",
+    "images": [
+      32,
+      33,
+      34,
+      35
+    ],
+    "amenities": [
+      1,
+      4,
+      7,
+      10,
+      8,
+      5
+    ],
+    "rules": [
+      2,
+      3
+    ],
+    "documentation": [
+      2,
+      3
+    ],
+    "rooms": [
+      {
+        "id": "1738599374833",
+        "name": "Suite",
+        "price": "3000",
+        "discount": "15",
+        "size": "200",
+        "maxoccupancy": 4,
+        "amenities": [
+          5,
+          9,
+          11
+        ],
+        "bed_type": "king",
+        "private_bathroom": true,
+        "smoking": true,
+        "security_deposit": true,
+        "roomImages": [
+          {
+            "id": "1",
+            "image_url": "http://localhost:8000/media/room_images/room_cropped_image.webp"
+          },
+          {
+            "id": "1",
+            "image_url": "http://localhost:8000/media/room_images/room_cropped_image.webp"
+          },
+          {
+            "id": "2",
+            "image_url": "http://localhost:8000/media/room_images/room_cropped_image_gFpji0O.webp"
+          },
+          {
+            "id": "2",
+            "image_url": "http://localhost:8000/media/room_images/room_cropped_image_gFpji0O.webp"
+          }
+        ]
+      },
+      {
+        "id": "1738599413326",
+        "name": "Deluxe",
+        "price": "1500",
+        "discount": "15",
+        "size": "100",
+        "maxoccupancy": 2,
+        "amenities": [
+          5,
+          3,
+          7,
+          9,
+          10,
+          8
+        ],
+        "bed_type": "double",
+        "private_bathroom": true,
+        "smoking": true,
+        "security_deposit": false,
+        "roomImages": [
+          {
+            "id": "3",
+            "image_url": "http://localhost:8000/media/room_images/room_cropped_image_8AZn92J.webp"
+          },
+          {
+            "id": "3",
+            "image_url": "http://localhost:8000/media/room_images/room_cropped_image_8AZn92J.webp"
+          },
+          {
+            "id": "4",
+            "image_url": "http://localhost:8000/media/room_images/room_cropped_image_QC7BUOz.webp"
+          },
+          {
+            "id": "4",
+            "image_url": "http://localhost:8000/media/room_images/room_cropped_image_QC7BUOz.webp"
+          }
+        ]
+      }
+    ],
+    "description": "Nice Location"
+  }
+}

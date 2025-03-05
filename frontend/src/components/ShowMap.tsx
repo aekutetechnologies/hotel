@@ -47,9 +47,7 @@ export default React.memo(function ShowMap({ latitude, longitude }: ShowMapProps
 
   return (
     <>
-    {console.log("ShowMap Render", { latitude, longitude })}
-
-    <div className="h-96 w-full rounded-lg overflow-hidden">
+    <div className="h-96 w-full rounded-lg overflow-hidden z-10">
       <MapContainer 
         center={[latitude, longitude]} 
         zoom={13} 

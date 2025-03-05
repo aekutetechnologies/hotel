@@ -55,7 +55,6 @@ class BookingDocumentSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def create(self, validated_data):
-        print(validated_data)
         booking_document = BookingDocument.objects.create(**validated_data)
         booking_document.save()
         return booking_document

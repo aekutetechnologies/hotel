@@ -7,6 +7,7 @@ export interface VerifyOtpResponse {
   user_role: string;
   id: number;
   name: string;
+  permissions: string[];
   // Add other fields if present in your API response
 }
 

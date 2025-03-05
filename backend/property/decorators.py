@@ -12,16 +12,12 @@ def custom_authentication_and_permissions(required_permissions=None, exempt_get_
         exempt_get_views = []
 
     def decorator(view_func):
-        print(exempt_get_views)
         @wraps(view_func)
         def wrapper(request, *args, **kwargs):
             # Check if the current view is in the exempt list for GET requests
-            print(request.path)
             if request.method == 'GET':
                 for pattern in exempt_get_views:
-                    print(pattern)
                     if re.fullmatch(pattern, request.path):
-                        print("matched")
                         return view_func(request, *args, **kwargs)
 
             auth = request.headers.get('Authorization')

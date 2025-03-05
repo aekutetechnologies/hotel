@@ -74,3 +74,8 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+
+.leaflet-pane {
+  z-index: 10 !important;
+}

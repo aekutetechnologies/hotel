@@ -77,6 +77,8 @@ class HsPermission(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    is_active = models.BooleanField(default=True)
 
     def __str__(self):
         return self.name
@@ -85,14 +87,18 @@ class HsPermissionGroup(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255, unique=True)
     permissions = models.ManyToManyField(HsPermission, related_name='permission_groups')
-
+    created_at = models.DateTimeField(default=timezone.now)
+    is_active = models.BooleanField(default=True)
+    
     def __str__(self):
         return self.name
     
 class UserHsPermission(models.Model):
     id = models.AutoField(primary_key=True)
-    user = models.ForeignKey(HsUser, on_delete=models.CASCADE)
-    permission_group = models.ForeignKey(HsPermissionGroup, on_delete=models.CASCADE)
+    user = models.ForeignKey(HsUser, on_delete=models.CASCADE, blank=True, null=True)
+    permission_group = models.ForeignKey(HsPermissionGroup, on_delete=models.CASCADE, blank=True, null=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    is_active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.user.mobile} - {self.permission.name}"

@@ -3,21 +3,19 @@
 import { Property } from '@/types/property'
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Star, MapPin, Wifi, Coffee, Gym, Parking, Pet, Spa, ShieldCheck, UserRoundCheck, BellRing, Beer, Soup, Building, BatteryCharging, Heater, ChefHat, AirVent, Tv, Utensils, StarHalf } from 'lucide-react'
-import Image from 'next/image'
+import { Star, MapPin, Wifi, Coffee, ShieldCheck, UserRoundCheck, BellRing, Beer, Soup, Building, BatteryCharging, Heater, ChefHat, AirVent, Tv, Utensils, StarHalf } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 
 interface PropertyCardProps {
   property: Property;
+  searchParams: ReturnType<typeof useSearchParams>;
 }
 
 const amenityIcons = {
   "Free WiFi": Wifi,
   "Coffee": Coffee,
-  "Gym": Gym,
-  "Parking": Parking,
-  "Spa": Spa,
   "Security": ShieldCheck,
   "Caretaker": UserRoundCheck,
   "Reception": BellRing,
@@ -32,12 +30,18 @@ const amenityIcons = {
   "Utensils": Utensils,
 }
 
-export function PropertyCard({ property }: PropertyCardProps) {
+export function PropertyCard({ property, searchParams }: PropertyCardProps) {
   const isHostel = property.property_type === 'hostel'
-  const originalPrice = Math.min(...property.rooms.map(room => 'price' in room ? room.price : room.price))
-  const discount = Math.max(...property.rooms.map(room => 'discount' in room ? room.discount : room.discount))
-  const lowestPrice = originalPrice - (originalPrice * discount) / 100
+  const bookingType = searchParams.get('bookingType') || 'fulltime'
+  const originalPrice = Math.min(...property.rooms.map(room =>
+        bookingType === 'hourly' ? parseFloat(room.hourly_rate) : parseFloat(room.daily_rate)
+    ));
+  const discount = Math.max(...property.rooms.map(room => room.discount || 0))
+  const lowestPrice = originalPrice - (originalPrice * (discount || 0)) / 100
+
+
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
 
   const handleThumbnailClick = (index: number) => {
     setCurrentImageIndex(index)
@@ -50,14 +54,17 @@ export function PropertyCard({ property }: PropertyCardProps) {
       <div className="flex flex-col sm:flex-row">
         {/* Image Section */}
         <div className="w-full sm:w-2/5 relative flex pr-0">
-          <div className="relative h-48 sm:h-52 md:h-60 lg:h-64 xl:h-72 sm:w-full flex-1">
+          <div className="relative h-48 w-48 sm:h-52 sm:w-52 md:h-60 md:w-60 lg:h-64 lg:w-64 xl:h-72 xl:w-72 flex-1">
             <img
               src={property.images[currentImageIndex].image}
               alt={property.name}
-              className="object-contain w-full h-full p-2"
+              className="object-cover w-full h-full p-2"
+              onLoad={() => setIsImageLoaded(true)}
+              onError={() => setIsImageLoaded(true)}
+              style={{ opacity: isImageLoaded ? 1 : 0 }}
             />
-            <Badge 
-              variant="secondary" 
+            <Badge
+              variant="secondary"
               className="absolute top-2 left-2"
             >
               {property.property_type.toUpperCase()}
@@ -74,7 +81,10 @@ export function PropertyCard({ property }: PropertyCardProps) {
                   <img
                     src={image.image}
                     alt={`${property.name} thumbnail ${index + 1}`}
-                    className="object-cover w-full h-full"
+                    className="object-fill w-full h-full"
+                    onLoad={() => setIsImageLoaded(true)}
+                    onError={() => setIsImageLoaded(true)}
+                    style={{ opacity: isImageLoaded ? 1 : 0 }}
                   />
                 </div>
               ))}
@@ -128,7 +138,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
                   <div className="flex items-baseline gap-2">
                     <span className="text-xl sm:text-2xl font-bold">₹{lowestPrice}</span>
                     <span className="text-xs sm:text-sm text-gray-500">
-                      {isHostel ? '/month' : '/night'}
+                      {isHostel ? '/month' : bookingType === 'hourly' ? '/hour' : '/night'}
                     </span>
                   </div>
                   {discount > 0 && (
@@ -143,12 +153,18 @@ export function PropertyCard({ property }: PropertyCardProps) {
                   )}
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
-                  <Link href={`/property/${property.id}`}>
+                  <Link href={{
+                    pathname: `/property/${property.id}`,
+                    query: searchParams? Object.fromEntries(searchParams.entries()) : {}
+                  }}>
                     <Button variant="outline" size="lg">
                       View Details
                     </Button>
                   </Link>
-                  <Link href={`/property/${property.id}/book`}>
+                  <Link href={{
+                    pathname: `/property/${property.id}/book`,
+                    query: searchParams? Object.fromEntries(searchParams.entries()) : {}
+                  }}>
                     <Button
                       className="bg-[#B11E43] hover:bg-[#8f1836]"
                       size="lg"
@@ -165,4 +181,3 @@ export function PropertyCard({ property }: PropertyCardProps) {
     </div>
   )
 }
-

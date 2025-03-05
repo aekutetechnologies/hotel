@@ -9,40 +9,129 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { createExpense } from '@/lib/api/createExpense'
+import { updateExpense } from '@/lib/api/updateExpense'
+import { toast } from 'react-toastify'
+import { fetchExpenseCategory } from '@/lib/api/fetchExpenseCategory'
+import { Spinner } from '@/components/ui/spinner'
 
 interface ExpenseModalProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (expense: any) => void
+  onSubmit?: (expense: any) => void
   title: string
   initialData?: any
+  properties: any[]
 }
 
-export function ExpenseModal({ isOpen, onClose, onSubmit, title, initialData }: ExpenseModalProps) {
-  const [expense, setExpense] = useState({
-    propertyName: '',
-    category: '',
-    description: '',
-    amount: '',
-    date: '',
-    status: 'Pending',
+interface ExpenseFormData {
+  property: string
+  category: string
+  description: string
+  amount: number
+  date: string
+  status: string
+}
+
+export function ExpenseModal({ isOpen, onClose, onSubmit, title, initialData, properties }: ExpenseModalProps) {
+  const [expenseFormData, setExpenseFormData] = useState<ExpenseFormData>({
+    property: initialData?.property.id || '',
+    category: initialData?.category.id || '',
+    description: initialData?.description || '',
+    amount: initialData?.amount || 0,
+    date: initialData?.date ? new Date(initialData.date).toISOString().split('T')[0] : '',
+    status: initialData?.status || 'pending',
   })
+  const [expenseCategories, setExpenseCategories] = useState([])
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false)
+  const isUpdate = !!initialData?.id
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      setIsLoadingCategories(true)
+      try {
+        const categories = await fetchExpenseCategory()
+        setExpenseCategories(categories)
+      } catch (error: any) {
+        console.error('Error fetching expense categories:', error)
+        toast.error(`Failed to load expense categories: ${error.message}`)
+      } finally {
+        setIsLoadingCategories(false)
+      }
+    }
+
+    loadCategories()
+  }, [])
 
   useEffect(() => {
     if (initialData) {
-      setExpense(initialData)
+      setExpenseFormData({
+        property: initialData.property.id || '',
+        category: initialData.category.id || '',
+        description: initialData.description || '',
+        amount: initialData.amount || 0,
+        date: initialData.date ? new Date(initialData.date).toISOString().split('T')[0] : '',
+        status: initialData.status || 'pending',
+      })
+    } else {
+      setExpenseFormData({
+        property: '',
+        category: '',
+        description: '',
+        amount: 0,
+        date: '',
+        status: 'pending',
+      })
     }
-  }, [initialData])
+  }, [initialData, isOpen])
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    setExpense(prev => ({ ...prev, [name]: value }))
+
+  const handleCategoryChange = (value: string) => {
+    setExpenseFormData(prev => ({ ...prev, category: value }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target
+    setExpenseFormData(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    const numberValue = value === '' ? 0 : parseFloat(value)
+    setExpenseFormData(prev => ({ ...prev, [name]: numberValue }))
+  }
+
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit(expense)
+
+    try {
+      const payload = {
+        ...expenseFormData,
+        property: parseInt(expenseFormData.property),
+        category: parseInt(expenseFormData.category),
+      }
+      const response = isUpdate
+        ? await updateExpense(initialData.id, payload)
+        : await createExpense(payload)
+
+      if (response.success) {
+        toast.success(`Expense ${isUpdate ? 'updated' : 'created'} successfully!`)
+        onClose()
+      } else {
+        toast.error(`Failed to ${isUpdate ? 'update' : 'create'} expense.`)
+      }
+    } catch (error: any) {
+      console.error(`Expense ${isUpdate ? 'update' : 'creation'} failed:`, error)
+      toast.error(error.message || `Failed to ${isUpdate ? 'update' : 'create'} expense.`)
+    }
+
+    if (onSubmit) {
+      onSubmit(expenseFormData)
+    }
   }
 
   return (
@@ -54,30 +143,53 @@ export function ExpenseModal({ isOpen, onClose, onSubmit, title, initialData }: 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="propertyName">Property Name</Label>
-            <Input
-              id="propertyName"
-              name="propertyName"
-              value={expense.propertyName}
-              onChange={handleChange}
-              required
-            />
+            {isUpdate ? (
+              <Input
+                id="propertyName"
+                name="propertyName"
+                value={initialData?.property?.name}
+                disabled
+              />
+            ) : (
+              <Select onValueChange={(value: string) => setExpenseFormData(prev => ({ ...prev, property: value }))} defaultValue={initialData?.property?.id ? String(initialData.property.id) : expenseFormData.property}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select property" />
+                </SelectTrigger>
+                <SelectContent>
+                  {properties.map((property: any) => (
+                    <SelectItem key={property.id} value={String(property.id)}>
+                      {property.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
           <div>
             <Label htmlFor="category">Category</Label>
-            <Input
-              id="category"
-              name="category"
-              value={expense.category}
-              onChange={handleChange}
-              required
-            />
+            {isLoadingCategories ? (
+              <Spinner size="sm" className="ml-2" />
+            ) : (
+              <Select onValueChange={handleCategoryChange} defaultValue={initialData?.category?.id ? String(initialData.category.id) : expenseFormData.category}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select expense category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {expenseCategories.map((category: any) => (
+                    <SelectItem key={category.id} value={String(category.id)}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
           <div>
             <Label htmlFor="description">Description</Label>
             <Input
               id="description"
               name="description"
-              value={expense.description}
+              value={expenseFormData.description}
               onChange={handleChange}
               required
             />
@@ -88,8 +200,8 @@ export function ExpenseModal({ isOpen, onClose, onSubmit, title, initialData }: 
               id="amount"
               name="amount"
               type="number"
-              value={expense.amount}
-              onChange={handleChange}
+              value={String(expenseFormData.amount)}
+              onChange={handleAmountChange}
               required
             />
           </div>
@@ -99,7 +211,7 @@ export function ExpenseModal({ isOpen, onClose, onSubmit, title, initialData }: 
               id="date"
               name="date"
               type="date"
-              value={expense.date}
+              value={expenseFormData.date}
               onChange={handleChange}
               required
             />
@@ -109,20 +221,21 @@ export function ExpenseModal({ isOpen, onClose, onSubmit, title, initialData }: 
             <select
               id="status"
               name="status"
-              value={expense.status}
+              value={expenseFormData.status}
               onChange={handleChange}
               className="w-full border rounded px-3 py-2"
             >
-              <option value="Pending">Pending</option>
-              <option value="Paid">Paid</option>
+              <option value="pending">Pending</option>
+              <option value="paid">Paid</option>
             </select>
           </div>
-          <Button type="submit" className="w-full">
-            {initialData ? 'Update' : 'Create'} Expense
-          </Button>
+          <DialogFooter>
+            <Button type="submit" className="w-full">
+              {isUpdate ? 'Update Expense' : 'Create Expense'}
+            </Button>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
   )
 }
-

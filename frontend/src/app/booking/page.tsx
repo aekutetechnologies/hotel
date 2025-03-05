@@ -6,8 +6,6 @@ import { Footer } from '@/components/Footer'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Star } from 'lucide-react'
-import Image from 'next/image'
-import Link from 'next/link'
 import { toast, ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { getUserBookings } from '@/lib/api/fetchUserBookings'

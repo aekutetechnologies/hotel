@@ -15,6 +15,10 @@ export interface Property {
   created_at: string;
   updated_at: string;
   is_active: boolean;
+  city: string;
+  state: string;
+  country: string;
+  area: string;
 }
 
 export interface Hotel extends Property {
@@ -53,4 +57,26 @@ export interface FoodMenu {
   cuisines: string[];
 }
 
-export interface Amenity { /* ... */ } 
+export interface Amenity { /* ... */ }
+
+export interface Room {
+    id: number; // Assuming IDs are numbers based on the JSON
+    images: { id: number; image: string }[]; // Assuming IDs are numbers
+    amenities: Amenity[];
+    name: string;
+    daily_rate: string;
+    hourly_rate: string;
+    bed_type: string | null;
+    private_bathroom: boolean;
+    smoking: boolean;
+    security_deposit: boolean;
+    size: string;
+    maxoccupancy: number;
+    number_of_rooms: number;
+    used_number_of_rooms: number;
+    left_number_of_rooms: number;
+    created_at: string;
+    updated_at: string;
+    is_active: boolean;
+    discount?: number; // Discount might be optional or on property level, clarify if needed
+} 

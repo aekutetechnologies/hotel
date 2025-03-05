@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import HsUser
+from .models import HsUser, HsPermission, HsPermissionGroup, UserHsPermission
 from booking.models import Booking
 
 class UserSerializer(serializers.ModelSerializer):
@@ -27,16 +27,16 @@ class UserViewSerializer(serializers.ModelSerializer):
 class HsPermissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = HsPermission
-        fields = ['id', 'name', 'description']
+        fields = ['id', 'name', 'created_at', 'description', 'is_active']
 
 class HsPermissionGroupSerializer(serializers.ModelSerializer):
     permissions = HsPermissionSerializer(many=True)
     class Meta:
         model = HsPermissionGroup
-        fields = ['id', 'name', 'permissions']
+        fields = ['id', 'name', 'permissions', 'created_at', 'is_active']
 
 class UserHsPermissionSerializer(serializers.ModelSerializer):
     permission_group = HsPermissionGroupSerializer()
     class Meta:
         model = UserHsPermission
-        fields = ['id', 'user', 'permission_group']
+        fields = ['id', 'user', 'permission_group', 'created_at', 'is_active']

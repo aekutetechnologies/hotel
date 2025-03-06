@@ -4,14 +4,15 @@ import { useState, useRef, useCallback, ChangeEvent } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { MapPin, CalendarIcon, Clock, Bed, Users, Minus, Plus, Search } from "lucide-react"
+import { MapPin } from "lucide-react"
 import { DatePicker } from "./DatePicker"
 import { RoomGuestSelector } from "./RoomGuestSelector"
 import { HourlyTimeSelector } from "./HourlyTimeSelector"
 import { useRouter, useSearchParams } from 'next/navigation'
 import { format } from 'date-fns'
 import { fetchLocation } from '@/lib/api/fetchLocation'
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
+import { ChevronLeft, ChevronRight, User, LogIn } from "lucide-react"
 
 const typingAnimation = `
   @keyframes typing {
@@ -40,17 +41,31 @@ const typingAnimation = `
   }
 `
 
-interface HeroSectionProps {
-  showDetailSection: "hotels" | "hostels" | null;
-  setShowDetailSection: (section: "hotels" | "hostels" | null) => void;
-  bookingType: "day" | "hour";
-  setBookingType:  (bookingType: "day" | "hour") => void;
+type AccommodationType = "hotel" | "hostel"
+type BookingType = "hourly" | "fulltime"
+
+const hotelImages = [
+  "/images/hotels/hotel_1.webp",
+  "/images/hotels/hotel_2.webp",
+  "/images/hotels/hotel_3.webp",
+]
+
+const hostelImages = [
+  "/images/hostels/hostel_1.jpg",
+  "/images/hostels/hostel_2.jpg",
+  "/images/hostels/hostel_3.jpg",
+]
+
+interface HeroProps {
+  onLoginClick: () => void
+  isLoggedIn: boolean
 }
 
-export function HeroSection({ showDetailSection, setShowDetailSection, bookingType, setBookingType }: HeroSectionProps) {
+export function Hero({ onLoginClick, isLoggedIn }: HeroProps) {
   const [locationPredictions, setLocationPredictions] = useState<string[]>([])
   const [location, setLocation] = useState('')
-  const [accommodationType, setAccommodationType] = useState<"hotel" | "hostel">("hotel")
+  const [accommodationType, setAccommodationType] = useState<AccommodationType>("hotel")
+  const [bookingType, setBookingType] = useState<BookingType>("fulltime")
   const locationInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -62,13 +77,41 @@ export function HeroSection({ showDetailSection, setShowDetailSection, bookingTy
   const [checkInTime, setCheckInTime] = useState<string>("12")
   const [checkOutTime, setCheckOutTime] = useState<string>("14")
   const [rooms, setRooms] = useState(1)
-  const [guests, setGuests] = useState("1")
-  const [months, setMonths] = useState(1)
+  const [guests, setGuests] = useState(1)
+  const [expandedSection, setExpandedSection] = useState<"hotels" | "hostels" | null>(null)
+  const [showDetailSection, setShowDetailSection] = useState<"hotels" | "hostels" | null>(null)
+  const [currentHotelImage, setCurrentHotelImage] = useState(0)
+  const [currentHostelImage, setCurrentHostelImage] = useState(0)
+  const [nextHotelImage, setNextHotelImage] = useState(0)
+  const [nextHostelImage, setNextHostelImage] = useState(0)
+  const detailSectionRef = useRef<HTMLDivElement>(null)
 
-  const incrementRooms = () => setRooms((prev) => prev + 1)
-  const decrementRooms = () => setRooms((prev) => (prev > 1 ? prev - 1 : 1))
-  const incrementMonths = () => setMonths((prev) => prev + 1)
-  const decrementMonths = () => setMonths((prev) => (prev > 1 ? prev - 1 : 1))
+  // Animation variants
+  const sectionVariants = {
+    initial: { width: "0%", opacity: 0 },
+    animate: { width: "50%", opacity: 1, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } },
+    expanded: { width: "80%", opacity: 1, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } },
+    collapsed: { width: "20%", opacity: 1, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } },
+  }
+
+  const imageVariants = {
+    enter: { opacity: 0 },
+    center: { opacity: 1 },
+    exit: { opacity: 0 },
+  }
+
+  const textRevealVariants = {
+    hidden: { y: 100, opacity: 0 },
+    visible: (i: number) => ({
+      y: 0,
+      opacity: 1,
+      transition: {
+        delay: i * 0.5,
+        duration: 1,
+        ease: [0.22, 1, 0.36, 1],
+      },
+    }),
+  }
 
   const handleSearch = () => {
     if (!location) {
@@ -98,251 +141,153 @@ export function HeroSection({ showDetailSection, setShowDetailSection, bookingTy
     router.push(`/search?${params.toString()}`)
   }
 
-  const handleLocationChange = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value
-    setLocation(value)
+  const handleLocationInputChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value
+    setLocation(query)
+    setInputValue(query)
 
-    if (value.length > 2) {
-      const predictions = await fetchLocation(value)
-      setLocationPredictions(predictions)
+    if (query.length > 2) {
+      try {
+        const predictions = await fetchLocation(query)
+        setLocationPredictions(predictions)
+      } catch (error) {
+        console.error("Error fetching location predictions:", error)
+        setLocationPredictions([])
+      }
     } else {
       setLocationPredictions([])
     }
-  }, [])
+
+    if (query.length > 0) {
+      setShowAnimation(false)
+    } else {
+      setShowAnimation(true)
+    }
+  }
 
   const handleLocationSelect = (selectedLocation: string) => {
     setLocation(selectedLocation)
     setLocationPredictions([])
     locationInputRef.current?.blur()
+    setInputValue(selectedLocation)
+    setShowAnimation(false)
   }
+
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value)
+    if (e.target.value) {
+      setShowAnimation(false)
+    } else {
+      setShowAnimation(true)
+    }
+  }
+
+  const handleInputFocus = () => {
+    if (inputValue === "") {
+      setShowAnimation(false)
+    }
+  }
+
+  const handleInputBlur = () => {
+    if (inputValue === "") {
+      setShowAnimation(true)
+    }
+  }
+
+  const handleCheckInTimeChange = useCallback((times: { checkInTime: string; checkOutTime: string }) => {
+    setCheckInTime(times.checkInTime)
+    setCheckOutTime(times.checkOutTime)
+  }, [setCheckInTime, setCheckOutTime])
+
+  const handleCheckOutTimeChange = useCallback((times: { checkInTime: string; checkOutTime: string }) => {
+    setCheckInTime(times.checkInTime)
+    setCheckOutTime(times.checkOutTime)
+  }, [setCheckInTime, setCheckOutTime])
+
+  const handleCheckInDateChange = useCallback((date: Date | undefined) => {
+    setCheckInDate(date)
+  }, [setCheckInDate])
+
+  const handleCheckOutDateChange = useCallback((date: Date | undefined) => {
+    setCheckOutDate(date)
+  }, [setCheckOutDate])
 
   const handleRoomGuestSelect = (selectedRooms: number, selectedGuests: number) => {
     setRooms(selectedRooms)
     setGuests(selectedGuests)
   }
 
+  const handleSectionClick = (section: "hotels" | "hostels") => {
+    setExpandedSection((prev) => (prev === section ? null : section))
+  }
+
+  const handleDiscover = (section: "hotels" | "hostels") => {
+    setShowDetailSection(section)
+  }
 
   return (
-    <div
-      className={`py-16 ${
-        showDetailSection === "hotels"
-          ? "bg-gradient-to-b from-[#A31C44] to-[#7A1533]"
-          : "bg-gradient-to-b from-[#2A2B2E] to-[#1A1B1E]"
-      }`}
-    >
-      <div className="container mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="max-w-5xl mx-auto"
-        >
-          <h2 className="text-4xl font-bold mb-8 text-center text-white">
-            {showDetailSection === "hotels" ? "Find Your Perfect Hotel" : "Discover Your Ideal Hostel"}
-          </h2>
-          <p className="text-xl text-white text-center mb-8">
-            {showDetailSection === "hotels"
-              ? "Book by hour or day - flexibility that suits your schedule"
-              : "Find your perfect stay in our vibrant hostels"}
-          </p>
-
-          {/* Update the search form in the Hero Section */}
-          <form
-            onSubmit={handleSearch}
-            className="bg-white rounded-xl shadow-lg p-2 flex flex-col md:flex-row md:flex-wrap items-stretch md:items-center"
+    <div className="flex flex-1 relative">
+      <AnimatePresence>
+        {!expandedSection && (
+          <motion.div
+            className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-30"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
           >
-            {/* Location */}
-            <div className="flex items-center flex-1 min-w-full md:min-w-[200px] p-2 border-b md:border-b-0 md:border-r border-gray-200">
-              <MapPin className="text-gray-400 mr-2 flex-shrink-0" size={20} />
-              <div className="flex flex-col flex-grow">
-                <label htmlFor="location" className="text-xs text-gray-500 font-medium">
-                  Location
-                </label>
-                <input
-                  id="location"
-                  type="text"
-                  placeholder="Which city do you prefer?"
-                  className="outline-none text-sm w-full"
-                  value={location}
-                  onChange={handleLocationChange}
-                  ref={locationInputRef}
-                />
-              </div>
-            </div>
+            <button
+              className="w-12 h-12 -ml-6 flex items-center justify-center text-white hover:scale-110 transition-transform"
+              onClick={() => handleSectionClick("hostels")}
+            >
+              <ChevronLeft className="w-8 h-8" />
+            </button>
+            <button
+              className="w-12 h-12 -mr-6 flex items-center justify-center text-white hover:scale-110 transition-transform"
+              onClick={() => handleSectionClick("hotels")}
+            >
+              <ChevronRight className="w-8 h-8" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-            {/* Check In */}
-            <div className="flex items-center flex-1 min-w-full md:min-w-[150px] p-2 border-b md:border-b-0 md:border-r border-gray-200">
-              <CalendarIcon className="text-gray-400 mr-2 flex-shrink-0" size={20} />
-              <div className="flex flex-col flex-grow">
-                <label htmlFor="check-in" className="text-xs text-gray-500 font-medium">
-                  Check In
-                </label>
-                <DatePicker
-                  date={checkInDate}
-                  setDate={setCheckInDate}
-                  placeholder="Add Date"
-                />
-              </div>
-            </div>
+      {/* Hotel Section */}
+      <motion.section
+        className="w-full md:w-1/2 bg-gradient-to-b from-[#A31C44] to-[#7A1533] text-white relative overflow-hidden cursor-pointer"
+        variants={sectionVariants}
+        initial="initial"
+        animate={expandedSection === "hotels" ? "expanded" : expandedSection === "hostels" ? "collapsed" : "animate"}
+        onClick={() => handleSectionClick("hotels")}
+      >
+        {/* Hotel content */}
+        {/* Add hotel section content similar to page.tsx */}
+      </motion.section>
 
-            {showDetailSection === "hotels" ? (
-              <>
-                {bookingType === "hour" ? (
-                  <div className="flex items-center flex-1 min-w-full md:min-w-[150px] p-2 border-b md:border-b-0 md:border-r border-gray-200">
-                    <Clock className="text-gray-400 mr-2 flex-shrink-0" size={20} />
-                    <div className="flex flex-col flex-grow">
-                      <label htmlFor="check-in-time" className="text-xs text-gray-500 font-medium">
-                        Check In Time
-                      </label>
-                      <HourlyTimeSelector value={checkInTime} setValue={setCheckInTime} />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center flex-1 min-w-full md:min-w-[150px] p-2 border-b md:border-b-0 md:border-r border-gray-200">
-                    <CalendarIcon className="text-gray-400 mr-2 flex-shrink-0" size={20} />
-                    <div className="flex flex-col flex-grow">
-                      <label htmlFor="check-out" className="text-xs text-gray-500 font-medium">
-                        Check Out
-                      </label>
-                      <DatePicker
-                        date={checkOutDate}
-                        setDate={setCheckOutDate}
-                        placeholder="Add Date"
-                      />
-                    </div>
-                  </div>
-                )}
+      {/* Hostel Section */}
+      <motion.section
+        className="w-full md:w-1/2 bg-gradient-to-b from-[#2A2B2E] to-[#1A1B1E] text-white relative overflow-hidden cursor-pointer"
+        variants={sectionVariants}
+        initial="initial"
+        animate={expandedSection === "hostels" ? "expanded" : expandedSection === "hotels" ? "collapsed" : "animate"}
+        onClick={() => handleSectionClick("hostels")}
+      >
+        {/* Hostel content */}
+        {/* Add hostel section content similar to page.tsx */}
+      </motion.section>
 
-                {bookingType === "hour" && (
-                  <div className="flex items-center flex-1 min-w-full md:min-w-[150px] p-2 border-b md:border-b-0 md:border-r border-gray-200">
-                    <Clock className="text-gray-400 mr-2 flex-shrink-0" size={20} />
-                    <div className="flex flex-col flex-grow">
-                      <label htmlFor="check-out-time" className="text-xs text-gray-500 font-medium">
-                        Check Out Time
-                      </label>
-                      <HourlyTimeSelector value={checkOutTime} setValue={setCheckOutTime} />
-                    </div>
-                  </div>
-                )}
-
-                {/* Room */}
-                <div className="flex items-center flex-1 min-w-full md:min-w-[120px] p-2 border-b md:border-b-0 md:border-r border-gray-200">
-                  <Bed className="text-gray-400 mr-2 flex-shrink-0" size={20} />
-                  <div className="flex flex-col flex-grow">
-                    <label className="text-xs text-gray-500 font-medium">Room</label>
-                    <div className="flex items-center">
-                      <button
-                        type="button"
-                        className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center"
-                        onClick={decrementRooms}
-                      >
-                        <Minus size={14} />
-                      </button>
-                      <span className="mx-2 text-sm">{rooms}</span>
-                      <button
-                        type="button"
-                        className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center"
-                        onClick={incrementRooms}
-                      >
-                        <Plus size={14} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </>
-            ) : (
-              // Hostel-specific fields
-              <div className="flex items-center flex-1 min-w-full md:min-w-[150px] p-2 border-b md:border-b-0 md:border-r border-gray-200">
-                <CalendarIcon className="text-gray-400 mr-2 flex-shrink-0" size={20} />
-                <div className="flex flex-col flex-grow">
-                  <label className="text-xs text-gray-500 font-medium">Months</label>
-                  <div className="flex items-center">
-                    <button
-                      type="button"
-                      className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center"
-                      onClick={decrementMonths}
-                    >
-                      <Minus size={14} />
-                    </button>
-                    <span className="mx-2 text-sm">{months}</span>
-                    <button
-                      type="button"
-                      className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center"
-                      onClick={incrementMonths}
-                    >
-                      <Plus size={14} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Guests */}
-            <div className="flex items-center flex-1 min-w-full md:min-w-[120px] p-2 border-b md:border-b-0 md:border-r border-gray-200">
-              <Users className="text-gray-400 mr-2 flex-shrink-0" size={20} />
-              <div className="flex flex-col flex-grow">
-                <label className="text-xs text-gray-500 font-medium">Guests</label>
-                <div className="flex items-center">
-                  <button
-                    type="button"
-                    className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center"
-                    onClick={() => setGuests((prev) => (Number(prev) > 1 ? String(Number(prev) - 1) : "1"))}
-                  >
-                    <Minus size={14} />
-                  </button>
-                  <span className="mx-2 text-sm">{guests}</span>
-                  <button
-                    type="button"
-                    className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center"
-                    onClick={() => setGuests((prev) => String(Number(prev) + 1))}
-                  >
-                    <Plus size={14} />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Search Button */}
-            <div className="flex-none p-2 w-full md:w-auto">
-              <Button
-                type="submit"
-                className="bg-black text-white p-3 rounded-full hover:bg-gray-800 transition-colors w-full md:w-auto"
-              >
-                <span className="md:hidden">
-                  Search {showDetailSection === "hotels" ? "Hotel" : "Hostel"}
-                </span>
-                <Search size={20} className="hidden md:block" />
-              </Button>
-            </div>
-          </form>
-
-          {/* Booking Type Toggle (only for hotels) */}
-          {showDetailSection === "hotels" && (
-            <div className="mt-4 flex justify-center">
-              <div className="bg-white rounded-full p-1 inline-flex shadow-md">
-                <button
-                  type="button"
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                    bookingType === "day" ? "bg-black text-white" : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                  onClick={() => setBookingType("day")}
-                >
-                  Book by Day
-                </button>
-                <button
-                  type="button"
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                    bookingType === "hour" ? "bg-black text-white" : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                  onClick={() => setBookingType("hour")}
-                >
-                  Book by Hour
-                </button>
-              </div>
-            </div>
-          )}
-        </motion.div>
-      </div>
+      {/* Search Modal */}
+      <AnimatePresence>
+        {showDetailSection && (
+          <motion.div
+            className="fixed inset-0 bg-black bg-opacity-50 z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            {/* Add search form content */}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

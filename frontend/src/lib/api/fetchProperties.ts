@@ -7,7 +7,7 @@ import { API_URL } from '../config'
  * @returns {Promise<any>} - A promise that resolves to the fetched properties data.
  * @throws {Error} - Throws an error if the fetch request fails.
  */
-export async function fetchProperties(params?: URLSearchParams) {
+export async function fetchProperties(params?: URLSearchParams, property_type?: string) {
   console.log("params", params)
 
   // Convert URLSearchParams to a query string, if params are provided
@@ -15,7 +15,7 @@ export async function fetchProperties(params?: URLSearchParams) {
   console.log("queryParams", queryParams)
 
   // Fetch properties from the API endpoint with authorization header
-  const response = await fetch(`${API_URL}property/properties/?${queryParams}`, {
+  const response = await fetch(`${API_URL}property/properties/?${queryParams}&property_type=${property_type}`, {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${localStorage.getItem('accessToken')}`

@@ -25,7 +25,7 @@ const reviews = [
   },
 ]
 
-export function Reviews() {
+export function Reviews(property_type: string) {
   return (
     <div className="bg-white py-16">
       <div className="max-w-7xl mx-auto px-4">

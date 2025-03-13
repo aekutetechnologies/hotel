@@ -1,6 +1,13 @@
+/** @type {import('tailwindcss').Config} */
 module.exports = {
-  darkMode: ["class"],
-  content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
+  darkMode: ["class"], // Supports dark mode via class
+  content: [
+    "./pages/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./app/**/*.{ts,tsx}",
+    "./src/**/*.{ts,tsx}",
+    "*.{js,ts,jsx,tsx,mdx}",
+  ],
   theme: {
     container: {
       center: true,
@@ -10,6 +17,10 @@ module.exports = {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["var(--font-poppins)", "sans-serif"],
+        'rock-salt': ['var(--font-rock-salt)']
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -17,16 +28,16 @@ module.exports = {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#dc2626",
-          foreground: "hsl(var(--primary-foreground))",
+          DEFAULT: "#A31C44",
+          foreground: "#FFFFFF",
         },
         secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
+          DEFAULT: "#2A2B2E",
+          foreground: "#FFFFFF",
         },
         destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
+          DEFAULT: "#FF4C4C", // Red for error buttons
+          foreground: "#FFFFFF",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
@@ -44,11 +55,35 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        main: "var(--main)",
+        overlay: "var(--overlay)",
+        bg: "var(--bg)",
+        bw: "var(--bw)",
+        blank: "var(--blank)",
+        text: "var(--text)",
+        mtext: "var(--mtext)",
+        border: "var(--border)",
+        ring: "var(--ring)",
+        ringOffset: "var(--ring-offset)",
+      },
+      boxShadow: {
+        shadow: "var(--shadow)",
+      },
+      translate: {
+        boxShadowX: "4px",
+        boxShadowY: "4px",
+        reverseBoxShadowX: "-4px",
+        reverseBoxShadowY: "-4px",
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        base: "5px",
+      },
+      fontWeight: {
+        base: "500",
+        heading: "700",
       },
       keyframes: {
         "accordion-down": {
@@ -67,5 +102,4 @@ module.exports = {
     },
   },
   plugins: [require("tailwindcss-animate")],
-}
-
+};

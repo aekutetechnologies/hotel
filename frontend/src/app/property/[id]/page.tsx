@@ -49,42 +49,12 @@ export default function PropertyDetails() {
   const [checkInTime, setCheckInTime] = useState<string | null>(checkInTimeParam)
   const [checkOutTime, setCheckOutTime] = useState<string | null>(checkOutTimeParam)
 
-  // Calculate required occupancy per room
-  const guestsPerRoom = selectedGuests && selectedRooms 
-    ? Math.ceil(parseInt(selectedGuests) / parseInt(selectedRooms))
-    : selectedGuests 
-      ? parseInt(selectedGuests) 
-      : 0
-
-  // Filter rooms based on max occupancy
-  const getFilteredRooms = (rooms: any[]) => {
-    if (!guestsPerRoom) return rooms
-    
-    return rooms.filter(room => {
-      // For hotel rooms
-      if ('maxoccupancy' in room) {
-        return room.maxoccupancy >= guestsPerRoom
-      }
-      // For hostel rooms
-      if ('occupancytype' in room) {
-        // Convert occupancyType (e.g., "2-Sharing") to number
-        const occupancy = parseInt(room.occupancytype.split('-')[0])
-        return occupancy >= guestsPerRoom
-      }
-      return false
-    })
-  }
-
   useEffect(() => {
     fetchProperty(propertyId.toString()).then((data) => {
       console.log("data", data)
       setProperty(data)
       if (data && data.rooms.length > 0) {
-        const filteredRooms = getFilteredRooms(data.rooms)
-        // Set first eligible room as selected, if any
-        if (filteredRooms.length > 0) {
-          setSelectedRoom(filteredRooms[0])
-        }
+        setSelectedRoom(data.rooms[0])
       }
     })
   }, [propertyId])
@@ -258,7 +228,7 @@ export default function PropertyDetails() {
             <section>
               <h2 className="text-2xl font-semibold mb-4">Available Rooms</h2>
               <div className="space-y-4">
-                {getFilteredRooms(property.rooms).map((room) => (
+                {property.rooms.map((room) => (
                   <div key={'name' in room ? room.name : room.occupancyType} className="border rounded-lg p-4">
                     <div className="flex space-x-4">
                       {/* Image Slider (Left Side) */}
@@ -366,14 +336,6 @@ export default function PropertyDetails() {
                     </div>
                   </div>
                 ))}
-                {getFilteredRooms(property.rooms).length === 0 && (
-                  <div className="text-center p-4 border rounded-lg bg-gray-50">
-                    <p className="text-gray-500">
-                      No rooms available for {selectedGuests} guest{parseInt(selectedGuests || '0') > 1 ? 's' : ''} 
-                      {selectedRooms && ` in ${selectedRooms} room${parseInt(selectedRooms) > 1 ? 's' : ''}`}
-                    </p>
-                  </div>
-                )}
               </div>
             </section>
 

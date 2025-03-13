@@ -11,8 +11,6 @@ import { HourlyTimeSelector } from "./HourlyTimeSelector"
 import { useRouter, useSearchParams } from 'next/navigation'
 import { format } from 'date-fns'
 import { fetchLocation } from '@/lib/api/fetchLocation'
-import { motion, AnimatePresence } from "framer-motion"
-import { ChevronLeft, ChevronRight, User, LogIn } from "lucide-react"
 
 const typingAnimation = `
   @keyframes typing {
@@ -44,24 +42,7 @@ const typingAnimation = `
 type AccommodationType = "hotel" | "hostel"
 type BookingType = "hourly" | "fulltime"
 
-const hotelImages = [
-  "/images/hotels/hotel_1.webp",
-  "/images/hotels/hotel_2.webp",
-  "/images/hotels/hotel_3.webp",
-]
-
-const hostelImages = [
-  "/images/hostels/hostel_1.jpg",
-  "/images/hostels/hostel_2.jpg",
-  "/images/hostels/hostel_3.jpg",
-]
-
-interface HeroProps {
-  onLoginClick: () => void
-  isLoggedIn: boolean
-}
-
-export function Hero({ onLoginClick, isLoggedIn }: HeroProps) {
+export function HeroSection() {
   const [locationPredictions, setLocationPredictions] = useState<string[]>([])
   const [location, setLocation] = useState('')
   const [accommodationType, setAccommodationType] = useState<AccommodationType>("hotel")
@@ -78,40 +59,6 @@ export function Hero({ onLoginClick, isLoggedIn }: HeroProps) {
   const [checkOutTime, setCheckOutTime] = useState<string>("14")
   const [rooms, setRooms] = useState(1)
   const [guests, setGuests] = useState(1)
-  const [expandedSection, setExpandedSection] = useState<"hotels" | "hostels" | null>(null)
-  const [showDetailSection, setShowDetailSection] = useState<"hotels" | "hostels" | null>(null)
-  const [currentHotelImage, setCurrentHotelImage] = useState(0)
-  const [currentHostelImage, setCurrentHostelImage] = useState(0)
-  const [nextHotelImage, setNextHotelImage] = useState(0)
-  const [nextHostelImage, setNextHostelImage] = useState(0)
-  const detailSectionRef = useRef<HTMLDivElement>(null)
-
-  // Animation variants
-  const sectionVariants = {
-    initial: { width: "0%", opacity: 0 },
-    animate: { width: "50%", opacity: 1, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } },
-    expanded: { width: "80%", opacity: 1, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } },
-    collapsed: { width: "20%", opacity: 1, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } },
-  }
-
-  const imageVariants = {
-    enter: { opacity: 0 },
-    center: { opacity: 1 },
-    exit: { opacity: 0 },
-  }
-
-  const textRevealVariants = {
-    hidden: { y: 100, opacity: 0 },
-    visible: (i: number) => ({
-      y: 0,
-      opacity: 1,
-      transition: {
-        delay: i * 0.5,
-        duration: 1,
-        ease: [0.22, 1, 0.36, 1],
-      },
-    }),
-  }
 
   const handleSearch = () => {
     if (!location) {
@@ -217,77 +164,180 @@ export function Hero({ onLoginClick, isLoggedIn }: HeroProps) {
     setGuests(selectedGuests)
   }
 
-  const handleSectionClick = (section: "hotels" | "hostels") => {
-    setExpandedSection((prev) => (prev === section ? null : section))
-  }
-
-  const handleDiscover = (section: "hotels" | "hostels") => {
-    setShowDetailSection(section)
-  }
-
   return (
-    <div className="flex flex-1 relative">
-      <AnimatePresence>
-        {!expandedSection && (
-          <motion.div
-            className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-30"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <button
-              className="w-12 h-12 -ml-6 flex items-center justify-center text-white hover:scale-110 transition-transform"
-              onClick={() => handleSectionClick("hostels")}
-            >
-              <ChevronLeft className="w-8 h-8" />
-            </button>
-            <button
-              className="w-12 h-12 -mr-6 flex items-center justify-center text-white hover:scale-110 transition-transform"
-              onClick={() => handleSectionClick("hotels")}
-            >
-              <ChevronRight className="w-8 h-8" />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+    <div className="relative min-h-[600px] flex items-center justify-center">
+      {/* Background Image with Overlay */}
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{
+          backgroundImage:
+            'linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.4)), url("/images/banner.png")',
+        }}
+      />
 
-      {/* Hotel Section */}
-      <motion.section
-        className="w-full md:w-1/2 bg-gradient-to-b from-[#A31C44] to-[#7A1533] text-white relative overflow-hidden cursor-pointer"
-        variants={sectionVariants}
-        initial="initial"
-        animate={expandedSection === "hotels" ? "expanded" : expandedSection === "hostels" ? "collapsed" : "animate"}
-        onClick={() => handleSectionClick("hotels")}
-      >
-        {/* Hotel content */}
-        {/* Add hotel section content similar to page.tsx */}
-      </motion.section>
+      <div className="relative max-w-7xl mx-auto px-4 w-full">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 font-rock-salt">Your Perfect Stay at</h1>
+          <h2 className="text-3xl md:text-4xl font-bold text-white font-rock-salt">the Best Price</h2>
+        </div>
 
-      {/* Hostel Section */}
-      <motion.section
-        className="w-full md:w-1/2 bg-gradient-to-b from-[#2A2B2E] to-[#1A1B1E] text-white relative overflow-hidden cursor-pointer"
-        variants={sectionVariants}
-        initial="initial"
-        animate={expandedSection === "hostels" ? "expanded" : expandedSection === "hotels" ? "collapsed" : "animate"}
-        onClick={() => handleSectionClick("hostels")}
-      >
-        {/* Hostel content */}
-        {/* Add hostel section content similar to page.tsx */}
-      </motion.section>
+        <Card className="w-full max-w-6xl mx-auto p-6 bg-white/95 backdrop-blur-sm shadow-lg">
+            {/* Travel Type Tabs */}
+            <div className="flex justify-center mb-6 text-sm">
+              <div className="inline-flex rounded-lg p-1" style={{ backgroundColor: "rgba(255, 255, 255, 0.95)" }}>
+                <button
+                  className={`px-4 py-2 rounded-lg transition-colors ${
+                    accommodationType === "hotel" ? "bg-gray-800 text-white" : "text-red-600 hover:bg-gray-100"
+                  }`}
+                  style={{ backgroundColor: accommodationType === "hotel" ? "#1f2937" : "rgba(255, 255, 255, 0.95)" }}
+                  onClick={() => setAccommodationType("hotel")}
+                >
+                  Hotel
+                </button>
+                <button
+                  className={`px-4 py-2 rounded-lg transition-colors ${
+                    accommodationType === "hostel" ? "bg-gray-800 text-white" : "text-red-600 hover:bg-gray-100"
+                  }`}
+                  style={{ backgroundColor: accommodationType === "hostel" ? "#1f2937" : "rgba(255, 255, 255, 0.95)" }}
+                  onClick={() => setAccommodationType("hostel")}
+                >
+                  Hostel
+                </button>
+              </div>
+            </div>
 
-      {/* Search Modal */}
-      <AnimatePresence>
-        {showDetailSection && (
-          <motion.div
-            className="fixed inset-0 bg-black bg-opacity-50 z-50"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            {/* Add search form content */}
-          </motion.div>
-        )}
-      </AnimatePresence>
+            {/* Search Form */}
+            <div className="space-y-4">
+              <div
+                className={`grid gap-4 ${accommodationType === "hostel" ? "grid-cols-1 md:grid-cols-3" : "grid-cols-1 md:grid-cols-4"}`}
+              >
+                {/* Location */}
+                <div className={`relative ${accommodationType === "hostel" ? "md:col-span-1" : ""}`}>
+                  <label className="text-xs text-gray-500 mb-1 block">Location</label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                    <input
+                    ref={inputRef}
+                      type="text"
+                      className="w-full pl-9 pr-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 truncate h-10"
+                    value={inputValue}
+                    onChange={handleLocationInputChange}
+                    onFocus={handleInputFocus}
+                    onBlur={handleInputBlur}
+                  />
+                  {showAnimation && (
+                    <span
+                      className="absolute left-9 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none before:content-[''] before:inline-block before:animate-[typing_5s_steps(22,end)_infinite]"
+                      aria-hidden="true"
+                    ></span>
+                  )}
+                </div>
+                {locationPredictions.length > 0 && (
+                  <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                    {locationPredictions.map((prediction, index) => (
+                      <li
+                        key={index}
+                        className="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm"
+                        onClick={() => handleLocationSelect(prediction.name)}
+                      >
+                        {prediction.name}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                </div>
+
+                {/* Check In */}
+                <div className={accommodationType === "hostel" ? "md:col-span-1" : ""}>
+                  <label className="text-xs text-gray-500 mb-1 block">Check in</label>
+                <DatePicker onChange={handleCheckInDateChange} />
+                </div>
+
+                {/* Check Out / Time Selection / Months */}
+                <div className={accommodationType === "hostel" ? "md:col-span-1" : ""}>
+                  {accommodationType === "hotel" && bookingType === "fulltime" && (
+                    <>
+                      <label className="text-xs text-gray-500 mb-1 block">Check out</label>
+                    <DatePicker onChange={handleCheckOutDateChange} />
+                    </>
+                  )}
+                {accommodationType === "hotel" && bookingType === "hourly" && <HourlyTimeSelector onChange={handleCheckInTimeChange} />}
+                  {accommodationType === "hostel" && (
+                    <>
+                      <label className="text-xs text-gray-500 mb-1 block">Duration</label>
+                      <Select defaultValue="1">
+                        <SelectTrigger className="w-full h-10">
+                          <SelectValue placeholder="Select months" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">1 month</SelectItem>
+                          <SelectItem value="2">2 months</SelectItem>
+                          <SelectItem value="3">3 months</SelectItem>
+                          <SelectItem value="6">6 months</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </>
+                  )}
+                </div>
+
+                {/* Rooms and Guests */}
+                {accommodationType === "hotel" && (
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Rooms & Guests</label>
+                    <RoomGuestSelector
+                    onSelect={handleRoomGuestSelect}
+                    initialRooms={rooms}
+                    initialGuests={guests}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Bottom Row */}
+            <div className="flex items-center justify-between mt-4">
+              {/* Radio Buttons (only shown for Hotel) */}
+              {accommodationType === "hotel" && (
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="hourly"
+                      name="booking-type"
+                      checked={bookingType === "hourly"}
+                      onChange={() => setBookingType("hourly")}
+                      className="w-4 h-4 text-black border-gray-300 focus:ring-black"
+                    />
+                    <label htmlFor="hourly" className="text-sm font-medium text-red-600">
+                      Hourly
+                    </label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="fulltime"
+                      name="booking-type"
+                      checked={bookingType === "fulltime"}
+                      onChange={() => setBookingType("fulltime")}
+                      className="w-4 h-4 text-black border-gray-300 focus:ring-black"
+                    />
+                    <label htmlFor="fulltime" className="text-sm font-medium text-red-600">
+                      Fulltime
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* Search Button */}
+            <Button className={`px-8 bg-red-600 hover:bg-red-700 ${accommodationType === "hostel" ? "ml-auto" : ""}`} onClick={handleSearch}>
+                Search
+              </Button>
+            </div>
+        </Card>
+      </div>
+      <style jsx>{`
+        ${typingAnimation}
+      `}</style>
     </div>
   )
 }

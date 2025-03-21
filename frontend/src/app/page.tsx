@@ -31,6 +31,13 @@ import { NewButton } from "@/components/ui/new-button"
 import { text } from "stream/consumers"
 import { Button } from "@/components/ui/button"
 
+
+import AddNavbar from "@/components/AddNavbar"
+import Navbar from "@/components/Navbar"
+import PlaceCard from "@/components/PlaceCard"
+import Features from "@/components/Features"
+import SocialSection from "@/components/SocialSection"
+
 const hotelImages = [
   "/images/hotels/hotel_1.webp",
   "/images/hotels/hotel_3.webp",
@@ -712,7 +719,7 @@ export default function Home() {
               >
                 <motion.div
                   ref={detailSectionRef}
-                  className="absolute inset-x-0 top-0 bottom-0 bg-white text-black overflow-y-auto shadow-2xl scrollbar-hide"
+                  className="absolute inset-x-0 top-0 bottom-0 bg-white text-black overflow-y-hidden shadow-2xl scrollbar-hide"
                   variants={{
                     hidden: { y: "100%" },
                     visible: { y: 0 },
@@ -724,7 +731,9 @@ export default function Home() {
                   transition={{ type: "spring", damping: 30, stiffness: 300 }}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="sticky top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md shadow-[0_4px_6px_-1px_rgba(163,28,68,0.1),0_2px_4px_-2px_rgba(163,28,68,0.1)]">
+                  <AddNavbar/>
+                  <Navbar isLoggedIn={isLoggedIn} userName={userName} />
+                  {/* <div className="sticky top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md shadow-[0_4px_6px_-1px_rgba(163,28,68,0.1),0_2px_4px_-2px_rgba(163,28,68,0.1)]">
                     <header className="px-4 py-4">
                       <div className="container mx-auto flex items-center justify-between">
                         <div onClick={() => setShowDetailSection(null)} className="cursor-pointer">
@@ -748,8 +757,9 @@ export default function Home() {
                 )}
                       </div>
                     </header>
-                  </div>
-                  <div className="overflow-y-auto h-full scrollbar-hide">
+                  </div> */}
+                  
+                  <div className="overflow-y-auto h-full scrollbar-hide mt-16">
                     {/* Hero Section with Search */}
                     <div
                       className={`py-16 ${showDetailSection === "hotels"
@@ -991,16 +1001,21 @@ export default function Home() {
                       </div>
                     </div>
 
+                    <PlaceCard  type={
+                          showDetailSection === "hotels" ? "hotel" : "hostel"
+                        }/>
                     {/* Property Timeline */}
                     <div className="bg-white w-full">
                       <PropertyTimeline type={showDetailSection === "hotels" ? "hotel" : "hostel"} />
                     </div>
 
                     {/* Featured Properties */}
-                    <div className="bg-gray-50 w-full">
+                    {/* <div className="bg-gray-50 w-full">
                       <FeaturedProperties type={showDetailSection === "hotels" ? "hotels" : "hostels"} />
-                    </div>
+                    </div> */}
 
+                    <Features/>
+                    <SocialSection/>
                     {/* Reviews Section */}
                     <div className="py-16 bg-white">
                       <TestimonialSection

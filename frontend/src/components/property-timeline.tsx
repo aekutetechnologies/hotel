@@ -226,7 +226,7 @@ export function PropertyTimeline({ type = "hotel" }: PropertyTimelineProps) {
 
   return (
     <div className="w-full">
-      <div className="max-w-7xl mx-auto py-12 px-4 md:px-8 lg:px-10">
+      {/* <div className="max-w-7xl mx-auto py-12 px-4 md:px-8 lg:px-10">
         <h2
           className={`text-lg md:text-4xl mb-4 text-center font-bold font-rock-salt ${
             type === "hotel" ? "text-[#A31C44]" : "text-[#2A2B2E]"
@@ -237,7 +237,7 @@ export function PropertyTimeline({ type = "hotel" }: PropertyTimelineProps) {
         <p className="text-neutral-700 dark:text-neutral-300 text-sm md:text-base text-center max-w-2xl mx-auto">
           Come over and experience how a place to stay can be so much more
         </p>
-      </div>
+      </div> */}
       <div className="relative">
         <Timeline data={type === "hotel" ? hotelData : hostelData} theme={type} />
       </div>

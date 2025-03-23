@@ -54,6 +54,7 @@ export default function RootLayout({
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${rockSalt.variable} ${poppins.variable} antialiased font-sans`}
+        suppressHydrationWarning={true}
       >
         {children}
       </body>

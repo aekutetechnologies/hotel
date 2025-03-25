@@ -1,92 +1,84 @@
-import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react"
-import Image from "next/image"
-import Link from "next/link"
+import { motion } from "framer-motion";
+import PropTypes from "prop-types";
 
-export function Footer() {
+const Footer = ({ sectionType }) => {
   return (
-    <footer className="bg-gradient-to-b from-white to-gray-100 py-12">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex flex-col items-center mb-8">
-          <img
-            src="/logo.png"
-            alt="Hsquare Logo"
-            width={140}
-            height={48}
-            className="h-12 w-auto mb-4"
-          />
-          <p className="text-sm text-gray-600">Your perfect stay at the best price</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+    <footer
+      className={`text-white py-12 ${
+        sectionType === "hotels" ? "bg-[#A31C44]" : "bg-[#2A2B2E]"
+      }`}
+    >
+      <div className="container mx-auto px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+          className="grid grid-cols-1 md:grid-cols-4 gap-8"
+        >
+          {/* About Us */}
           <div>
-            <h3 className="font-semibold mb-4 text-gray-900">Download Hsquare app</h3>
-            <div className="flex space-x-4">
-              <Link href="#" className="text-sm text-gray-600 hover:text-red-600">
-                App Store
-              </Link>
-              <Link href="#" className="text-sm text-gray-600 hover:text-red-600">
-                Google Play
-              </Link>
+            <h4 className="font-bold mb-4">About Us</h4>
+            <p className="text-gray-300">
+              {sectionType === "hotels"
+                ? "Discover luxury and comfort with our carefully curated selection of premium hotels."
+                : "Experience vibrant and affordable stays with our network of social hostels."}
+            </p>
+          </div>
+          
+          {/* Quick Links */}
+          <div>
+            <h4 className="font-bold mb-4">Quick Links</h4>
+            <ul className="space-y-2 text-gray-300">
+              <li>{sectionType === "hotels" ? "Hotels" : "Hostels"}</li>
+              <li>Locations</li>
+              <li>Special Offers</li>
+              <li>Contact Us</li>
+            </ul>
+          </div>
+          
+          {/* Contact */}
+          <div>
+            <h4 className="font-bold mb-4">Contact</h4>
+            <ul className="space-y-2 text-gray-300">
+              <li>Email: info@hsquare.com</li>
+              <li>Phone: +1 234 567 890</li>
+              <li>Address: 123 Travel Street</li>
+            </ul>
+          </div>
+          
+          {/* Newsletter */}
+          <div>
+            <h4 className="font-bold mb-4">Newsletter</h4>
+            <div className="flex">
+              <input
+                type="email"
+                placeholder="Your email"
+                className="px-4 py-2 rounded-l-md flex-1 text-gray-900"
+              />
+              <button
+                className={`px-4 py-2 rounded-r-md transition-colors ${
+                  sectionType === "hotels"
+                    ? "bg-[#7A1533] hover:bg-[#5A0F23]"
+                    : "bg-[#1A1B1E] hover:bg-[#0A0B0E]"
+                }`}
+              >
+                Subscribe
+              </button>
             </div>
           </div>
-
-          <div>
-            <h3 className="font-semibold mb-4 text-gray-900">About Us</h3>
-            <div className="space-y-2">
-              <Link href="#" className="block text-sm text-gray-600 hover:text-red-600">
-                About Hsquare
-              </Link>
-              <Link href="#" className="block text-sm text-gray-600 hover:text-red-600">
-                Teams / Careers
-              </Link>
-              <Link href="#" className="block text-sm text-gray-600 hover:text-red-600">
-                Blogs
-              </Link>
-              <Link href="#" className="block text-sm text-gray-600 hover:text-red-600">
-                Support
-              </Link>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="font-semibold mb-4 text-gray-900">Business</h3>
-            <div className="space-y-2">
-              <Link href="#" className="block text-sm text-gray-600 hover:text-red-600">
-                List your property
-              </Link>
-              <Link href="#" className="block text-sm text-gray-600 hover:text-red-600">
-                Become a Partner
-              </Link>
-              <Link href="#" className="block text-sm text-gray-600 hover:text-red-600">
-                Corporate Travel
-              </Link>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="font-semibold mb-4 text-gray-900">Connect</h3>
-            <div className="flex space-x-4">
-              <Link href="#" className="text-gray-600 hover:text-red-600">
-                <Facebook className="h-5 w-5" />
-              </Link>
-              <Link href="#" className="text-gray-600 hover:text-red-600">
-                <Twitter className="h-5 w-5" />
-              </Link>
-              <Link href="#" className="text-gray-600 hover:text-red-600">
-                <Instagram className="h-5 w-5" />
-              </Link>
-              <Link href="#" className="text-gray-600 hover:text-red-600">
-                <Linkedin className="h-5 w-5" />
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-12 pt-8 border-t border-gray-200">
-          <p className="text-sm text-gray-600 text-center">2024 © Hsquare Living Private Limited</p>
+        </motion.div>
+        
+        {/* Footer Bottom */}
+        <div className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-300">
+          <p>&copy; 2024 HSquare. All rights reserved.</p>
         </div>
       </div>
     </footer>
-  )
-}
+  );
+};
 
+Footer.propTypes = {
+  sectionType: PropTypes.string.isRequired,
+};
+
+export default Footer;

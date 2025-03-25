@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import { useEffect, useRef, useState } from "react"
-import Image from "next/image"
-import { ArrowUpRight } from "lucide-react"
+import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import { ArrowUpRight } from "lucide-react";
 
 export default function TestimonialSection({ testimonials, theme }: any) {
-  const [activeIndex, setActiveIndex] = useState(0)
-  const testimonialRefs = useRef<(HTMLDivElement | null)[]>([])
+  const [activeIndex, setActiveIndex] = useState(0);
+  const testimonialRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Theme colors
   const themeColors = {
     maroon: {
       primary: "bg-[#A31C44]",
@@ -30,51 +30,47 @@ export default function TestimonialSection({ testimonials, theme }: any) {
       starActive: "text-white",
       starInactive: "text-[#2A2B2E]",
     },
-  }
+  };
 
-  // Map 'hotel' to 'maroon' and 'hostel' to 'grey'
   const themeMap: { [key: string]: keyof typeof themeColors } = {
     hotel: "maroon",
     hostel: "grey",
-  }
+  };
 
-  // Get background image based on theme
   const getBackgroundImage = () => {
-    if (theme === "hotel") {
-      return "/images/hotels/hotel_1.webp"
-    } else {
-      return "/images/hostels/hostel_1.jpg"
-    }
-  }
+    return theme === "hotel"
+      ? "/images/hotels/hotel_1.webp"
+      : "/images/hostels/hostel_1.jpg";
+  };
 
-  const selectedTheme = themeMap[theme] || "grey" // Default to 'grey' if theme is not recognized
-  const colors = themeColors[selectedTheme]
+  const selectedTheme = themeMap[theme] || "grey";
+  const colors = themeColors[selectedTheme];
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const index = testimonialRefs.current.findIndex((ref) => ref === entry.target)
-            if (index !== -1) {
-              setActiveIndex(index)
-            }
-          }
-        })
-      },
-      { threshold: 0.7 }, // When 70% of the element is visible
-    )
-
-    testimonialRefs.current.forEach((ref) => {
-      if (ref) observer.observe(ref)
-    })
+    // Auto-scroll every 4 seconds
+    intervalRef.current = setInterval(() => {
+      setActiveIndex((prevIndex) =>
+        prevIndex === testimonials.length - 1 ? 0 : prevIndex + 1
+      );
+    }, 4000);
 
     return () => {
-      testimonialRefs.current.forEach((ref) => {
-        if (ref) observer.unobserve(ref)
-      })
-    }
-  }, [])
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [testimonials.length]);
+
+  // Pause scrolling on hover
+  const handleMouseEnter = () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+  };
+
+  const handleMouseLeave = () => {
+    intervalRef.current = setInterval(() => {
+      setActiveIndex((prevIndex) =>
+        prevIndex === testimonials.length - 1 ? 0 : prevIndex + 1
+      );
+    }, 4000);
+  };
 
   return (
     <div className="p-6 md:p-8 bg-white rounded-3xl max-w-6xl mx-auto">
@@ -82,7 +78,6 @@ export default function TestimonialSection({ testimonials, theme }: any) {
         {/* Left Column */}
         <div className="relative rounded-3xl overflow-hidden">
           <div className="relative h-full min-h-[400px] md:min-h-[600px] flex flex-col">
-            {/* Background Image */}
             <Image
               src={getBackgroundImage()}
               alt={theme === "hotel" ? "Luxury hotel interior" : "Vibrant hostel space"}
@@ -91,33 +86,26 @@ export default function TestimonialSection({ testimonials, theme }: any) {
               priority
             />
 
-            {/* Overlay with theme gradient */}
-            <div className={`absolute inset-0 z-0 opacity-60 ${colors?.primary}`}></div>
+            <div className={`absolute inset-0 z-0 opacity-60 ${colors?.primary}`} />
 
-            {/* Content Overlay */}
             <div className="relative z-10 flex flex-col justify-between h-full p-8 text-white">
-              {/* Heading */}
               <div className="max-w-[300px]">
                 <h2 className="text-4xl md:text-5xl font-bold leading-tight">
-                  {theme === "hotel" 
-                    ? "Experience What Our Guests Love" 
-                    : "Hear From Fellow Travelers"} 
+                  {theme === "hotel" ? "Experience What Our Guests Love" : "Hear From Fellow Travelers"}{" "}
                   <span className="text-3xl">❤️</span>
                 </h2>
               </div>
 
-              {/* Counter */}
               <div className="mt-auto mb-16">
                 <p className="text-6xl md:text-7xl font-bold">10.9K+</p>
                 <p className="text-xl opacity-90">Happy guests</p>
               </div>
 
-              {/* CTA */}
               <div className={`${colors?.secondary} p-4 rounded-xl -mx-8 -mb-8`}>
                 <div className="flex justify-between items-center">
                   <h3 className="text-2xl md:text-3xl font-semibold">Are you the next one?</h3>
                   <button className={`bg-white ${colors?.buttonText} px-4 py-2 rounded-lg font-medium`}>
-                    {theme === "hotel" ? "Book Now" : "Join Us"}
+                    {theme === "hotel" ? "Post Experience" : "Post Memories"}
                   </button>
                 </div>
               </div>
@@ -127,7 +115,9 @@ export default function TestimonialSection({ testimonials, theme }: any) {
 
         {/* Right Column - Testimonials */}
         <div
-          className={`flex flex-col gap-4 max-h-[600px] overflow-y-auto pr-2 testimonial-scroll`}
+          className="flex flex-col gap-4 max-h-[600px] overflow-y-auto pr-2 testimonial-scroll"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
         >
           {testimonials?.map((testimonial: any, index: number) => (
             <div
@@ -163,6 +153,5 @@ export default function TestimonialSection({ testimonials, theme }: any) {
         </div>
       </div>
     </div>
-  )
+  );
 }
-

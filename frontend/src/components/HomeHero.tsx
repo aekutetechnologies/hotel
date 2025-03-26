@@ -1,17 +1,21 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import Image from "next/image"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
-import { NewButton } from "@/components/ui/new-button"
+import { useState, useEffect } from "react";
+import Image from "next/image";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { NewButton } from "@/components/ui/new-button";
+import hotels from "/public/hotels.png";
+import hostels from "/public/hostels.png";
 
 interface HomeHeroProps {
-  hotelImages: string[]
-  hostelImages: string[]
-  expandedSection: "hotels" | "hostels" | null
-  setExpandedSection: React.Dispatch<React.SetStateAction<"hotels" | "hostels" | null>>
-  handleDiscover: (section: "hotels" | "hostels") => void
+  hotelImages: string[];
+  hostelImages: string[];
+  expandedSection: "hotels" | "hostels" | null;
+  setExpandedSection: React.Dispatch<
+    React.SetStateAction<"hotels" | "hostels" | null>
+  >;
+  handleDiscover: (section: "hotels" | "hostels") => void;
 }
 
 export function HomeHero({
@@ -21,61 +25,77 @@ export function HomeHero({
   setExpandedSection,
   handleDiscover,
 }: HomeHeroProps) {
-  const [currentHotelImage, setCurrentHotelImage] = useState(0)
-  const [currentHostelImage, setCurrentHostelImage] = useState(0)
-  const [nextHotelImage, setNextHotelImage] = useState(0)
-  const [nextHostelImage, setNextHostelImage] = useState(0)
+  const [currentHotelImage, setCurrentHotelImage] = useState(0);
+  const [currentHostelImage, setCurrentHostelImage] = useState(0);
+  const [nextHotelImage, setNextHotelImage] = useState(0);
+  const [nextHostelImage, setNextHostelImage] = useState(0);
 
   useEffect(() => {
     const hotelTimer = setInterval(() => {
-      setNextHotelImage((prev) => (prev + 1) % hotelImages.length)
-    }, 5000)
+      setNextHotelImage((prev) => (prev + 1) % hotelImages.length);
+    }, 5000);
 
     const hostelTimer = setInterval(() => {
-      setNextHostelImage((prev) => (prev + 1) % hostelImages.length)
-    }, 5000)
+      setNextHostelImage((prev) => (prev + 1) % hostelImages.length);
+    }, 5000);
 
     return () => {
-      clearInterval(hotelTimer)
-      clearInterval(hostelTimer)
-    }
-  }, [hotelImages.length, hostelImages.length])
+      clearInterval(hotelTimer);
+      clearInterval(hostelTimer);
+    };
+  }, [hotelImages.length, hostelImages.length]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setCurrentHotelImage(nextHotelImage)
-    }, 1000) // Delay to allow for fade transition
-    return () => clearTimeout(timer)
-  }, [nextHotelImage])
+      setCurrentHotelImage(nextHotelImage);
+    }, 1000); // Delay to allow for fade transition
+    return () => clearTimeout(timer);
+  }, [nextHotelImage]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setCurrentHostelImage(nextHostelImage)
-    }, 1000) // Delay to allow for fade transition
-    return () => clearTimeout(timer)
-  }, [nextHostelImage])
+      setCurrentHostelImage(nextHostelImage);
+    }, 1000); // Delay to allow for fade transition
+    return () => clearTimeout(timer);
+  }, [nextHostelImage]);
 
   const handleSectionClick = (section: "hotels" | "hostels") => {
-    setExpandedSection((prev) => (prev === section ? null : section))
-  }
+    setExpandedSection((prev) => (prev === section ? null : section));
+  };
 
   const handleBack = () => {
-    setExpandedSection(null)
-  }
+    setExpandedSection(null);
+  };
 
   const sectionVariants = {
     initial: { width: "0%", opacity: 0 },
-    animate: { width: "50%", opacity: 1, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } },
-    exit: { width: "0%", opacity: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } },
-    expanded: { width: "80%", opacity: 1, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } },
-    collapsed: { width: "20%", opacity: 1, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } },
-  }
+    animate: {
+      width: "50%",
+      opacity: 1,
+      transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] },
+    },
+    exit: {
+      width: "0%",
+      opacity: 0,
+      transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] },
+    },
+    expanded: {
+      width: "80%",
+      opacity: 1,
+      transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] },
+    },
+    collapsed: {
+      width: "20%",
+      opacity: 1,
+      transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] },
+    },
+  };
 
   const imageVariants = {
     enter: { opacity: 0 },
     center: { opacity: 1 },
     exit: { opacity: 0 },
-  }
+  };
 
   const textRevealVariants = {
     hidden: { y: 100, opacity: 0 },
@@ -95,7 +115,17 @@ export function HomeHero({
         ease: "easeInOut",
       },
     },
-  }
+  };
+  const text = "Hotels";
+  const textHostel = "Hostels";
+  const textVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: (i) => ({
+      opacity: 1,
+      y: 0,
+      transition: { delay: i * 0.1 }, // Delay each letter for the typewriter effect
+    }),
+  };
 
   return (
     <div className="hidden md:flex flex-1 flex-col md:flex-row relative">
@@ -132,7 +162,11 @@ export function HomeHero({
           variants={sectionVariants}
           initial="initial"
           animate={
-            expandedSection === "hotels" ? "expanded" : expandedSection === "hostels" ? "collapsed" : "animate"
+            expandedSection === "hotels"
+              ? "expanded"
+              : expandedSection === "hostels"
+              ? "collapsed"
+              : "animate"
           }
           exit="exit"
           onClick={() => handleSectionClick("hotels")}
@@ -175,8 +209,8 @@ export function HomeHero({
                   transition={{ duration: 0.3 }}
                   className="absolute top-32 left-8 text-white flex items-center gap-2"
                   onClick={(e) => {
-                    e.stopPropagation()
-                    handleBack()
+                    e.stopPropagation();
+                    handleBack();
                   }}
                 >
                   <ChevronLeft className="h-6 w-6" />
@@ -195,21 +229,43 @@ export function HomeHero({
                   >
                     {["LUXURY", "COMFORT", "STYLE"].map((word, index) => (
                       <motion.div key={index} className="overflow-hidden">
-                        <motion.span className="inline-block" variants={textRevealVariants} custom={index}>
+                        <motion.span
+                          className="inline-block"
+                          variants={textRevealVariants}
+                          custom={index}
+                        >
                           {word}
                         </motion.span>
                       </motion.div>
                     ))}
                   </motion.h2>
+
+                  {/* Typewriter Effect for "Hostels" using Framer Motion */}
+                  <div className="text-2xl font-semibold text-white flex">
+                    {text.split("").map((letter, i) => (
+                      <motion.span
+                        key={i}
+                        variants={textVariants}
+                        initial="hidden"
+                        animate="visible"
+                        custom={i}
+                      >
+                        {letter}
+                      </motion.span>
+                    ))}
+                  </div>
+
                   <motion.p
                     className="mb-8 max-w-md text-white/90 text-sm sm:text-base"
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.4 }}
                   >
-                    Experience unparalleled luxury in our handpicked selection of premium hotels. Indulge in
-                    exceptional service and amenities designed for the discerning traveler.
+                    Experience unparalleled luxury in our handpicked selection
+                    of premium hotels. Indulge in exceptional service and
+                    amenities designed for the discerning traveler.
                   </motion.p>
+
                   {expandedSection === "hotels" && (
                     <motion.div
                       initial={{ opacity: 0, y: 30 }}
@@ -221,11 +277,12 @@ export function HomeHero({
                         variant="neutral"
                         className="btn-hotel rounded-full"
                         onClick={(e) => {
-                          e.stopPropagation()
-                          handleDiscover("hotels")
+                          e.stopPropagation();
+                          handleDiscover("hotels");
                         }}
                       >
-                        Discover hotels <ChevronRight className="ml-2 h-5 w-5" />
+                        Discover hotels{" "}
+                        <ChevronRight className="ml-2 h-5 w-5" />
                       </NewButton>
                     </motion.div>
                   )}
@@ -233,19 +290,28 @@ export function HomeHero({
               </>
             )}
             {expandedSection === "hostels" && (
-              <div
-                className="h-full flex items-center justify-center cursor-pointer"
+              <motion.div
+                className="h-full flex items-center cursor-pointer absolute inset-0 z-[-1] overflow-hidden"
+                initial={{ opacity: 0, scale: 0.8, x: "100%" }}
+                animate={{ opacity: 1, scale: 1, x: "70%", zIndex: 10 }}
+                exit={{ opacity: 0, scale: 0.8, x: "100%", zIndex: -1 }}
+                whileHover={{ x: "20%" }} // 👈 Moves left on hover
+                transition={{ duration: 0.8, ease: "easeInOut" }}
                 onClick={(e) => {
-                  e.stopPropagation()
-                  handleSectionClick("hotels")
+                  e.stopPropagation();
+                  handleSectionClick("hotels");
                 }}
               >
-                <div className="transform -rotate-90">
-                  <span className="text-xl sm:text-2xl font-bold tracking-wider text-white whitespace-nowrap">
-                    SWITCH TO HOTELS
+                <div className="relative w-full overflow-hidden">
+                  <span className="text-2xl font-bold tracking-wider text-white whitespace-nowrap block">
+                    <Image
+                      src={hotels}
+                      alt="hotel"
+                      className="object-contain w-40 h-40"
+                    />
                   </span>
                 </div>
-              </div>
+              </motion.div>
             )}
           </div>
         </motion.section>
@@ -257,7 +323,11 @@ export function HomeHero({
           variants={sectionVariants}
           initial="initial"
           animate={
-            expandedSection === "hostels" ? "expanded" : expandedSection === "hotels" ? "collapsed" : "animate"
+            expandedSection === "hostels"
+              ? "expanded"
+              : expandedSection === "hotels"
+              ? "collapsed"
+              : "animate"
           }
           exit="exit"
           onClick={() => handleSectionClick("hostels")}
@@ -300,8 +370,8 @@ export function HomeHero({
                   transition={{ duration: 0.3 }}
                   className="absolute top-32 left-8 text-white flex items-center gap-2"
                   onClick={(e) => {
-                    e.stopPropagation()
-                    handleBack()
+                    e.stopPropagation();
+                    handleBack();
                   }}
                 >
                   <ChevronLeft className="h-6 w-6" />
@@ -320,20 +390,38 @@ export function HomeHero({
                   >
                     {["VIBRANT", "SOCIAL", "AFFORDABLE"].map((word, index) => (
                       <motion.div key={index} className="overflow-hidden">
-                        <motion.span className="inline-block" variants={textRevealVariants} custom={index}>
+                        <motion.span
+                          className="inline-block"
+                          variants={textRevealVariants}
+                          custom={index}
+                        >
                           {word}
                         </motion.span>
                       </motion.div>
                     ))}
                   </motion.h2>
+                  <div className="text-2xl font-semibold text-white flex">
+                    {textHostel.split("").map((letter, i) => (
+                      <motion.span
+                        key={i}
+                        variants={textVariants}
+                        initial="hidden"
+                        animate="visible"
+                        custom={i}
+                      >
+                        {letter}
+                      </motion.span>
+                    ))}
+                  </div>
                   <motion.p
                     className="mb-8 max-w-md text-white/90"
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.4 }}
                   >
-                    Connect with fellow travelers in our vibrant hostels. Enjoy budget-friendly accommodations without
-                    compromising on experience or location.
+                    Connect with fellow travelers in our vibrant hostels. Enjoy
+                    budget-friendly accommodations without compromising on
+                    experience or location.
                   </motion.p>
                   {expandedSection === "hostels" && (
                     <motion.div
@@ -346,11 +434,12 @@ export function HomeHero({
                         variant="neutral"
                         className="btn-hostel rounded-full"
                         onClick={(e) => {
-                          e.stopPropagation()
-                          handleDiscover("hostels")
+                          e.stopPropagation();
+                          handleDiscover("hostels");
                         }}
                       >
-                        Discover hostels <ChevronRight className="ml-2 h-5 w-5" />
+                        Discover hostels{" "}
+                        <ChevronRight className="ml-2 h-5 w-5" />
                       </NewButton>
                     </motion.div>
                   )}
@@ -358,23 +447,28 @@ export function HomeHero({
               </>
             )}
             {expandedSection === "hotels" && (
-              <div
-                className="h-full flex items-center justify-center cursor-pointer"
+              <motion.div
+                className="h-full flex items-center  cursor-pointer absolute inset-0 z-[-1] overflow-hidden"
+                initial={{ opacity: 0, scale: 0.8, x: "-100%" }}
+                animate={{ opacity: 1, scale: 1, x: "0%", zIndex: 10 }}
+                exit={{ opacity: 0, scale: 0.8, x: "-100%", zIndex: -1 }}
+                transition={{ duration: 0.8, ease: "easeInOut" }}
                 onClick={(e) => {
-                  e.stopPropagation()
-                  handleSectionClick("hostels")
+                  e.stopPropagation();
+                  handleSectionClick("hostels");
                 }}
               >
-                <div className="transform -rotate-90">
-                  <span className="text-2xl font-bold tracking-wider text-white whitespace-nowrap">
-                    SWITCH TO HOSTELS
+                <div className="relative w-[150px] overflow-hidden left-0">
+                  <span className="text-2xl font-bold tracking-wider text-white whitespace-nowrap block -translate-x-[20%]">
+                    {/* HOSTELS */}
+                    <Image src={hostels} alt="hostel" />
                   </span>
                 </div>
-              </div>
+              </motion.div>
             )}
           </div>
         </motion.section>
       </AnimatePresence>
     </div>
-  )
-} 
+  );
+}

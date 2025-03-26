@@ -17,6 +17,7 @@ export function SearchForm({ sectionType }: SearchFormProps) {
   const [guests, setGuests] = useState("1")
   const [bookingType, setBookingType] = useState<"day" | "hour">("day")
   const [months, setMonths] = useState(1)
+  const [isFocused, setIsFocused] = useState(false);
 
   const incrementRooms = () => setRooms((prev) => prev + 1)
   const decrementRooms = () => setRooms((prev) => (prev > 1 ? prev - 1 : 1))
@@ -37,21 +38,30 @@ export function SearchForm({ sectionType }: SearchFormProps) {
       >
         {/* Location */}
         <div className="flex items-center flex-1 min-w-full md:min-w-[200px] p-2 border-b md:border-b-0 md:border-r border-gray-200">
-          <MapPin className="text-gray-400 mr-2 flex-shrink-0" size={20} />
-          <div className="flex flex-col flex-grow">
-            <label htmlFor="location" className="text-xs text-gray-500 font-medium">
-              Location
-            </label>
-            <input
-              id="location"
-              type="text"
-              placeholder="Which city do you prefer?"
-              className="outline-none text-sm w-full"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-            />
-          </div>
-        </div>
+  <MapPin className="text-gray-400 mr-2 flex-shrink-0" size={20} />
+  <div className="relative flex flex-col flex-grow">
+    <label
+      htmlFor="location"
+      className={`absolute text-xs font-medium transition-all duration-200 ${
+        location || isFocused
+          ? "text-gray-500 top-0 left-0"
+          : "text-gray-400 top-1/2 left-2 transform -translate-y-1/2"
+      }`}
+    >
+      Location
+    </label>
+    <input
+      id="location"
+      type="text"
+      className="outline-none text-sm w-full pt-4"
+      value={location}
+      onFocus={() => setIsFocused(true)}
+      onBlur={() => setIsFocused(false)}
+      onChange={(e) => setLocation(e.target.value)}
+    />
+  </div>
+</div>
+
 
         {/* Check In */}
         <div className="flex items-center flex-1 min-w-full md:min-w-[150px] p-2 border-b md:border-b-0 md:border-r border-gray-200">

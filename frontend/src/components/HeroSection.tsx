@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { motion } from "framer-motion"
-import { SearchForm } from "./SearchForm"
+import { motion } from "framer-motion";
+import { SearchForm } from "./SearchForm";
 
 interface HeroSectionProps {
-  sectionType: "hotels" | "hostels"
+  sectionType: "hotels" | "hostels";
 }
 
 export function HeroSection({ sectionType }: HeroSectionProps) {
@@ -12,8 +12,8 @@ export function HeroSection({ sectionType }: HeroSectionProps) {
     <div
       className={`py-16 ${
         sectionType === "hotels"
-          ? "bg-gradient-to-b from-[#A31C44] to-[#7A1533]"
-          : "bg-gradient-to-b from-[#2A2B2E] to-[#1A1B1E]"
+          ? "bg-gradient-to-r from-[#b95372] via-[#7A1533] to-[#b95372]"
+          : "bg-gradient-to-r from-slate-400 via-slate-700 to-slate-400"
       }`}
     >
       <div className="container mx-auto px-4">
@@ -23,8 +23,10 @@ export function HeroSection({ sectionType }: HeroSectionProps) {
           transition={{ delay: 0.2 }}
           className="max-w-5xl mx-auto"
         >
-          <h2 className="text-4xl font-bold mb-8 text-center text-white font-rock-salt">
-            {sectionType === "hotels" ? "Find Your Perfect Hotel" : "Discover Your Ideal Hostel"}
+          <h2 className="text-6xl font-bold mb-8 text-center text-white ">
+            {sectionType === "hotels"
+              ? "Find Your Perfect Hotel"
+              : "Discover Your Ideal Hostel"}
           </h2>
           <p className="text-xl text-white text-center mb-8">
             {sectionType === "hotels"
@@ -36,5 +38,5 @@ export function HeroSection({ sectionType }: HeroSectionProps) {
         </motion.div>
       </div>
     </div>
-  )
-} 
+  );
+}

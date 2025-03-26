@@ -1,15 +1,26 @@
+"use client"
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import room1 from "/public/images/room1.jpg";
-import room2 from "/public/images/room2.jpg";
-import room3 from "/public/images/room3.jpg";
+import room1 from "/public/images/feature/room1.jpg";
+import room2 from "/public/images/feature/room2.jpg";
+import room3 from "/public/images/feature/room3.jpg";
+import fhostel1 from "/public/images/feature/fhostel1.webp";
+import fhostel2 from "/public/images/feature/fhostel2.jpg";
+import fhostel3 from "/public/images/feature/fhostel3.jpeg";
 
 const images = [room1, room2, room3];
+const hostelImages = [fhostel1, fhostel2, fhostel3];
 
-const Features = () => {
+interface FeaturesSectionProps {
+  sectionType: "hotels" | "hostels";
+}
+
+const Features = ({type}:FeaturesSectionProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const image = type === "hotels" ? images : hostelImages;
 
   useEffect(() => {
     if (isHovered) return; // Pause auto-scroll when hovered
@@ -22,7 +33,7 @@ const Features = () => {
   }, [isHovered]);
 
   return (
-    <div className="w-screen h-fit bg-black text-white  py-10">
+    <div className="w-screen h-fit  text-white  py-10">
       <div className="container mx-auto flex items-center justify-between px-6">
         {/* Left Section - Text Content */}
         <motion.div
@@ -31,12 +42,12 @@ const Features = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h1 className="text-6xl font-bold text-white  leading-tight">
-            Why We Need <span className="text-[#A31C44]">HSquare</span>
+          <h1 className="text-6xl font-bold text-black  leading-tight">
+            Why  <span className="text-[#A31C44]">HSquare</span>
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-300 max-w-md mx-auto">
            your stay should be more than just a place to sleep! Enjoy premium comfort, thoughtfully curated experiences, and a vibrant atmosphere that makes every moment special. From cozy rooms to top-tier amenities, we redefine hospitality. 🌍💛 
-          <span className="font-bold text-[#A31C44]">#WhyHSquare #BeyondStay</span>
+          <span className="font-bold text-[#A31C44]"> #BeyondStay</span>
           </p>
         </motion.div>
 
@@ -53,7 +64,7 @@ const Features = () => {
             onMouseLeave={() => setIsHovered(false)}
           >
             <Image
-              src={images[currentIndex]}
+              src={image[currentIndex]}
               alt="Room"
               className="w-full h-full object-cover rounded-2xl transition duration-300 group-hover:blur-sm"
             />

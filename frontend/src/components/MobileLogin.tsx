@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Button } from "@/components/ui/button"
+import { NewButton } from "@/components/ui/new-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -46,9 +47,9 @@ export function MobileLogin({ onLoginSuccess }: MobileLoginProps) {
                 onChange={(e) => setMobileNumber(e.target.value)}
               />
             </div>
-            <Button onClick={handleSendOtp} className="w-full bg-[#B11E43] hover:bg-[#8f1836]">
+            <NewButton onClick={handleSendOtp} variant="default" className="w-full">
               Send OTP
-            </Button>
+            </NewButton>
           </div>
         ) : (
           <div className="space-y-4">
@@ -62,9 +63,9 @@ export function MobileLogin({ onLoginSuccess }: MobileLoginProps) {
                 onChange={(e) => setOtp(e.target.value)}
               />
             </div>
-            <Button onClick={handleVerifyOtp} className="w-full bg-[#B11E43] hover:bg-[#8f1836]">
+            <NewButton onClick={handleVerifyOtp} variant="default" className="w-full">
               Verify OTP
-            </Button>
+            </NewButton>
           </div>
         )}
       </CardContent>

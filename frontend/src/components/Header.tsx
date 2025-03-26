@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
+import { NewButton } from "@/components/ui/new-button"
 import { Globe, Phone } from 'lucide-react'
 import Image from "next/image"
 import Link from "next/link"
@@ -122,17 +123,15 @@ export function Header() {
               <ProfileDropdown 
                 onLogout={handleLogout} 
                 userName={userName}
-                className="text-base"
               />
             ) : (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="text-red-600 border-red-600 hover:bg-red-50 text-base"
+              <NewButton 
+                variant="default" 
+                size="sm"
                 onClick={() => { console.log("Login/Signup button clicked"); setIsLoginOpen(true); }}
               >
                 Login / Signup
-              </Button>
+              </NewButton>
             )}
           </div>
         </div>

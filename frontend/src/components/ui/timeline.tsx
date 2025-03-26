@@ -69,7 +69,7 @@ export const Timeline = ({ data, theme = "hotel" }: TimelineProps) => {
               </div>
               <div className="hidden md:block md:pl-20">
                 <h3
-                  className={`text-xl md:text-4xl font-bold font-rock-salt ${theme === "hotel" ? "text-[#A31C44]" : "text-[#2A2B2E]"}`}
+                  className={`text-xl md:text-4xl font-bold  ${theme === "hotel" ? "text-[#A31C44]" : "text-[#2A2B2E]"}`}
                 >
                   {item.year}
                 </h3>

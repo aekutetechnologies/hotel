@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
+import { NewButton } from "@/components/ui/new-button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { AlertCircle } from 'lucide-react'
@@ -83,13 +84,13 @@ function AdminLogin() {
                   required
                 />
               </div>
-              <Button
+              <NewButton
                 type="submit"
-                className="w-full bg-[#B11E43] hover:bg-[#8f1836]"
+                variant="default"
                 disabled={isLoading}
               >
                 {isLoading ? 'Sending OTP...' : 'Send OTP'}
-              </Button>
+              </NewButton>
             </form>
           ) : (
             <form onSubmit={handleVerifyOtp} className="space-y-4">
@@ -113,13 +114,13 @@ function AdminLogin() {
                   required
                 />
               </div>
-              <Button
+              <NewButton
                 type="submit"
-                className="w-full bg-[#B11E43] hover:bg-[#8f1836]"
+                variant="default"
                 disabled={isLoading}
               >
                 {isLoading ? 'Verifying...' : 'Verify OTP'}
-              </Button>
+              </NewButton>
             </form>
           )}
         </CardContent>

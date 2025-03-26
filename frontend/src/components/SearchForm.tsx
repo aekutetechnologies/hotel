@@ -29,6 +29,7 @@ export function SearchForm({ sectionType }: SearchFormProps) {
   const [guests, setGuests] = useState(1)
   const [bookingType, setBookingType] = useState<"day" | "hour">("day")
   const [months, setMonths] = useState(1)
+  const [isFocused, setIsFocused] = useState(false)
   const locationInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -105,7 +106,14 @@ export function SearchForm({ sectionType }: SearchFormProps) {
         <div className="flex items-center flex-1 min-w-full md:min-w-[200px] p-2 border-b md:border-b-0 md:border-r border-gray-200">
           <MapPin className="text-gray-400 mr-2 flex-shrink-0" size={20} />
           <div className="flex flex-col flex-grow relative">
-            <label htmlFor="location" className="text-xs text-gray-500 font-medium">
+            <label 
+              htmlFor="location" 
+              className={`text-xs font-medium transition-all duration-200 ${
+                location || isFocused
+                  ? "text-gray-500"
+                  : "text-gray-400"
+              }`}
+            >
               Location
             </label>
             <input
@@ -116,6 +124,8 @@ export function SearchForm({ sectionType }: SearchFormProps) {
               className="outline-none text-sm w-full"
               value={location}
               onChange={handleLocationInputChange}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
             />
             {locationPredictions.length > 0 && (
               <ul className="absolute z-10 w-full mt-6 bg-white border border-gray-300 rounded-md shadow-lg">

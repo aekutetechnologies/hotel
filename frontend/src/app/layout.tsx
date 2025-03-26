@@ -6,6 +6,7 @@ import { Poppins } from 'next/font/google'
 import { PermissionProvider } from "@/providers/PermissionProvider";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { AppErrorProvider } from "@/components/AppErrorProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -60,7 +61,9 @@ export default function RootLayout({
         suppressHydrationWarning={true}
       >
         <PermissionProvider>
-          {children}
+          <AppErrorProvider>
+            {children}
+          </AppErrorProvider>
           <ToastContainer position="top-right" autoClose={5000} />
         </PermissionProvider>
       </body>

@@ -1,5 +1,4 @@
-export interface ActionResponse<Data = any, Error = any> {
-  success: boolean;
-  data?: Data;
-  error?: Error;
+export interface ActionResponse<TData, TError = unknown> {
+  data: TData | null
+  error?: TError | null
 } 

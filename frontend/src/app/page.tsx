@@ -161,7 +161,7 @@ export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false)
   const [userName, setUserName] = useState("")
-  
+
   const { imagesPreloaded, loadingProgress } = useImagePreloader([...hotelImages, ...hostelImages])
 
   useEffect(() => {
@@ -221,21 +221,21 @@ export default function Home() {
                 <div className="py-3">
                   <Logo />
                 </div>
-                {isLoggedIn ? (
-                  <ProfileDropdown
-                    userName={userName}
-                    onLogout={handleLogout}
-                  />
-                ) : (
+                  {isLoggedIn ? (
+                    <ProfileDropdown 
+                      userName={userName} 
+                      onLogout={handleLogout} 
+                    />
+                  ) : (
                   <NewButton
                     variant="default"
                     onClick={handleLoginClick}
                     size="sm"
                   >
                     <LogIn className="w-5 h-5 mr-2" />
-                    <span>Login</span>
+                      <span>Login</span>
                   </NewButton>
-                )}
+                  )}
               </nav>
             </div>
           )}
@@ -255,7 +255,7 @@ export default function Home() {
               <DetailSection 
                 sectionType={showDetailSection || "hotels"}
                 isLoggedIn={isLoggedIn}
-                userName={userName}
+                              userName={userName} 
                 onClose={handleCloseDetail}
                 hotelTestimonials={hotelTestimonials}
                 hostelTestimonials={hostelTestimonials}

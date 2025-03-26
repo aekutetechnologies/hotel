@@ -4,7 +4,7 @@ from users.models import HsUser
 from property.models import Property, Room
 from decimal import Decimal
 from django.core.exceptions import ValidationError
-
+from datetime import datetime
 class Booking(models.Model):
     BOOKING_TYPE_CHOICES = [
         ('walkin', 'Walkin'),
@@ -66,6 +66,11 @@ class Booking(models.Model):
                 total_hours = delta.total_seconds() / 3600
                 calculated_price = Decimal(total_hours) * self.room.hourly_rate
             else:
+                # if self.checking_date and self.checkout_date are string, convert them to date
+                if isinstance(self.checkin_date, str):
+                    self.checkin_date = datetime.strptime(self.checkin_date, '%Y-%m-%d').date()
+                if isinstance(self.checkout_date, str):
+                    self.checkout_date = datetime.strptime(self.checkout_date, '%Y-%m-%d').date()
                 delta_days = (self.checkout_date - self.checkin_date).days
                 if delta_days < 0:
                     raise ValueError("Checkout date cannot be before check-in date.")

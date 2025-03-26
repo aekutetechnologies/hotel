@@ -1,11 +1,20 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { Building2, CalendarCheck, CircleDollarSign, Users, Tag, Menu, X, LogOut, UserRound } from 'lucide-react'
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { Permission, hasPermission } from '@/lib/permissions'
+
+interface NavItem {
+  name: string
+  href: string
+  icon: any
+  permissions: Permission[]
+}
 
 export default function AdminLayout({
   children,
@@ -13,19 +22,40 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
-  const navigation = [
-    { name: 'Properties', href: '/admin/dashboard', icon: Building2 },
-    { name: 'Bookings', href: '/admin/bookings', icon: CalendarCheck },
-    { name: 'Expenses', href: '/admin/expenses', icon: CircleDollarSign },
-    { name: 'Users', href: '/admin/users', icon: Users },
-    { name: 'User Roles', href: '/admin/userroles', icon: UserRound },
-    { name: 'Offers', href: '/admin/offers', icon: Tag },
+  // Wait for component to mount to access localStorage
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const navigation: NavItem[] = [
+    { name: 'Properties', href: '/admin/dashboard', icon: Building2, permissions: ['admin:dashboard:view', 'property:view'] },
+    { name: 'Bookings', href: '/admin/bookings', icon: CalendarCheck, permissions: ['booking:view'] },
+    { name: 'Expenses', href: '/admin/expenses', icon: CircleDollarSign, permissions: ['admin:expense:view'] },
+    { name: 'Users', href: '/admin/users', icon: Users, permissions: ['admin:user:view'] },
+    { name: 'User Roles', href: '/admin/userroles', icon: UserRound, permissions: ['admin:user:assign-permissions'] },
+    { name: 'Offers', href: '/admin/offers', icon: Tag, permissions: ['admin:offer:view'] },
   ]
 
+  // Handle logout
+  const handleLogout = () => {
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem('permissions')
+    router.push('/admin/login')
+  }
+
+  // Show login page directly without layout
   if (pathname === '/admin/login') {
     return children
+  }
+
+  // Check if user has permission to see a navigation item
+  const canAccessNavItem = (item: NavItem): boolean => {
+    if (!mounted) return false
+    return item.permissions.some(permission => hasPermission(permission))
   }
 
   return (
@@ -53,7 +83,7 @@ export default function AdminLayout({
         </div>
         <nav className="mt-8">
           <div className="px-2 space-y-1">
-            {navigation.map((item) => {
+            {mounted && navigation.filter(canAccessNavItem).map((item) => {
               const isActive = pathname === item.href
               return (
                 <Link
@@ -74,19 +104,19 @@ export default function AdminLayout({
           </div>
         </nav>
         <div className="absolute bottom-0 w-full p-4 border-t">
-          <Link href="/admin/login">
-            <Button variant="ghost" className="w-full justify-start text-red-600">
-              <LogOut className="mr-3 h-5 w-5" />
-              Logout
-            </Button>
-          </Link>
+          <Button variant="ghost" className="w-full justify-start text-red-600" onClick={handleLogout}>
+            <LogOut className="mr-3 h-5 w-5" />
+            Logout
+          </Button>
         </div>
       </div>
 
       {/* Main content */}
       <div className="lg:pl-64">
         <main className="py-8 px-4 sm:px-6 lg:px-8">
-          {children}
+          <ProtectedRoute>
+            {children}
+          </ProtectedRoute>
         </main>
       </div>
     </div>

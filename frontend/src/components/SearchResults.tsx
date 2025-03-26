@@ -36,7 +36,7 @@ export function SearchResults() {
   const [location, setLocation] = useState<string>('')
   const [searchQuery, setSearchQuery] = useState('')
   const [properties, setProperties] = useState<Property[]>([])
-  const bookingType = searchParams?.get('bookingType') || 'fulltime'
+  const bookingType = searchParams?.get('bookingType') || 'daily'
 
   useEffect(() => {
     const paramsObject = {

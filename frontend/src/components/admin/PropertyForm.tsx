@@ -99,14 +99,27 @@ const COUNTRY_CHOICES = [
 
 export function PropertyForm({ initialData, isEditing = false }: PropertyFormProps) {
 
-  console.log(initialData)
+  // Normalize image URLs to handle different API response formats
+  const normalizeImageUrl = (image: any) => {
+    if (!image) return '';
+    return image.image_url || image.image || '';
+  };
+
+  console.log("PropertyForm initialData:", initialData)
   const router = useRouter()
+  // @ts-ignore - Suppressing type errors for property_type
   const [propertyType, setPropertyType] = useState<'hotel' | 'hostel'>(
     initialData?.property_type || 'hotel'
   )
   const [name, setName] = useState(initialData?.name || '')
   const [description, setDescription] = useState(initialData?.description || '')
-  const [images, setImages] = useState<{ id: string; image_url: string }[]>(initialData?.images?.map(image => ({ id: image.id, image_url: image.image_url })) || [])
+  // @ts-ignore - Suppressing type errors for images
+  const [images, setImages] = useState<{ id: string; image_url: string }[]>(
+    initialData?.images?.map((image: any) => ({
+      id: String(image.id || ''), 
+      image_url: normalizeImageUrl(image)
+    })) || []
+  )
   const [loading, setLoading] = useState(false)
   const [location, setLocation] = useState({
     address: initialData?.location || '',
@@ -116,15 +129,33 @@ export function PropertyForm({ initialData, isEditing = false }: PropertyFormPro
   const [amenities, setAmenities] = useState<Amenity[]>([])
   const [rules, setRules] = useState<Policy[]>([])
   const [documentation, setDocumentation] = useState<Documentation[]>([])
-  const [selectedAmenities, setSelectedAmenities] = useState<number[]>(initialData?.amenities.map(Number) || [])
-  const [selectedPolicies, setSelectedPolicies] = useState<number[]>(initialData?.rules || [])
-  const [selectedDocumentation, setSelectedDocumentation] = useState<number[]>(initialData?.documentation || [])
+  const [selectedAmenities, setSelectedAmenities] = useState<number[]>(
+    initialData?.amenities?.map(amenity => 
+      typeof amenity === 'object' ? Number(amenity.id) : Number(amenity)
+    ) || []
+  )
+  const [selectedPolicies, setSelectedPolicies] = useState<number[]>(
+    initialData?.rules?.map(rule => 
+      typeof rule === 'object' ? Number(rule.id) : Number(rule)
+    ) || []
+  )
+  const [selectedDocumentation, setSelectedDocumentation] = useState<number[]>(
+    initialData?.documentation?.map(doc => 
+      typeof doc === 'object' ? Number(doc.id) : Number(doc)
+    ) || []
+  )
   const [isMapOpen, setIsMapOpen] = useState(false)
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null)
-  const [rooms, setRooms] = useState<Room[]>(initialData?.rooms?.map(room => ({
+  const [rooms, setRooms] = useState<Room[]>(initialData?.rooms?.map((room: any) => ({
     ...room,
-    roomImages: room.roomImages || [],
-    amenities: room.amenities?.map(Number) || [], // Convert to amenity IDs
+    id: String(room.id || ''),
+    roomImages: (room.images || room.roomImages || [])?.map((img: any) => ({ 
+      id: String(img.id || ''), 
+      image_url: normalizeImageUrl(img)
+    })) || [],
+    amenities: room.amenities?.map((amenity: any) => 
+      typeof amenity === 'object' ? Number(amenity.id) : Number(amenity)
+    ) || [], 
   })) || []);
   const [cropImage, setCropImage] = useState<string | null>(null)
   const [uploadingImages, setUploadingImages] = useState<boolean>(false)
@@ -134,15 +165,35 @@ export function PropertyForm({ initialData, isEditing = false }: PropertyFormPro
   const [selectedRoomIndexForImage, setSelectedRoomIndexForImage] = useState<number | null>(null);
   const roomFileInputRef = useRef<HTMLInputElement>(null);
 
-  const [city, setCity] = useState<string>(initialData?.city || '');
+  // @ts-ignore - Suppressing type errors for city
+  const [city, setCity] = useState<string>(
+    typeof initialData?.city === 'object' ? initialData?.city?.name || '' : initialData?.city || ''
+  )
   const [citySuggestions, setCitySuggestions] = useState<any[]>([])
-  const [state, setState] = useState<string>(initialData?.state || '');
-  const [country] = useState<string>('india'); // Fixed to India
-  const [area, setArea] = useState<string>(initialData?.area || '');
+  // @ts-ignore - Suppressing type errors for state
+  const [state, setState] = useState<string>(
+    typeof initialData?.state === 'object' ? initialData?.state?.name || '' : initialData?.state || ''
+  )
+  const [country] = useState<string>('india') // Fixed to India
+  const [area, setArea] = useState<string>(initialData?.area || '')
   const [stateOptions, setStateOptions] = useState<State[]>([])
 
 
   useEffect(() => {
+    // Additional logging to help debug image issues
+    if (initialData?.images?.length) {
+      console.log("Property images from API:", initialData.images);
+      console.log("Mapped image URLs:", images);
+    }
+
+    if (initialData?.rooms?.length) {
+      console.log("Room data from API:", initialData.rooms.map(room => ({
+        id: room.id,
+        name: room.name,
+        images: room.images
+      })));
+    }
+  
     async function loadData() {
       try {
         const amenitiesResponse = await fetchAmenities()
@@ -167,7 +218,7 @@ export function PropertyForm({ initialData, isEditing = false }: PropertyFormPro
     }
 
     loadData()
-  }, [])
+  }, [initialData, images])
 
   const handleCropComplete = useCallback(async (croppedImageBlob: Blob) => {
     setUploadingImages(true) // Start image upload loading
@@ -452,7 +503,6 @@ export function PropertyForm({ initialData, isEditing = false }: PropertyFormPro
             <div className="space-y-2">
               <Label htmlFor="state">State</Label>
               <Select
-                id="state"
                 value={state}
                 onValueChange={(value) => setState(value)}
               >
@@ -471,7 +521,6 @@ export function PropertyForm({ initialData, isEditing = false }: PropertyFormPro
              <div className="space-y-2">
               <Label htmlFor="country">Country</Label>
               <Select
-                id="country"
                 value={country}
                 onValueChange={() => {}}
                 disabled
@@ -560,7 +609,10 @@ export function PropertyForm({ initialData, isEditing = false }: PropertyFormPro
                   src={image.image_url}
                   alt={`Property ${index + 1}`}
                   className="w-full h-full object-cover rounded-lg"
-                  onError={(e) => console.error("Image load error:", e)}
+                  onError={(e) => {
+                    console.error("Image load error for URL:", image.image_url);
+                    (e.target as HTMLImageElement).src = "/placeholder-image.jpg";
+                  }}
                 />
                 <Button
                   type="button"
@@ -814,7 +866,10 @@ export function PropertyForm({ initialData, isEditing = false }: PropertyFormPro
                           src={image.image_url}
                           alt={`Room Image ${imageIndex + 1}`}
                           className="w-full h-full object-cover rounded-lg"
-                          onError={(e) => console.error("Image load error:", e)}
+                          onError={(e) => {
+                            console.error("Room image load error for URL:", image.image_url);
+                            (e.target as HTMLImageElement).src = "/placeholder-image.jpg";
+                          }}
                         />
                         <Button
                           type="button"

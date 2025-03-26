@@ -33,15 +33,15 @@ export function GenericModal({
 }: GenericModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="w-full max-w-md sm:max-w-lg md:max-w-xl overflow-y-auto max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
-        <div className="py-4">
+        <div className="py-4 w-full">
           {children}
         </div>
-        <DialogFooter>
+        <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
           <Button type="button" variant="secondary" onClick={onClose}>
             {cancelText}
           </Button>

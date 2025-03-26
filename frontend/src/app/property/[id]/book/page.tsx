@@ -15,6 +15,8 @@ import { Badge } from '@/components/ui/badge'
 import { bookProperty } from '@/lib/api/bookProperty'
 import { SignIn } from '@/components/SignIn'
 
+const capitalize = (s: string) => s && String(s[0]).toUpperCase() + String(s).slice(1)
+
 
 export default function BookProperty() {
   const params = useParams()
@@ -27,6 +29,12 @@ export default function BookProperty() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false) // Track login status
   const [showSignIn, setShowSignIn] = useState<boolean>(false) // State for SignIn modal
 
+  const checkInDateParam = searchParams.get('checkInDate') || '';
+  const checkOutDateParam = searchParams.get('checkOutDate') || '';
+  const guestsParam = searchParams.get('guests') || '1';
+  const bookingTypeParam = searchParams.get('bookingType') || 'daily';
+  const roomParam = searchParams.get('rooms') || '1';
+
   useEffect(() => {
     // Check for token to determine login status (example - adjust as per your auth method)
     const token = localStorage.getItem('accessToken'); // Or however you store your token
@@ -34,16 +42,39 @@ export default function BookProperty() {
 
     // Fetch property details
     fetchProperty(propertyId.toString()).then((data) => {
+      console.log('Property data:', data);
+      if (data && data.rooms) {
+        console.log('Room data:', data.rooms);
+        data.rooms.forEach((room: any, index: number) => {
+          console.log(`Room ${index}:`, {
+            id: room.id,
+            name: room.name || room.occupancyType,
+            daily_rate: room.daily_rate,
+            hourly_rate: room.hourly_rate,
+            price: bookingTypeParam === 'hourly' ? room.hourly_rate : room.daily_rate,
+            priceType: typeof (bookingTypeParam === 'hourly' ? room.hourly_rate : room.daily_rate),
+            parsedPrice: bookingTypeParam === 'hourly' 
+              ? (room.hourly_rate ? parseFloat(room.hourly_rate) : 'N/A')
+              : (room.daily_rate ? parseFloat(room.daily_rate) : 'N/A'),
+            discount: room.discount
+          });
+        });
+      }
+      
+      // Add price field based on booking type
+      if (data && data.rooms) {
+        data.rooms = data.rooms.map((room: any) => ({
+          ...room,
+          price: bookingTypeParam === 'hourly' ? room.hourly_rate : room.daily_rate
+        }));
+      }
+      
       setProperty(data)
       if (data && data.rooms.length > 0) {
         setSelectedRoom(data.rooms[0]) // Select the first room by default
       }
     })
-  }, [propertyId])
-
-  const checkInDateParam = searchParams.get('checkInDate') || '';
-  const checkOutDateParam = searchParams.get('checkOutDate') || '';
-  const guestsParam = searchParams.get('guests') || '1';
+  }, [propertyId, bookingTypeParam])
 
   const [booking, setBooking] = useState({
     checkIn: checkInDateParam,
@@ -52,6 +83,7 @@ export default function BookProperty() {
     roomId: selectedRoom?.id, // Initialize with selectedRoom id if available
     checkInDate: checkInDateParam,
     checkOutDate: checkOutDateParam,
+    bookingType: bookingTypeParam
   })
 
   useEffect(() => {
@@ -85,18 +117,23 @@ export default function BookProperty() {
       return
     }
 
+    // Get the appropriate price based on booking type
+    const roomPrice = booking.bookingType === 'hourly' 
+      ? selectedRoom.hourly_rate 
+      : selectedRoom.daily_rate;
+
     const bookingData = {
       user: localStorage.getItem('userId'), // Assuming userId is stored in localStorage
       property: propertyId,
       room: selectedRoom.id,
-      price: parseFloat(selectedRoom.price || '0'),
+      price: parseFloat(roomPrice || '0'),
       discount: parseFloat(selectedRoom.discount || '0'),
-      booking_type: 'walkin', // Default to 'hotel' if property type is missing
+      booking_time: capitalize(booking.bookingType), // Use the selected booking type
       payment_type: 'upi', // Default payment type, can be updated later
       checkin_date: booking.checkIn,
       checkout_date: booking.checkOut,
       number_of_guests: parseInt(booking.guests, 10),
-      number_of_rooms: 1, // Assuming always booking 1 room for now
+      number_of_rooms: parseInt(roomParam, 10), // Assuming always booking 1 room for now
       token: token,
     }
 
@@ -113,6 +150,20 @@ export default function BookProperty() {
       alert(`Booking error: ${error.message}`) // Show error message
     }
   }
+
+  const formatRoomPrice = (room: any, discount: string | number | null | undefined = 0) => {
+    const price = booking.bookingType === 'hourly' ? room.hourly_rate : room.daily_rate;
+    
+    if (!price) return 'Price unavailable';
+    
+    const numPrice = typeof price === 'string' ? parseFloat(price) : price;
+    if (isNaN(numPrice) || numPrice === 0) return 'Price unavailable';
+    
+    const discountValue = discount ? (typeof discount === 'string' ? parseFloat(discount) : discount) : 0;
+    const discountedPrice = numPrice * (1 - (discountValue / 100));
+    
+    return `₹${formatPrice(discountedPrice)}`;
+  };
 
   if (!property) {
     return <div>Loading property details...</div> // Or a loading spinner
@@ -150,7 +201,6 @@ export default function BookProperty() {
                     id="checkIn"
                     name="checkIn"
                     value={booking.checkIn}
-                    defaultValue={checkInDateParam}
                     onChange={handleInputChange}
                     required
                     className="mt-1"
@@ -204,22 +254,21 @@ export default function BookProperty() {
                         value={room.name || room.occupancyType}
                         onClick={() => setSelectedRoom(room)} // Update selectedRoom on item click
                       >
-                        {room.name || room.occupancyType} - ₹{formatPrice(room.price ? parseFloat(room.price) * (1 - (parseFloat(room.discount || '0') / 100)) : 0)}
-                        {room.discount && parseFloat(room.discount) > 0 && (
-                          <Badge variant="secondary" className="ml-2 text-orange-600 bg-orange-50">
-                            {room.discount}% off
-                          </Badge>
-                        )}
-                        {room.discount && parseFloat(room.discount) > 0 && (
-                          <span className="text-gray-500 line-through text-sm ml-1">
-                            ₹{formatPrice(room.price ? parseFloat(room.price) : 0)}
-                          </span>
-                        )}
-                        {!room.discount && (
-                          <span className="ml-2">
-                             ₹{formatPrice(room.price ? parseFloat(room.price) : 0)}
-                          </span>
-                        )}
+                        {room.name || room.occupancyType} - {(booking.bookingType === 'hourly' ? room.hourly_rate : room.daily_rate) ? (
+                          <>
+                            {formatRoomPrice(room, room.discount)}
+                            {room.discount && parseFloat(room.discount) > 0 && (
+                              <>
+                                <Badge variant="secondary" className="ml-2 text-orange-600 bg-orange-50">
+                                  {room.discount}% off
+                                </Badge>
+                                <span className="text-gray-500 line-through text-sm ml-1">
+                                  {formatRoomPrice(room, 0)}
+                                </span>
+                              </>
+                            )}
+                          </>
+                        ) : 'Price unavailable'}
                       </SelectItem>
                     ))}
                   </SelectContent>

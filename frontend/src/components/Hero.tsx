@@ -40,13 +40,13 @@ const typingAnimation = `
 `
 
 type AccommodationType = "hotel" | "hostel"
-type BookingType = "hourly" | "fulltime"
+type BookingType = "hourly" | "daily"
 
 export function HeroSection() {
   const [locationPredictions, setLocationPredictions] = useState<string[]>([])
   const [location, setLocation] = useState('')
   const [accommodationType, setAccommodationType] = useState<AccommodationType>("hotel")
-  const [bookingType, setBookingType] = useState<BookingType>("fulltime")
+  const [bookingType, setBookingType] = useState<BookingType>("daily")
   const locationInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -255,7 +255,7 @@ export function HeroSection() {
 
                 {/* Check Out / Time Selection / Months */}
                 <div className={accommodationType === "hostel" ? "md:col-span-1" : ""}>
-                  {accommodationType === "hotel" && bookingType === "fulltime" && (
+                  {accommodationType === "hotel" && bookingType === "daily" && (
                     <>
                       <label className="text-xs text-gray-500 mb-1 block">Check out</label>
                     <DatePicker onChange={handleCheckOutDateChange} />
@@ -315,13 +315,13 @@ export function HeroSection() {
                   <div className="flex items-center space-x-2">
                     <input
                       type="radio"
-                      id="fulltime"
+                      id="daily"
                       name="booking-type"
-                      checked={bookingType === "fulltime"}
-                      onChange={() => setBookingType("fulltime")}
+                      checked={bookingType === "daily"}
+                      onChange={() => setBookingType("daily")}
                       className="w-4 h-4 text-black border-gray-300 focus:ring-black"
                     />
-                    <label htmlFor="fulltime" className="text-sm font-medium text-red-600">
+                    <label htmlFor="daily" className="text-sm font-medium text-red-600">
                       Fulltime
                     </label>
                   </div>

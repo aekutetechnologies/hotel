@@ -1,32 +1,98 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useCallback, ChangeEvent } from "react"
 import { MapPin, Calendar, Clock, Bed, Users, Minus, Plus, Search } from "lucide-react"
+import { useRouter, useSearchParams } from 'next/navigation'
+import { format } from 'date-fns'
+import { fetchLocation } from '@/lib/api/fetchLocation'
 
 interface SearchFormProps {
   sectionType: "hotels" | "hostels"
 }
 
+// Define the interface for location predictions based on the API response
+interface LocationPrediction {
+  id: number
+  name: string
+  city: string
+  country: string
+}
+
 export function SearchForm({ sectionType }: SearchFormProps) {
+  const [locationPredictions, setLocationPredictions] = useState<LocationPrediction[]>([])
   const [location, setLocation] = useState("")
   const [checkIn, setCheckIn] = useState("")
   const [checkOut, setCheckOut] = useState("")
   const [checkInTime, setCheckInTime] = useState("")
   const [checkOutTime, setCheckOutTime] = useState("")
   const [rooms, setRooms] = useState(1)
-  const [guests, setGuests] = useState("1")
+  const [guests, setGuests] = useState(1)
   const [bookingType, setBookingType] = useState<"day" | "hour">("day")
   const [months, setMonths] = useState(1)
+  const locationInputRef = useRef<HTMLInputElement>(null)
+  const router = useRouter()
+  const searchParams = useSearchParams()
 
   const incrementRooms = () => setRooms((prev) => prev + 1)
   const decrementRooms = () => setRooms((prev) => (prev > 1 ? prev - 1 : 1))
   const incrementMonths = () => setMonths((prev) => prev + 1)
   const decrementMonths = () => setMonths((prev) => (prev > 1 ? prev - 1 : 1))
+  const incrementGuests = () => setGuests((prev) => prev + 1)
+  const decrementGuests = () => setGuests((prev) => (prev > 1 ? prev - 1 : 1))
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    // Implement search functionality here
-    console.log("Search submitted")
+    
+    if (!location) {
+      alert("Please enter a location")
+      return
+    }
+
+    const params = new URLSearchParams()
+    params.set('location', location)
+    params.set('propertyType', sectionType === "hotels" ? "hotel" : "hostel")
+    params.set('bookingType', bookingType === "day" ? "daily" : "hourly")
+
+    if (checkIn) params.set('checkInDate', checkIn)
+    if (checkOut && bookingType === "day") params.set('checkOutDate', checkOut)
+    
+    if (bookingType === "hour") {
+      if (checkInTime) params.set('checkInTime', checkInTime)
+      if (checkOutTime) params.set('checkOutTime', checkOutTime)
+    }
+    
+    if (sectionType === "hotels") {
+      params.set('rooms', rooms.toString())
+    } else {
+      params.set('months', months.toString())
+    }
+    
+    params.set('guests', guests.toString())
+
+    router.push(`/search?${params.toString()}`)
+  }
+
+  const handleLocationInputChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value
+    setLocation(query)
+
+    if (query.length > 2) {
+      try {
+        const predictions = await fetchLocation(query)
+        setLocationPredictions(predictions)
+      } catch (error) {
+        console.error("Error fetching location predictions:", error)
+        setLocationPredictions([])
+      }
+    } else {
+      setLocationPredictions([])
+    }
+  }
+
+  const handleLocationSelect = (selectedLocation: LocationPrediction) => {
+    setLocation(selectedLocation.name)
+    setLocationPredictions([])
+    locationInputRef.current?.blur()
   }
 
   return (
@@ -38,18 +104,32 @@ export function SearchForm({ sectionType }: SearchFormProps) {
         {/* Location */}
         <div className="flex items-center flex-1 min-w-full md:min-w-[200px] p-2 border-b md:border-b-0 md:border-r border-gray-200">
           <MapPin className="text-gray-400 mr-2 flex-shrink-0" size={20} />
-          <div className="flex flex-col flex-grow">
+          <div className="flex flex-col flex-grow relative">
             <label htmlFor="location" className="text-xs text-gray-500 font-medium">
               Location
             </label>
             <input
               id="location"
+              ref={locationInputRef}
               type="text"
               placeholder="Which city do you prefer?"
               className="outline-none text-sm w-full"
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
+              onChange={handleLocationInputChange}
             />
+            {locationPredictions.length > 0 && (
+              <ul className="absolute z-10 w-full mt-6 bg-white border border-gray-300 rounded-md shadow-lg">
+                {locationPredictions.map((prediction) => (
+                  <li
+                    key={prediction.id}
+                    className="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm"
+                    onClick={() => handleLocationSelect(prediction)}
+                  >
+                    {prediction.name}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
 
@@ -68,7 +148,12 @@ export function SearchForm({ sectionType }: SearchFormProps) {
               value={checkIn}
               onChange={(e) => setCheckIn(e.target.value)}
               onFocus={(e) => ((e.target as HTMLInputElement).type = "date")}
-              onBlur={(e) => ((e.target as HTMLInputElement).type = "text")}
+              onBlur={(e) => {
+                const input = e.target as HTMLInputElement
+                if (!input.value) {
+                  input.type = "text"
+                }
+              }}
             />
           </div>
         </div>
@@ -106,7 +191,12 @@ export function SearchForm({ sectionType }: SearchFormProps) {
                     value={checkOut}
                     onChange={(e) => setCheckOut(e.target.value)}
                     onFocus={(e) => ((e.target as HTMLInputElement).type = "date")}
-                    onBlur={(e) => ((e.target as HTMLInputElement).type = "text")}
+                    onBlur={(e) => {
+                      const input = e.target as HTMLInputElement
+                      if (!input.value) {
+                        input.type = "text"
+                      }
+                    }}
                   />
                 </div>
               </div>
@@ -191,7 +281,7 @@ export function SearchForm({ sectionType }: SearchFormProps) {
               <button
                 type="button"
                 className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center"
-                onClick={() => setGuests((prev) => (Number(prev) > 1 ? String(Number(prev) - 1) : "1"))}
+                onClick={decrementGuests}
               >
                 <Minus size={14} />
               </button>
@@ -199,7 +289,7 @@ export function SearchForm({ sectionType }: SearchFormProps) {
               <button
                 type="button"
                 className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center"
-                onClick={() => setGuests((prev) => String(Number(prev) + 1))}
+                onClick={incrementGuests}
               >
                 <Plus size={14} />
               </button>

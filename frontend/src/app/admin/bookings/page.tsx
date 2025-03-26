@@ -45,9 +45,9 @@ export interface Document {
 }
 
 export interface Booking {
-  property: number;
+  property: { id: number; name: string } | number;
   room: number;
-  user: number;
+  user: { id: number; name: string } | number;
   checkin_date: string;
   checkout_date: string;
   status: string;
@@ -56,6 +56,26 @@ export interface Booking {
   payment_type: string;
   documents?: Document[];
   id: number;
+  number_of_guests?: number;
+  number_of_rooms?: number;
+  discount?: number;
+}
+
+// Interface for the book property API params
+interface BookPropertyParams {
+  property?: number;
+  room: number;
+  user?: number | string | null;
+  checkin_date: string;
+  checkout_date: string;
+  status: string;
+  discount: number;
+  price: number;
+  booking_type: string;
+  payment_type: string;
+  number_of_guests: number;
+  number_of_rooms: number;
+  token?: string;
 }
 
 export default function Bookings() {
@@ -79,9 +99,9 @@ export default function Bookings() {
       const fetchedBookings = await fetchBookings()
       setBookings(fetchedBookings)
       const fetchedProperties = await fetchProperties()
-    setProperties(fetchedProperties)
-    const fetchedUsers = await fetchUsers()
-    setUsers(fetchedUsers)
+      setProperties(fetchedProperties)
+      const fetchedUsers = await fetchUsers()
+      setUsers(fetchedUsers)
     } catch (error: any) {
       console.error('Error fetching bookings:', error)
       toast.error(`Failed to fetch bookings: ${error.message}`)
@@ -113,17 +133,22 @@ export default function Bookings() {
     }
   }, [isDocumentListModalOpen, selectedBooking, fetchDocuments])
 
-  const handleAddBooking = async (newBooking: Omit<Booking, 'id'>) => {
-    console.log('Adding new booking:', newBooking)
+  const handleAddBooking = async (bookingData: Omit<BookPropertyParams, 'token'>) => {
+    console.log('Adding new booking:', bookingData)
     const token = localStorage.getItem('accessToken')
     if (!token) {
       alert('Please log in to book.')
       return
     }
-    const response = await bookProperty(newBooking)
-    console.log('Booking Response:', response)
-    setIsAddModalOpen(false)
+    
     try {
+      const response = await bookProperty({
+        ...bookingData,
+        token,
+        user: bookingData.user ? String(bookingData.user) : null
+      })
+      console.log('Booking Response:', response)
+      setIsAddModalOpen(false)
       toast.success('Booking added successfully')
       await getBookingsData()
     } catch (error: any) {
@@ -187,7 +212,7 @@ export default function Bookings() {
   }
 
   return (
-    <div>
+    <div className="container mx-auto px-4 py-6 max-w-7xl">
       <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-2xl font-bold">Bookings</h1>
         <Button className="bg-[#B11E43] hover:bg-[#8f1836]" onClick={() => setIsAddModalOpen(true)}>
@@ -221,15 +246,19 @@ export default function Bookings() {
             ) : (
               bookings.map((booking) => (
                 <TableRow key={booking.id}>
-                  <TableCell className="font-medium">{booking.property.name}</TableCell>
-                  <TableCell>{booking.user.name}</TableCell>
+                  <TableCell className="font-medium">
+                    {typeof booking.property === 'object' ? booking.property.name : ''}
+                  </TableCell>
+                  <TableCell>
+                    {typeof booking.user === 'object' ? booking.user.name : ''}
+                  </TableCell>
                   <TableCell>{booking.checkin_date}</TableCell>
                   <TableCell>{booking.checkout_date}</TableCell>
                   <TableCell>
                     <select
                       value={booking.status}
                       onChange={(e) => handleStatusChange(booking.id, e.target.value as any)}
-                      className="border rounded px-2 py-1"
+                      className="border rounded px-2 py-1 w-full max-w-[120px]"
                     >
                       <option value="confirmed">Confirmed</option>
                       <option value="pending">Pending</option>

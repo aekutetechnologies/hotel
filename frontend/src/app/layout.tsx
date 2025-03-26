@@ -3,6 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Rock_Salt } from 'next/font/google'
 import { Poppins } from 'next/font/google'
+import { PermissionProvider } from "@/providers/PermissionProvider";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -56,7 +59,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${rockSalt.variable} ${poppins.variable} antialiased font-sans`}
         suppressHydrationWarning={true}
       >
-        {children}
+        <PermissionProvider>
+          {children}
+          <ToastContainer position="top-right" autoClose={5000} />
+        </PermissionProvider>
       </body>
     </html>
   );

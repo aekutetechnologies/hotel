@@ -15,7 +15,7 @@ export default function EditProperty() {
   useEffect(() => {
     async function loadProperty() {
       try {
-        const data = await fetchProperty(propertyId)
+        const data = await fetchProperty(propertyId.toString())
         setPropertyData(data)
       } catch (error) {
         console.error('Error fetching property:', error)

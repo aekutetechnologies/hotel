@@ -12,7 +12,7 @@ export default function SearchPage() {
   const searchParams = useSearchParams()
   const location = searchParams.get('location') || ''
   const propertyType = searchParams.get('propertyType') || ''
-  const bookingType = searchParams.get('bookingType') || 'fulltime'
+  const bookingType = searchParams.get('bookingType') || 'daily'
   const checkInDate = searchParams.get('checkInDate') || ''
   const checkOutDate = searchParams.get('checkOutDate') || ''
   const checkInTime = searchParams.get('checkInTime') || ''

@@ -15,10 +15,13 @@ def booking_list(request):
         serializer = BookingViewSerializer(bookings, many=True)
         return Response(serializer.data)
     elif request.method == 'POST':
+        print(request.data)
         serializer = BookingSerializer(data=request.data)
+        print(serializer.is_valid())
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        print(serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET', 'PUT', 'DELETE'])

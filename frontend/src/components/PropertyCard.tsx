@@ -32,7 +32,7 @@ const amenityIcons = {
 
 export function PropertyCard({ property, searchParams }: PropertyCardProps) {
   const isHostel = property.property_type === 'hostel'
-  const bookingType = searchParams.get('bookingType') || 'fulltime'
+  const bookingType = searchParams.get('bookingType') || 'daily'
   const originalPrice = Math.min(...property.rooms.map(room =>
         bookingType === 'hourly' ? parseFloat(room.hourly_rate) : parseFloat(room.daily_rate)
     ));

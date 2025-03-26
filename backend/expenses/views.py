@@ -23,8 +23,8 @@ def expense(request):
     elif request.method == 'POST':
         serializer = ExpenseSerializer(data=request.data)
         if serializer.is_valid():
-            property_id = request.data.get('property_id')
-            category_id = request.data.get('category_id')
+            property_id = request.data.get('property')
+            category_id = request.data.get('category')
             try:
                 # Assuming property_id and category_id are passed in the request data
                 property_instance = get_object_or_404(Property, id=property_id)

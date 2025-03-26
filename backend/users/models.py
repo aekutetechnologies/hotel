@@ -101,4 +101,4 @@ class UserHsPermission(models.Model):
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
-        return f"{self.user.mobile} - {self.permission.name}"
+        return f"{self.user.mobile} - {self.permission_group.name}"

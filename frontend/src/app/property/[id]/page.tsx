@@ -21,6 +21,7 @@ interface PropertyDetailsProps {
   property: Property;
 }
 
+
 export default function PropertyDetails() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [selectedRoom, setSelectedRoom] = useState<any>(null)
@@ -30,7 +31,7 @@ export default function PropertyDetails() {
   const params = useParams()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const bookingType = searchParams.get('bookingType') || 'fulltime'
+  const bookingType = searchParams.get('bookingType') || 'daily'
   const propertyId = Number(params.id)
   const checkInDateParam = searchParams.get('checkInDate')
   const checkOutDateParam = searchParams.get('checkOutDate')

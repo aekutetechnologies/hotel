@@ -13,7 +13,7 @@ import { format } from "date-fns"
 import { CalendarIcon, Info, AlertCircle, CheckCircle2 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { HotelRoom, HostelRoom } from '@/types/property'
+import { Room } from '@/types/property'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
 import { Princess_Sofia } from "next/font/google"
@@ -39,7 +39,7 @@ interface BookingCardProps {
   checkOutDate: Date | undefined
   checkInTime: string | null
   checkOutTime: string | null
-  selectedRoom: HotelRoom | HostelRoom | null
+  selectedRoom: Room | null
   selectedGuests: number | null
   selectedRooms: number | null
   searchParams: ReturnType<typeof useSearchParams>
@@ -64,6 +64,9 @@ export function BookingCard({
   const [guests, setGuests] = useState(initialSelectedGuests|| 1)
   const [rooms, setRooms] = useState(initialSelectedRooms|| 1)
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null)
+  
+  // Check if this is a hostel property
+  const isHostel = property?.property_type === 'hostel'
 
   const hours = Array.from({ length: 24 }, (_, i) => i)
 
@@ -72,40 +75,60 @@ export function BookingCard({
   }
 
   const calculatePrice = () => {
-    console.log("initialSelectedRoom", initialSelectedRoom)
     if (!initialSelectedRoom) return 0
 
-    console.log("room", initialSelectedRoom)
-
     const room = initialSelectedRoom
-    const basePrice = bookingType === 'hourly'
-      ? parseFloat(room.hourly_rate)
-      : parseFloat(room.daily_rate)
+    
+    // Check if we should use monthly rate for hostels
+    let basePrice = 0
+    
+    if (isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
+      // Use monthly rate for hostels
+      basePrice = parseFloat(room.monthly_rate)
+      
+      // For monthly booking, base price is already per month
+      return basePrice * rooms
+    } else {
+      // Use hourly or daily rate based on bookingType
+      basePrice = bookingType === 'hourly'
+        ? parseFloat(room.hourly_rate)
+        : parseFloat(room.daily_rate)
+      
+      let duration = 0
 
-    let duration = 0
+      if (bookingType === 'hourly' && checkInTime && checkOutTime && date) {
+        const startTime = new Date(date)
+        const endTime = new Date(date)
+        startTime.setHours(parseInt(checkInTime, 10), 0, 0, 0)
+        endTime.setHours(parseInt(checkOutTime, 10), 0, 0, 0)
+        duration = (endTime.getTime() - startTime.getTime()) / (1000 * 3600)
+      } else if (date && checkOut) {
+        duration = (checkOut.getTime() - date.getTime()) / (1000 * 3600 * 24)
+      }
 
-    if (bookingType === 'hourly' && checkInTime && checkOutTime && date) {
-      const startTime = new Date(date)
-      const endTime = new Date(date)
-      startTime.setHours(parseInt(checkInTime, 10), 0, 0, 0)
-      endTime.setHours(parseInt(checkOutTime, 10), 0, 0, 0)
-      duration = (endTime.getTime() - startTime.getTime()) / (1000 * 3600)
-    } else if (date && checkOut) {
-      duration = (checkOut.getTime() - date.getTime()) / (1000 * 3600 * 24)
+      return basePrice * duration * rooms
     }
-
-    const price_with_discount = basePrice * duration * rooms
-    const discount = price_with_discount * (initialSelectedRoom?.discount || 0) / 100
-    const price_after_discount = price_with_discount - discount
-
-    return price_after_discount
   }
 
   const totalPrice = calculatePrice()
   const taxes = totalPrice * 0.18 // 18% GST
-  const discountedPrice = totalPrice - (totalPrice * (initialSelectedRoom?.discount || 0) / 100)
+  
+  // Safely handle discount as string or number
+  const discountValue = initialSelectedRoom?.discount ? parseFloat(String(initialSelectedRoom.discount)) : 0
+  const discountedPrice = totalPrice - (totalPrice * discountValue / 100)
+  
+  // Safely handle offer discount
   const offerDiscount = selectedOffer ? (totalPrice * parseFloat(selectedOffer.offer.discount_percentage)) / 100 : 0
   const finalPrice = discountedPrice - offerDiscount + taxes
+  
+  // Determine the price label based on property type and room
+  const getPriceLabel = () => {
+    if (isHostel && initialSelectedRoom?.monthly_rate && parseFloat(initialSelectedRoom.monthly_rate) > 0) {
+      return "/month";
+    } else {
+      return bookingType === 'hourly' ? "/hour" : "/night";
+    }
+  };
 
   return (
     <Card className="w-[380px] bg-white shadow-lg">
@@ -114,14 +137,15 @@ export function BookingCard({
           <div>
             <div className="flex items-baseline gap-2">
               <span className="text-2xl font-bold">₹{Math.round(finalPrice)}</span>
-              {initialSelectedRoom?.discount > 0 && (
+              <span className="text-sm text-gray-500">{getPriceLabel()}</span>
+              {initialSelectedRoom && initialSelectedRoom.discount && parseFloat(String(initialSelectedRoom.discount)) > 0 && (
                 <>
                   <span className="text-gray-500 line-through">
                     ₹{Math.round(totalPrice)}
-              </span>
+                  </span>
                   <Badge variant="secondary" className="bg-red-50 text-red-600">
                     {initialSelectedRoom.discount}% off
-                </Badge>
+                  </Badge>
                 </>
               )}
             </div>
@@ -249,7 +273,7 @@ export function BookingCard({
           <div className="border rounded-lg p-4 flex justify-between items-center">
             <div>
               <span className="font-medium">
-                {'name' in initialSelectedRoom ? initialSelectedRoom.name : initialSelectedRoom.occupancyType}
+                {initialSelectedRoom.name}
               </span>
               <p className="text-sm text-gray-500">
                 {bookingType === 'hourly' 
@@ -279,8 +303,11 @@ export function BookingCard({
                 Remove
               </Button>
             </div>
-          ) : (
-            <Select onValueChange={(value) => setSelectedOffer(property.offers.find(o => o.offer.code === value) || null)}>
+          ) : property.offers && property.offers.length > 0 ? (
+            <Select onValueChange={(value) => {
+              const offer = property.offers.find((o: any) => o.offer.code === value);
+              setSelectedOffer(offer || null);
+            }}>
               <SelectTrigger>
                 <SelectValue placeholder="Select an offer" />
               </SelectTrigger>
@@ -296,6 +323,10 @@ export function BookingCard({
                 ))}
               </SelectContent>
             </Select>
+          ) : (
+            <div className="p-2 border rounded-md text-gray-500">
+              No offers available
+            </div>
           )}
         </div>
 
@@ -322,14 +353,16 @@ export function BookingCard({
             <span>Total</span>
             <span>₹{Math.round(finalPrice)}</span>
           </div>
-            </div>
+        </div>
       </CardContent>
 
       <CardFooter className="flex flex-col gap-4">
         <Link href={{
           pathname: `/property/${property.id}/book`,
           query: searchParams? Object.fromEntries(searchParams.entries()) : {}
-        }}>
+        }}
+        target="_blank"
+        rel="noopener noreferrer">
           <Button className="w-full bg-[#B11E43] hover:bg-[#8f1836]">
           Book Now
         </Button>

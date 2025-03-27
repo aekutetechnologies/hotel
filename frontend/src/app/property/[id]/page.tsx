@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { Header } from '@/components/Header'
-import { Footer } from '@/components/Footer'
+import Footer from '@/components/Footer'
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Star, MapPin, ChevronLeft, ChevronRight, Wifi, Coffee, Tv, Car, Utensils, Building2, BatteryCharging, Dumbbell, BellRing, ShieldCheck, UserRoundCheck, Beer, Soup, Building, Heater, ChefHat, AirVent } from 'lucide-react'
+import { Star, MapPin, ChevronLeft, ChevronRight, Wifi, Coffee, Tv, Car, Utensils, Building2, BatteryCharging, Dumbbell, BellRing, ShieldCheck, UserRoundCheck, Beer, Soup, Building, Heater, ChefHat, AirVent, ClipboardList, FileCheck } from 'lucide-react'
 import Image from 'next/image'
-import { Property, Review } from '@/types/property'
+import { Property, Room } from '@/types/property'
 import { fetchProperty } from '@/lib/api/fetchProperty'
 import { ReviewSection } from '@/components/ReviewSection'
 import { BookingCard } from '@/components/BookingCard'
@@ -21,10 +21,60 @@ interface PropertyDetailsProps {
   property: Property;
 }
 
+// Add review interface
+interface Review {
+  id: number;
+  user: {
+    name: string;
+  };
+  rating: number;
+  detail: string;
+  created_at: string;
+  images: string[];
+}
+
+// Define custom Amenity interface matching the one used in components
+interface CustomAmenity {
+  id: string | number;
+  name: string;
+}
+
+// Define rule interface to match API response
+interface Rule {
+  id: number;
+  name: string;
+  created_at: string;
+  updated_at: string;
+  is_active: boolean;
+}
+
+// Define documentation interface to match API response
+interface Documentation {
+  id: number;
+  name: string;
+  created_at: string;
+  updated_at: string;
+  is_active: boolean;
+}
+
+// Add reviews to Property interface
+interface ExtendedProperty extends Property {
+  reviews: Review[];
+  rules: Rule[];
+  documentation: Documentation[];
+}
+
+// Extend Room to include all necessary properties
+interface ExtendedRoom extends Room {
+  occupancyType?: string;
+  availableBeds?: number;
+  totalBeds?: number;
+  security?: boolean;
+}
 
 export default function PropertyDetails() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const [selectedRoom, setSelectedRoom] = useState<any>(null)
+  const [selectedRoom, setSelectedRoom] = useState<ExtendedRoom | null>(null)
   const [currentRoomImageIndex, setCurrentRoomImageIndex] = useState(0)
   const [currentRoomImageIndices, setCurrentRoomImageIndices] = useState<{ [key: string]: number }>({});
 
@@ -37,10 +87,10 @@ export default function PropertyDetails() {
   const checkOutDateParam = searchParams.get('checkOutDate')
   const checkInTimeParam = searchParams.get('checkInTime')
   const checkOutTimeParam = searchParams.get('checkOutTime')
-  const selectedGuests = searchParams.get('guests')
-  const selectedRooms = searchParams.get('rooms')
+  const selectedGuests = searchParams.get('guests') ? Number(searchParams.get('guests')) : null
+  const selectedRooms = searchParams.get('rooms') ? Number(searchParams.get('rooms')) : null
 
-  const [property, setProperty] = useState<Property | null>(null)
+  const [property, setProperty] = useState<ExtendedProperty | null>(null)
   const [isGalleryOpen, setIsGalleryOpen] = useState(false)
   const [galleryStartIndex, setGalleryStartIndex] = useState(0)
   const [showGallery, setShowGallery] = useState(false)
@@ -51,14 +101,30 @@ export default function PropertyDetails() {
   const [checkOutTime, setCheckOutTime] = useState<string | null>(checkOutTimeParam)
 
   useEffect(() => {
-    fetchProperty(propertyId.toString()).then((data) => {
-      console.log("data", data)
-      setProperty(data)
-      if (data && data.rooms.length > 0) {
-        setSelectedRoom(data.rooms[0])
-      }
-    })
-  }, [propertyId])
+    console.log("Fetching property with ID:", propertyId.toString());
+    
+    fetchProperty(propertyId.toString())
+      .then((data) => {
+        console.log("Property data loaded:", data);
+        setProperty(data as ExtendedProperty);
+        
+        // Initialize room image indices
+        if (data && data.rooms && data.rooms.length > 0) {
+          // Create an initial state for the room image indices
+          const initialIndices: { [key: string]: number } = {};
+          data.rooms.forEach((room: any) => {
+            initialIndices[room.id.toString()] = 0;
+          });
+          setCurrentRoomImageIndices(initialIndices);
+          
+          // Select the first room
+          setSelectedRoom(data.rooms[0] as ExtendedRoom);
+        }
+      })
+      .catch(error => {
+        console.error("Error fetching property:", error);
+      });
+  }, [propertyId]);
 
   if (!property) {
     return <div>Loading...</div>
@@ -99,7 +165,7 @@ export default function PropertyDetails() {
   const nextRoomImage = (roomId: string) => {
     setCurrentRoomImageIndices((prev) => ({
       ...prev,
-      [roomId]: (prev[roomId] || 0) + 1 % (property.rooms.find(room => room.id === roomId)?.images.length || 1),
+      [roomId]: (prev[roomId] || 0) + 1 % (property.rooms.find(room => room.id.toString() === roomId)?.images.length || 1),
     }));
   };
 
@@ -107,9 +173,11 @@ export default function PropertyDetails() {
   const prevRoomImage = (roomId: string) => {
     setCurrentRoomImageIndices((prev) => ({
       ...prev,
-      [roomId]: (prev[roomId] || 0) - 1 < 0 ? (property.rooms.find(room => room.id === roomId)?.images.length || 1) - 1 : prev[roomId] - 1,
+      [roomId]: (prev[roomId] || 0) - 1 < 0 ? (property.rooms.find(room => room.id.toString() === roomId)?.images.length || 1) - 1 : prev[roomId] - 1,
     }));
   };
+
+  const isHostel = property.property_type === 'hostel'
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -120,22 +188,30 @@ export default function PropertyDetails() {
           <h1 className="text-2xl sm:text-3xl font-bold mb-2">{property.name}</h1>
           <p className="text-gray-600 flex items-center gap-2 mb-4">
             <MapPin className="h-5 w-5" />
-            {property.location}
+            {property.area && property.city ? `${property.area}, ${property.city.name}` : property.location}
           </p>
           <div className="flex flex-wrap items-center gap-4">
             <Badge variant="outline" className="flex items-center gap-2">
               <Building2 className="h-4 w-4" />
-              Company-Serviced
+              {property.property_type === 'hotel' ? 'Hotel' : property.property_type === 'hostel' ? 'Hostel' : 'Property'}
             </Badge>
-            <Badge variant="outline" className="bg-black text-white">
-              WIZARD MEMBER
-            </Badge>
+            {property.discount && (
+              <Badge variant="outline" className="bg-green-50 text-green-700">
+                {property.discount}% OFF
+              </Badge>
+            )}
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="bg-green-50">
                 <Star className="h-4 w-4 text-green-600 fill-current mr-1" />
-                4.4
+                {property.reviews && property.reviews.length > 0 
+                  ? (property.reviews.reduce((sum, review) => sum + review.rating, 0) / property.reviews.length).toFixed(1) 
+                  : 'New'}
               </Badge>
-              <span className="text-sm text-gray-600">Delightful experience</span>
+              <span className="text-sm text-gray-600">
+                {property.reviews && property.reviews.length > 0 
+                  ? `${property.reviews.length} ${property.reviews.length === 1 ? 'review' : 'reviews'}` 
+                  : 'No reviews yet'}
+              </span>
             </div>
           </div>
         </div>
@@ -146,45 +222,51 @@ export default function PropertyDetails() {
           <div className="lg:col-span-2 space-y-8">
             {/* Image Gallery */}
             <div className="relative">
-              <div
-                className="aspect-video relative overflow-hidden rounded-lg cursor-pointer"
-                onClick={() => openGalleryModal(currentImageIndex)}
-              >
+              {/* Main image */}
+              <div className="relative w-full h-64 sm:h-80 md:h-96 rounded-t-xl overflow-hidden">
                 <Image
-                  src={property.images[currentImageIndex].image}
-                  alt={`View ${currentImageIndex + 1}`}
-                  fill={true}
+                  src={property.images[currentImageIndex]?.image || '/placeholder-property.jpg'}
+                  alt={`${property.name} - featured image`}
+                  fill
                   className="object-cover"
+                  priority
                 />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white"
-                  onClick={prevImage}
-                >
-                  <ChevronLeft className="h-6 w-6" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white"
-                  onClick={nextImage}
-                >
-                  <ChevronRight className="h-6 w-6" />
-                </Button>
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/50" />
+                <div className="absolute bottom-4 right-4 flex space-x-2">
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    onClick={() => setCurrentImageIndex(prev => (prev > 0 ? prev - 1 : property.images.length - 1))}
+                    className="h-8 w-8 rounded-full"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    onClick={() => setCurrentImageIndex(prev => (prev < property.images.length - 1 ? prev + 1 : 0))}
+                    className="h-8 w-8 rounded-full"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-              <div className="flex gap-2 mt-2 overflow-x-auto">
+              
+              {/* Image thumbnails */}
+              <div className="flex gap-2 mt-2 overflow-x-auto pb-2">
                 {property.images.map((image, index) => (
                   <button
-                    key={index}
-                    onClick={() => openGalleryModal(index)}
-                    className={`relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden ${index === currentImageIndex ? 'ring-2 ring-primary' : ''
-                      }`}
+                    key={`image-thumbnail-${image.id || index}`}
+                    className={`relative w-20 h-16 rounded-md overflow-hidden transition-all ${
+                      currentImageIndex === index ? 'ring-2 ring-primary' : 'opacity-80'
+                    }`}
+                    onClick={() => setCurrentImageIndex(index)}
                   >
-                    <img
+                    <Image
                       src={image.image}
-                      alt={`Thumbnail ${index + 1}`}
-                      className="object-cover w-full h-full"
+                      alt={`${property.name} - image ${index + 1}`}
+                      fill
+                      className="object-cover"
                     />
                   </button>
                 ))}
@@ -194,31 +276,41 @@ export default function PropertyDetails() {
             {/* Amenities */}
             <section>
               <h2 className="text-2xl font-semibold mb-4">Amenities</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {property.amenities.map((amenity) => {
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-8">
+                {property.amenities.map((amenity, index) => {
                   const amenityIcons: { [key: string]: React.ReactNode } = {
                     "Security": <ShieldCheck className="h-5 w-5" />,
                     "Caretaker": <UserRoundCheck className="h-5 w-5" />,
                     "Reception": <BellRing className="h-5 w-5" />,
-                    "Bar": < Beer className="h-5 w-5" />, // Assuming "Bar" maps to Cocktail icon
+                    "Bar": <Beer className="h-5 w-5" />,
                     "Gym": <Dumbbell className="h-5 w-5" />,
                     "In-house Restaurant": <Soup className="h-5 w-5" />,
-                    "Elevator": < Building className="h-5 w-5" />,
+                    "Elevator": <Building className="h-5 w-5" />,
                     "Power backup": <BatteryCharging className="h-5 w-5" />,
-                    "Geyser": <Heater className="h-5 w-5" />, // Assuming "Geyser" maps to HotTub icon
+                    "Geyser": <Heater className="h-5 w-5" />,
                     "Kitchen": <ChefHat className="h-5 w-5" />,
                     "Free Wifi": <Wifi className="h-5 w-5" />,
-                    "AC": < AirVent className="h-5 w-5" />, // Assuming "AC" maps to кондиционер icon
-                    "TV": <Tv className="h-5 w-5" />, // Keeping TV and Wifi as they were already present
-                    "Coffee": <Coffee className="h-5 w-5" />, // Keeping Coffee as it was already present
-                    "Utensils": <Utensils className="h-5 w-5" />, // Keeping Utensils as it was already present
+                    "AC": <AirVent className="h-5 w-5" />,
+                    "TV": <Tv className="h-5 w-5" />,
+                    "Coffee": <Coffee className="h-5 w-5" />,
+                    "Utensils": <Utensils className="h-5 w-5" />,
                   }
-                  const IconComponent = amenityIcons[(amenity.name as string)] || null // Default to null if no icon found
+                  const IconComponent = amenityIcons[(amenity.name as string)] || null
+
+                  // Create a guaranteed unique key
+                  const amenityKey = amenity.id 
+                    ? `amenity-id-${amenity.id}` 
+                    : amenity.name 
+                      ? `amenity-name-${amenity.name}` 
+                      : `amenity-index-${index}`;
 
                   return (
-                    <div key={amenity.id} className="flex items-center gap-2 p-4 border rounded-lg">
+                    <div 
+                      key={amenityKey} 
+                      className="flex items-center gap-2 p-4 border rounded-lg"
+                    >
                       {IconComponent}
-                      <span>{amenity.name}</span>
+                      <span>{amenity.name || 'Unknown amenity'}</span>
                     </div>
                   )
                 })}
@@ -230,7 +322,7 @@ export default function PropertyDetails() {
               <h2 className="text-2xl font-semibold mb-4">Available Rooms</h2>
               <div className="space-y-4">
                 {property.rooms.map((room) => (
-                  <div key={'name' in room ? room.name : room.occupancyType} className="border rounded-lg p-4">
+                  <div key={room.id} className="border rounded-lg p-4">
                     <div className="flex space-x-4">
                       {/* Image Slider (Left Side) */}
                       <div className="w-1/3 relative">
@@ -248,7 +340,7 @@ export default function PropertyDetails() {
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8 rounded-full bg-white/80 hover:bg-white"
-                                onClick={() => prevRoomImage(room.id)}
+                                onClick={() => prevRoomImage(room.id.toString())}
                                 disabled={(currentRoomImageIndices[room.id] || 0) === 0}
                               >
                                 <ChevronLeft className="h-4 w-4" />
@@ -257,7 +349,7 @@ export default function PropertyDetails() {
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8 rounded-full bg-white/80 hover:bg-white"
-                                onClick={() => nextRoomImage(room.id)}
+                                onClick={() => nextRoomImage(room.id.toString())}
                                 disabled={(currentRoomImageIndices[room.id] || 0) === room.images.length - 1}
                               >
                                 <ChevronRight className="h-4 w-4" />
@@ -276,8 +368,8 @@ export default function PropertyDetails() {
                         <div className="flex justify-between h-full flex-col">
                           <div className="flex justify-between">
                             <div>
-                              <h3 className="text-xl font-semibold mb-2">{'name' in room ? room.name : room.occupancyType}</h3>
-                              <p className="text-gray-600 mb-2">{'size' in room ? `Room size: ${room.size} sq. ft` : `Available beds: ${room.availableBeds}/${room.totalBeds} sq. ft`}</p>
+                              <h3 className="text-xl font-semibold mb-2">{'name' in room ? room.name : (room as ExtendedRoom).occupancyType}</h3>
+                              <p className="text-gray-600 mb-2">{'size' in room ? `Room size: ${room.size} sq. ft` : `Available beds: ${(room as ExtendedRoom).availableBeds}/${(room as ExtendedRoom).totalBeds} sq. ft`}</p>
                             </div>
                             <div className="flex flex-col items-end gap-1 text-sm text-gray-700">
                               {room.bed_type && <div><span className="text-black-900 font-semibold">Bed Type:</span> <span className="text-gray-700">{room.bed_type}</span></div>}
@@ -286,50 +378,75 @@ export default function PropertyDetails() {
                             </div>
                           </div>
                           <div className="flex gap-2 mb-2">
-                            {room.amenities.map((amenity, index) => {
+                            {room.amenities && room.amenities.map((amenity: CustomAmenity, index: number) => {
                               const amenityIcons: { [key: string]: React.ReactNode } = {
                                 "Security": <ShieldCheck className="h-5 w-5" />,
                                 "Caretaker": <UserRoundCheck className="h-5 w-5" />,
                                 "Reception": <BellRing className="h-5 w-5" />,
-                                "Bar": < Beer className="h-5 w-5" />,
+                                "Bar": <Beer className="h-5 w-5" />,
                                 "Gym": <Dumbbell className="h-5 w-5" />,
                                 "In-house Restaurant": <Soup className="h-5 w-5" />,
-                                "Elevator": < Building className="h-5 w-5" />,
+                                "Elevator": <Building className="h-5 w-5" />,
                                 "Power backup": <BatteryCharging className="h-5 w-5" />,
                                 "Geyser": <Heater className="h-5 w-5" />,
                                 "Kitchen": <ChefHat className="h-5 w-5" />,
                                 "Free Wifi": <Wifi className="h-5 w-5" />,
-                                "AC": < AirVent className="h-5 w-5" />,
+                                "AC": <AirVent className="h-5 w-5" />,
                                 "TV": <Tv className="h-5 w-5" />,
                                 "Coffee": <Coffee className="h-5 w-5" />,
                                 "Utensils": <Utensils className="h-5 w-5" />,
                               }
-                              const IconComponent = amenityIcons[(amenity.name as string)] || null
+                              const IconComponent = amenityIcons[amenity.name] || null
+
+                              // Create a guaranteed unique key
+                              const roomAmenityKey = amenity.id 
+                                ? `room-${room.id}-amenity-id-${amenity.id}` 
+                                : amenity.name 
+                                  ? `room-${room.id}-amenity-name-${amenity.name}` 
+                                  : `room-${room.id}-amenity-index-${index}`;
 
                               return (
-                                <Badge key={index} variant="outline" className="flex items-center gap-1">
+                                <Badge 
+                                  key={roomAmenityKey}
+                                  variant="outline" 
+                                  className="flex items-center gap-1"
+                                >
                                   {IconComponent}
-                                  {amenity.name}
+                                  {amenity.name || 'Unknown amenity'}
                                 </Badge>
                               )
                             })}
                           </div>
                           <div className="mt-4">
                             <div className="flex flex-col items-end gap-1 text-sm text-gray-700">
-                              {room.security_deposit !== undefined && <div>Security Deposit: {room.security ? 'Yes' : 'No'}</div>}
+                              {room.security_deposit !== undefined && <div>Security Deposit: {(room as ExtendedRoom).security ? 'Yes' : 'No'}</div>}
                             </div>
                           </div>
                           <div className="text-right mb-4">
                             <div className="text-2xl font-bold text-[#B11E43]">
-                              ₹{(bookingType === 'hourly' ? parseFloat(room.hourly_rate) : parseFloat(room.daily_rate)) * (1 - (parseFloat(room.discount || '0') / 100)) }
+                              ₹{isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0 
+                                ? parseFloat(room.monthly_rate) * (1 - (parseFloat(String(room.discount || '0')) / 100))
+                                : (bookingType === 'hourly' ? parseFloat(room.hourly_rate) : parseFloat(room.daily_rate)) * (1 - (parseFloat(String(room.discount || '0')) / 100)) 
+                              }
                             </div>
-                            <div className="text-gray-500 line-through">₹{bookingType === 'hourly' ? room.hourly_rate : room.daily_rate}</div>
+                            <div className="text-gray-500 line-through">
+                              ₹{isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0 
+                                ? room.monthly_rate 
+                                : bookingType === 'hourly' ? room.hourly_rate : room.daily_rate
+                              }
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0 
+                                ? 'per month' 
+                                : bookingType === 'hourly' ? 'per hour' : 'per night'
+                              }
+                            </div>
                             <Button
-                              onClick={() => setSelectedRoom(room)}
-                              variant={selectedRoom === room ? "default" : "outline"}
-                              className={selectedRoom === room ? "bg-[#B11E43] hover:bg-[#8f1836]" : ""}
+                              onClick={() => setSelectedRoom(room as ExtendedRoom)}
+                              variant={selectedRoom?.id === room.id ? "default" : "outline"}
+                              className={selectedRoom?.id === room.id ? "bg-[#B11E43] hover:bg-[#8f1836]" : ""}
                             >
-                              {selectedRoom === room ? "Selected" : "Select"}
+                              {selectedRoom?.id === room.id ? "Selected" : "Select"}
                             </Button>
                           </div>
                         </div>
@@ -360,30 +477,35 @@ export default function PropertyDetails() {
             {/* Reviews */}
             <section>
               <h2 className="text-2xl font-semibold mb-4">Ratings and reviews</h2>
-              <ReviewSection reviews={property.reviews.slice(0, 2)} />
+              <ReviewSection reviews={property.reviews || []} />
             </section>
 
             {/* Policies */}
             <section>
               <h2 className="text-2xl font-semibold mb-4">House Rules & Policies</h2>
               <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {property.rules && property.rules.length > 0 && (
-                    <div className="border rounded-lg p-4">
-                      <h3 className="font-semibold mb-2">Check-in/Check-out</h3>
-                      {property.rules.map((rule, index) => (
-                        <li key={rule.id}>{rule.name}</li>
-                      ))}
-                    </div>
-                  )}
-                  {property.documentation && property.documentation.length > 0 && (
-                    <div className="border rounded-lg p-4">
-                      <h3 className="font-semibold mb-2">Documentation</h3>
-                      {property.documentation.map((doc, index) => (
-                        <li key={doc.id}>{doc.name}</li>
-                      ))}
-                    </div>
-                  )}
+                <div className="p-6 bg-white shadow-lg rounded-xl">
+                  <h3 className="text-xl font-semibold mb-4">Rules & Policies</h3>
+                  <ul className="space-y-2">
+                    {property.rules.map((rule, index) => (
+                      <li key={rule.id || `rule-${index}`} className="flex items-start">
+                        <ClipboardList className="h-5 w-5 mr-2 text-muted-foreground" />
+                        <span>{rule.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                
+                <div className="p-6 bg-white shadow-lg rounded-xl">
+                  <h3 className="text-xl font-semibold mb-4">Documentation Required</h3>
+                  <ul className="space-y-2">
+                    {property.documentation.map((doc, index) => (
+                      <li key={doc.id || `doc-${index}`} className="flex items-start">
+                        <FileCheck className="h-5 w-5 mr-2 text-muted-foreground" />
+                        <span>{doc.name}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
             </section>
@@ -398,7 +520,7 @@ export default function PropertyDetails() {
               checkOutDate={checkOutDate}
               checkInTime={checkInTime}
               checkOutTime={checkOutTime}
-              selectedRoom={selectedRoom}
+              selectedRoom={selectedRoom as any}
               selectedGuests={selectedGuests}
               selectedRooms={selectedRooms}
               searchParams={searchParams}
@@ -406,11 +528,14 @@ export default function PropertyDetails() {
           </div>
         </div>
       </main>
-      <Footer />
+      <Footer sectionType="hotels" />
 
       {showGallery && (
         <GalleryModal
-          images={property.images.map(img => img.image)}
+          images={property.images.map(img => ({
+            id: img.id,
+            image: img.image
+          }))}
           initialIndex={currentImageIndex}
           onClose={closeGalleryModal}
         />

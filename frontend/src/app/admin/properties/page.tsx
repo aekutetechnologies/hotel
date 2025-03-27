@@ -104,7 +104,7 @@ export default function Properties() {
         <PermissionGuard permission="property:create">
           <Button className="bg-[#B11E43] hover:bg-[#8f1836]">
             <Plus className="mr-2 h-4 w-4" />
-            <Link href="/admin/properties/create">Add New Property</Link>
+            <Link href="/admin/properties/new">Add New Property</Link>
           </Button>
         </PermissionGuard>
       </div>
@@ -158,7 +158,7 @@ export default function Properties() {
           <p className="text-lg text-gray-600 mb-4">No properties found</p>
           <PermissionGuard permission="property:create">
             <Button className="bg-[#B11E43] hover:bg-[#8f1836]">
-              <Link href="/admin/properties/create">Add your first property</Link>
+              <Link href="/admin/properties/new">Add your first property</Link>
             </Button>
           </PermissionGuard>
         </div>

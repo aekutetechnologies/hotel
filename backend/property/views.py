@@ -467,3 +467,89 @@ def unique_areas_by_city(request, city_name):
 
     # Return the unique areas as a JSON response
     return Response({"unique_areas": list(unique_areas)}, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def public_search_properties(request):
+    """
+    Public API endpoint for searching properties - does not require authentication.
+    Accepts query parameters: propertyType, rooms, guests, location, area, price, etc.
+    """
+    try:
+        properties = Property.objects.all().distinct()
+        query_params = request.GET
+
+        # Extract filters
+        property_type = query_params.get("propertyType")
+        rooms = query_params.get("rooms")
+        guests = query_params.get("guests")
+        location = query_params.get("location")
+        area = query_params.get("area")
+        price = query_params.get("price")
+        
+        print(f"Public search params: {query_params}")
+
+        # Apply filters
+        if property_type and property_type != 'all':
+            properties = properties.filter(
+                property_type__iexact=property_type
+            )
+
+        if rooms:
+            try:
+                rooms = int(rooms)
+                # Filter properties with rooms that have enough available rooms
+                properties = properties.filter(
+                    rooms__left_number_of_rooms__gte=rooms
+                )
+            except ValueError:
+                pass
+
+        if guests:
+            try:
+                guests = int(guests)
+                # Filter properties with rooms that can accommodate guests
+                properties = properties.filter(
+                    rooms__maxoccupancy__gte=guests
+                )
+            except ValueError:
+                pass
+
+        if location:
+            # Search across city, state, and country names
+            properties = properties.filter(
+                Q(city__name__icontains=location) |
+                Q(state__name__icontains=location) |
+                Q(country__name__icontains=location) |
+                Q(location__icontains=location) # Also search directly in location field
+            )
+
+        if area:
+            properties = properties.filter(
+                area__icontains=area
+            )
+
+        if price:
+            try:
+                price = float(price)
+                # Filter properties with rooms under price limit
+                properties = properties.filter(
+                    rooms__price__lte=price
+                )
+            except ValueError:
+                pass
+
+        print(f"Found {properties.count()} properties for public search")
+        
+        serializer = PropertyViewSerializer(
+            properties, 
+            many=True, 
+            context={"request": request}
+        )
+        return Response(serializer.data)
+    except Exception as e:
+        print(f"Error in public property search: {str(e)}")
+        return Response(
+            {"error": "Failed to retrieve properties"}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

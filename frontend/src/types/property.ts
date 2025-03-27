@@ -15,10 +15,37 @@ export interface Property {
   created_at: string;
   updated_at: string;
   is_active: boolean;
-  city: string;
-  state: string;
-  country: string;
+  city: {
+    id: number;
+    name: string;
+    created_at: string;
+    updated_at: string;
+    is_active: boolean;
+  };
+  state: {
+    id: number;
+    name: string;
+    created_at: string;
+    updated_at: string;
+    is_active: boolean;
+  };
+  country: {
+    id: number;
+    name: string;
+    created_at: string;
+    updated_at: string;
+    is_active: boolean;
+  };
   area: string;
+  reviews?: Review[]; // Add reviews property
+  
+  // Additional properties for PropertyForm compatibility
+  _cityString?: string;
+  _stateString?: string;
+  _countryString?: string;
+  _amenityIds?: number[];
+  _ruleIds?: number[];
+  _documentationIds?: number[];
 }
 
 export interface Hotel extends Property {
@@ -57,15 +84,22 @@ export interface FoodMenu {
   cuisines: string[];
 }
 
-export interface Amenity { /* ... */ }
+export interface Amenity {
+  id: number;
+  name: string;
+  created_at: string;
+  updated_at: string;
+  is_active: boolean;
+}
 
 export interface Room {
-    id: number; // Assuming IDs are numbers based on the JSON
-    images: { id: number; image: string }[]; // Assuming IDs are numbers
+    id: number;
+    images: { id: number; image: string }[];
     amenities: Amenity[];
     name: string;
     daily_rate: string;
     hourly_rate: string;
+    monthly_rate?: string;
     bed_type: string | null;
     private_bathroom: boolean;
     smoking: boolean;
@@ -78,5 +112,18 @@ export interface Room {
     created_at: string;
     updated_at: string;
     is_active: boolean;
-    discount?: number; // Discount might be optional or on property level, clarify if needed
+    discount?: string | number; // Support both string and number formats
+    occupancyType?: string; // Additional property used in ExtendedRoom
+}
+
+// Define Review interface for the reviews property
+export interface Review {
+  id: number;
+  user: {
+    name: string;
+  };
+  rating: number;
+  detail: string;
+  created_at: string;
+  images: string[];
 } 

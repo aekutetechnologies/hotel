@@ -20,6 +20,7 @@ urlpatterns = [
     path('images/<int:pk>/', views.image_detail, name='image-detail'),
     path('room/images/upload/', views.room_image_upload, name='room-image-upload'),
     path('search/<str:location>/', views.search_properties_by_location, name='search-properties-by-location'),
+    path('public/search/', views.public_search_properties, name='public-search-properties'),
     path('city/', views.list_cities, name='list-cities'),
     path('country/', views.list_countries, name='list-countries'),
     path('state/', views.list_states, name='list-states'),

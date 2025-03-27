@@ -25,12 +25,23 @@ interface ReviewSectionProps {
 export function ReviewSection({ reviews }: ReviewSectionProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
-  const averageRating = reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
-  const totalReviews = reviews.length
-  const ratingDistribution = reviews.reduce((acc, review) => {
-    acc[review.rating] = (acc[review.rating] || 0) + 1
-    return acc
-  }, { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }) as Record<number, number>
+  // Check if there are reviews first
+  const hasReviews = Array.isArray(reviews) && reviews.length > 0
+  
+  // Calculate metrics only if we have reviews
+  const averageRating = hasReviews 
+    ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
+    : 0
+  const totalReviews = hasReviews ? reviews.length : 0
+  
+  // Use a type-safe approach for rating distribution
+  const ratingDistribution = hasReviews 
+    ? reviews.reduce((acc, review) => {
+        const rating = review.rating as 1 | 2 | 3 | 4 | 5;
+        acc[rating] = (acc[rating] || 0) + 1;
+        return acc;
+      }, { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } as Record<1 | 2 | 3 | 4 | 5, number>)
+    : { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } as Record<1 | 2 | 3 | 4 | 5, number>;
 
   const getRatingDescription = (rating: number): string => {
     if (rating >= 4.5) return "Exceptional"
@@ -40,6 +51,15 @@ export function ReviewSection({ reviews }: ReviewSectionProps) {
     if (rating >= 2.5) return "Average"
     if (rating >= 2.0) return "Fair"
     return "Poor"
+  }
+
+  if (!hasReviews) {
+    return (
+      <div className="p-6 bg-white rounded-lg shadow-sm border text-center">
+        <p className="text-gray-500 mb-2">No reviews yet</p>
+        <p className="text-sm text-gray-400">Be the first to review this property!</p>
+      </div>
+    );
   }
 
   return (
@@ -102,7 +122,7 @@ export function ReviewSection({ reviews }: ReviewSectionProps) {
                 {review.images && (
                   <div className="flex gap-2">
                     {review.images.map((image, index) => (
-                      <div key={index} className="relative w-20 h-20">
+                      <div key={`${review.id}-image-${index}`} className="relative w-20 h-20">
                         <Image
                           src={image}
                           alt={`Review image ${index + 1}`}
@@ -153,7 +173,7 @@ export function ReviewSection({ reviews }: ReviewSectionProps) {
                     {review.images && (
                       <div className="flex gap-2">
                         {review.images.map((image, index) => (
-                          <div key={index} className="relative w-20 h-20">
+                          <div key={`${review.id}-image-${index}`} className="relative w-20 h-20">
                             <Image
                               src={image}
                               alt={`Review image ${index + 1}`}

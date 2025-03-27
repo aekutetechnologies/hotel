@@ -5,8 +5,13 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 
+interface ImageWithId {
+  id: number;
+  image: string;
+}
+
 interface GalleryModalProps {
-  images: string[]
+  images: ImageWithId[]
   initialIndex: number
   onClose: () => void
 }
@@ -45,7 +50,7 @@ export function GalleryModal({ images, initialIndex, onClose }: GalleryModalProp
         </Button>
         <div className="relative aspect-video">
           <Image
-            src={images[currentIndex] || "/placeholder.svg"}
+            src={images[currentIndex]?.image || "/placeholder.svg"}
             alt={`Gallery image ${currentIndex + 1}`}
             fill
             className="object-contain"

@@ -1,12 +1,15 @@
 'use client'
 
-import { Property } from '@/types/property'
+import { Property, Review } from '@/types/property'
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Star, MapPin, Wifi, Coffee, ShieldCheck, UserRoundCheck, BellRing, Beer, Soup, Building, BatteryCharging, Heater, ChefHat, AirVent, Tv, Utensils, StarHalf } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { ApiButton } from "@/components/ui/api-button"
+import { useApiRequest } from "@/hooks/useApiRequest"
+import { toast } from 'react-toastify'
 
 interface PropertyCardProps {
   property: Property;
@@ -14,6 +17,7 @@ interface PropertyCardProps {
 }
 
 const amenityIcons = {
+  "Free Wifi": Wifi,
   "Free WiFi": Wifi,
   "Coffee": Coffee,
   "Security": ShieldCheck,
@@ -33,12 +37,32 @@ const amenityIcons = {
 export function PropertyCard({ property, searchParams }: PropertyCardProps) {
   const isHostel = property.property_type === 'hostel'
   const bookingType = searchParams.get('bookingType') || 'daily'
-  const originalPrice = Math.min(...property.rooms.map(room =>
-        bookingType === 'hourly' ? parseFloat(room.hourly_rate) : parseFloat(room.daily_rate)
-    ));
+  
+  // For hostels, use monthly rates when available
+  const originalPrice = Math.min(...property.rooms.map(room => {
+    if (isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
+      return parseFloat(room.monthly_rate);
+    } else {
+      return bookingType === 'hourly' ? parseFloat(room.hourly_rate) : parseFloat(room.daily_rate);
+    }
+  }));
+  
   const discount = Math.max(...property.rooms.map(room => room.discount || 0))
   const lowestPrice = originalPrice - (originalPrice * (discount || 0)) / 100
 
+  // Calculate the appropriate price label based on property type and booking type
+  const getPriceLabel = () => {
+    if (isHostel) {
+      // Check if we're using monthly rate
+      if (property.rooms.some(room => room.monthly_rate && parseFloat(room.monthly_rate) > 0)) {
+        return '/month';
+      } else {
+        return bookingType === 'hourly' ? '/hour' : '/night';
+      }
+    } else {
+      return bookingType === 'hourly' ? '/hour' : '/night';
+    }
+  };
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isImageLoaded, setIsImageLoaded] = useState(false);
@@ -47,7 +71,13 @@ export function PropertyCard({ property, searchParams }: PropertyCardProps) {
     setCurrentImageIndex(index)
   }
 
-  const rating = 4.5 // Example rating - replace with actual property.rating if available
+  // Calculate actual rating from property reviews
+  const hasReviews = property.reviews && Array.isArray(property.reviews) && property.reviews.length > 0
+  const averageRating = hasReviews && property.reviews 
+    ? property.reviews.reduce((sum: number, review: Review) => sum + review.rating, 0) / property.reviews.length 
+    : 0
+  const reviewCount = hasReviews && property.reviews ? property.reviews.length : 0
+  const displayRating = averageRating > 0 ? averageRating.toFixed(1) : "New"
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -98,18 +128,31 @@ export function PropertyCard({ property, searchParams }: PropertyCardProps) {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <div>
-                  <Link href={`/property/${property.id}`}>
+                  <Link 
+                    href={{
+                      pathname: `/property/${property.id}`,
+                      query: searchParams ? Object.fromEntries(searchParams.entries()) : {}
+                    }}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     <h2 className="text-xl sm:text-2xl font-semibold mb-1">{property.name}</h2>
                   </Link>
                   <p className="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-2 flex items-center">
                     <MapPin className="w-4 h-4 mr-1" />
-                    {property.location}
+                    {property.area && property.city ? `${property.area}, ${property.city.name}` : property.location}
                   </p>
                 </div>
                 <div className="flex items-center">
-                  <Star className="w-4 h-4 text-yellow-500 fill-yellow-500 mr-1" />
-                  <span className="text-lg font-medium">{rating}</span>
-                  <span className="text-xs text-gray-500 ml-1">(120 reviews)</span>
+                  {hasReviews ? (
+                    <>
+                      <Star className="w-4 h-4 text-yellow-500 fill-yellow-500 mr-1" />
+                      <span className="text-lg font-medium">{displayRating}</span>
+                      <span className="text-xs text-gray-500 ml-1">({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'})</span>
+                    </>
+                  ) : (
+                    <span className="text-xs text-gray-500">No reviews yet</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -117,7 +160,9 @@ export function PropertyCard({ property, searchParams }: PropertyCardProps) {
             {/* Amenities Section */}
             <div className="flex flex-wrap gap-2 mb-2">
               {property.amenities.slice(0, 5).map((amenity, index) => {
-                const Icon = amenityIcons[amenity.name] || Wifi;
+                // Type assertion to ensure amenity.name is a valid key
+                const amenityName = amenity.name as keyof typeof amenityIcons;
+                const Icon = amenityIcons[amenityName] || Wifi;
                 return (
                   <Badge key={index} variant="outline" className="text-xs flex items-center gap-1">
                     {Icon && <Icon className="w-3 h-3" />}
@@ -138,7 +183,7 @@ export function PropertyCard({ property, searchParams }: PropertyCardProps) {
                   <div className="flex items-baseline gap-2">
                     <span className="text-xl sm:text-2xl font-bold">₹{lowestPrice}</span>
                     <span className="text-xs sm:text-sm text-gray-500">
-                      {isHostel ? '/month' : bookingType === 'hourly' ? '/hour' : '/night'}
+                      {getPriceLabel()}
                     </span>
                   </div>
                   {discount > 0 && (
@@ -156,21 +201,32 @@ export function PropertyCard({ property, searchParams }: PropertyCardProps) {
                   <Link href={{
                     pathname: `/property/${property.id}`,
                     query: searchParams? Object.fromEntries(searchParams.entries()) : {}
-                  }}>
-                    <Button variant="outline" size="lg">
+                  }}
+                  target="_blank"
+                  rel="noopener noreferrer">
+                    <Button variant="neutral" size="lg">
                       View Details
                     </Button>
                   </Link>
                   <Link href={{
                     pathname: `/property/${property.id}/book`,
                     query: searchParams? Object.fromEntries(searchParams.entries()) : {}
-                  }}>
-                    <Button
+                  }}
+                  target="_blank"
+                  rel="noopener noreferrer">
+                    <ApiButton
                       className="bg-[#B11E43] hover:bg-[#8f1836]"
                       size="lg"
+                      loadingText="Preparing..."
+                      onClick={async () => {
+                        // This simulates any pre-booking API call, like checking availability
+                        // Even with multiple rapid clicks, this will only execute once
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        return true;
+                      }}
                     >
                       Book Now
-                    </Button>
+                    </ApiButton>
                   </Link>
                 </div>
               </div>

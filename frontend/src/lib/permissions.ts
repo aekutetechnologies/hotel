@@ -68,6 +68,7 @@ export const pagePermissionsMap: Record<string, Permission[]> = {
   // Properties
   '/admin/properties': ['property:view'],
   '/admin/properties/create': ['property:create'],
+  '/admin/properties/new': ['property:create'],
   
   // Dynamic paths with regex
   '^/admin/properties/\\d+/edit$': ['property:update'],
@@ -95,10 +96,35 @@ export function hasPermissions(requiredPermissions: Permission[]): boolean {
   
   try {
     const userPermissionsString = getFromLocalStorage('permissions');
-    if (!userPermissionsString) return false;
     
-    const userPermissions = userPermissionsString.split(',');
-    return requiredPermissions.every(permission => userPermissions.includes(permission));
+    if (!userPermissionsString) {
+      console.debug(`hasPermissions check failed: No permissions found in localStorage`);
+      return false;
+    }
+    
+    const userPermissions = userPermissionsString.split(',').map(p => p.trim().toLowerCase());
+    
+    // For debugging, log all permissions
+    if (process.env.NODE_ENV !== 'production') {
+      console.debug(`hasPermissions check:`, {
+        required: requiredPermissions,
+        userHas: userPermissions
+      });
+    }
+    
+    const result = requiredPermissions.every(permission => {
+      const normalizedPermission = permission.toLowerCase();
+      const hasPermission = userPermissions.includes(normalizedPermission);
+      
+      // For debugging, log each individual permission check
+      if (process.env.NODE_ENV !== 'production') {
+        console.debug(`Permission check: "${permission}" => ${hasPermission}`);
+      }
+      
+      return hasPermission;
+    });
+    
+    return result;
   } catch (error) {
     console.error('Error checking permissions:', error);
     return false;

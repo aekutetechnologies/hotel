@@ -39,10 +39,11 @@ interface PropertyFormProps {
 
 // Define Room type
 interface Room {
-  id: string;
+  id: string | number;
   name: string;
   daily_rate: string;
   hourly_rate: string;
+  monthly_rate: string;
   discount: string;
   bed_type: string | null;
   private_bathroom: boolean;
@@ -51,13 +52,13 @@ interface Room {
   size: string;
   maxoccupancy: number;
   number_of_rooms: number;
-  amenities: number[];
-  roomImages: { id: string; image_url: string }[];
+  amenities: number[] | Amenity[];
+  roomImages: { id: string | number; image_url: string }[];
 }
 
 interface Amenity {
-  id: string
-  name: string
+  id: string | number;
+  name: string;
 }
 
 interface Policy {
@@ -107,10 +108,11 @@ export function PropertyForm({ initialData, isEditing = false }: PropertyFormPro
 
   console.log("PropertyForm initialData:", initialData)
   const router = useRouter()
-  // @ts-ignore - Suppressing type errors for property_type
-  const [propertyType, setPropertyType] = useState<'hotel' | 'hostel'>(
-    initialData?.property_type || 'hotel'
-  )
+  
+  // Get property_type, ensure it's either 'hotel' or 'hostel'
+  const propertyTypeValue = initialData?.property_type === 'hostel' ? 'hostel' : 'hotel'
+  const [propertyType, setPropertyType] = useState<'hotel' | 'hostel'>(propertyTypeValue)
+  
   const [name, setName] = useState(initialData?.name || '')
   const [description, setDescription] = useState(initialData?.description || '')
   // @ts-ignore - Suppressing type errors for images
@@ -129,34 +131,30 @@ export function PropertyForm({ initialData, isEditing = false }: PropertyFormPro
   const [amenities, setAmenities] = useState<Amenity[]>([])
   const [rules, setRules] = useState<Policy[]>([])
   const [documentation, setDocumentation] = useState<Documentation[]>([])
-  const [selectedAmenities, setSelectedAmenities] = useState<number[]>(
-    initialData?.amenities?.map(amenity => 
-      typeof amenity === 'object' ? Number(amenity.id) : Number(amenity)
-    ) || []
-  )
-  const [selectedPolicies, setSelectedPolicies] = useState<number[]>(
-    initialData?.rules?.map(rule => 
-      typeof rule === 'object' ? Number(rule.id) : Number(rule)
-    ) || []
-  )
-  const [selectedDocumentation, setSelectedDocumentation] = useState<number[]>(
-    initialData?.documentation?.map(doc => 
-      typeof doc === 'object' ? Number(doc.id) : Number(doc)
-    ) || []
-  )
   const [isMapOpen, setIsMapOpen] = useState(false)
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null)
-  const [rooms, setRooms] = useState<Room[]>(initialData?.rooms?.map((room: any) => ({
-    ...room,
-    id: String(room.id || ''),
-    roomImages: (room.images || room.roomImages || [])?.map((img: any) => ({ 
-      id: String(img.id || ''), 
-      image_url: normalizeImageUrl(img)
-    })) || [],
-    amenities: room.amenities?.map((amenity: any) => 
-      typeof amenity === 'object' ? Number(amenity.id) : Number(amenity)
-    ) || [], 
-  })) || []);
+  const [rooms, setRooms] = useState<Room[]>(() => {
+    if (!initialData?.rooms) return [];
+    
+    return initialData.rooms.map((room: any) => {
+      // Process room amenities - ensure they're converted to numeric IDs
+      const processedAmenities = (room.amenities || []).map((amenity: any) => {
+        if (typeof amenity === 'number') return amenity;
+        if (typeof amenity === 'object' && amenity.id) return Number(amenity.id);
+        return 0; // fallback value
+      }).filter((id: number) => id > 0); // remove invalid values
+      
+      return {
+        ...room,
+        id: String(room.id || ''),
+        amenities: processedAmenities,
+        roomImages: (room.images || room.roomImages || []).map((img: any) => ({ 
+          id: String(img.id || ''), 
+          image_url: normalizeImageUrl(img)
+        })) || []
+      };
+    });
+  });
   const [cropImage, setCropImage] = useState<string | null>(null)
   const [uploadingImages, setUploadingImages] = useState<boolean>(false)
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -167,17 +165,38 @@ export function PropertyForm({ initialData, isEditing = false }: PropertyFormPro
 
   // @ts-ignore - Suppressing type errors for city
   const [city, setCity] = useState<string>(
-    typeof initialData?.city === 'object' ? initialData?.city?.name || '' : initialData?.city || ''
+    initialData?._cityString || 
+    (typeof initialData?.city === 'object' ? initialData?.city?.name || '' : initialData?.city || '')
   )
   const [citySuggestions, setCitySuggestions] = useState<any[]>([])
   // @ts-ignore - Suppressing type errors for state
   const [state, setState] = useState<string>(
-    typeof initialData?.state === 'object' ? initialData?.state?.name || '' : initialData?.state || ''
+    initialData?._stateString || 
+    (typeof initialData?.state === 'object' ? initialData?.state?.name || '' : initialData?.state || '')
   )
   const [country] = useState<string>('india') // Fixed to India
   const [area, setArea] = useState<string>(initialData?.area || '')
   const [stateOptions, setStateOptions] = useState<State[]>([])
-
+  
+  // Load IDs from the new format
+  const [selectedAmenities, setSelectedAmenities] = useState<number[]>(
+    initialData?._amenityIds || 
+    initialData?.amenities?.map((amenity: any) => 
+      typeof amenity === 'object' ? Number(amenity.id) : Number(amenity)
+    ) || []
+  )
+  const [selectedPolicies, setSelectedPolicies] = useState<number[]>(
+    initialData?._ruleIds || 
+    initialData?.rules?.map((rule: any) => 
+      typeof rule === 'object' ? Number(rule.id) : Number(rule)
+    ) || []
+  )
+  const [selectedDocumentation, setSelectedDocumentation] = useState<number[]>(
+    initialData?._documentationIds || 
+    initialData?.documentation?.map((doc: any) => 
+      typeof doc === 'object' ? Number(doc.id) : Number(doc)
+    ) || []
+  )
 
   useEffect(() => {
     // Additional logging to help debug image issues
@@ -205,11 +224,26 @@ export function PropertyForm({ initialData, isEditing = false }: PropertyFormPro
         const documentationResponse = await fetchDocumentation()
         setDocumentation(documentationResponse)
 
-        const statesResponse = await fetchState()
-        setStateOptions(statesResponse);
+        try {
+          console.log("Attempting to fetch states...")
+          const statesResponse = await fetchState()
+          
+          if (Array.isArray(statesResponse) && statesResponse.length === 0) {
+            console.warn("Received empty states list from API")
+            toast.warning("Could not load states data. Some form features may be limited.")
+          } else {
+            console.log(`Successfully loaded ${statesResponse.length} states`)
+            setStateOptions(statesResponse);
+          }
+        } catch (stateError) {
+          console.error("Failed to load states:", stateError)
+          toast.error("Failed to load location data. Please try again later.")
+          setStateOptions([])
+        }
 
       } catch (error) {
-        console.error("Failed to load data:", error)
+        console.error("Failed to load form data:", error)
+        toast.error("Failed to load form data. Please try again later.")
         setAmenities([])
         setRules([])
         setDocumentation([])
@@ -301,11 +335,20 @@ export function PropertyForm({ initialData, isEditing = false }: PropertyFormPro
     if (cropImage) return
     if (roomCropImage) return
 
-    const preparedRooms = rooms.map(room => ({
-      ...room,
-      amenities: room.amenities,
-      images: room.roomImages.map(img => Number(img.id)), // Convert to image IDs
-    }));
+    const preparedRooms = rooms.map(room => {
+      // Ensure amenities are always numbers
+      const processedAmenities = (room.amenities || []).map((amenity: any) => {
+        if (typeof amenity === 'number') return amenity;
+        if (typeof amenity === 'object' && amenity.id) return Number(amenity.id);
+        return 0;
+      }).filter((id: number) => id > 0);
+      
+      return {
+        ...room,
+        amenities: processedAmenities,
+        images: room.roomImages.map(img => Number(img.id)), // Convert to image IDs
+      };
+    });
   
     const propertyData = {
       name,
@@ -326,8 +369,8 @@ export function PropertyForm({ initialData, isEditing = false }: PropertyFormPro
     };
 
     try {
-      if (isEditing) {
-        await editProperty(initialData?.id, propertyData)
+      if (isEditing && initialData?.id) {
+        await editProperty(initialData.id.toString(), propertyData)
         toast.success('Property updated successfully')
       } else {
         await createProperty(propertyData)
@@ -362,6 +405,7 @@ export function PropertyForm({ initialData, isEditing = false }: PropertyFormPro
         name: '',
         daily_rate: '',
         hourly_rate: '',
+        monthly_rate: '',
         discount: '',
         size: '',
         maxoccupancy: 0,
@@ -473,11 +517,19 @@ export function PropertyForm({ initialData, isEditing = false }: PropertyFormPro
                     setCity(e.target.value)
                     if (e.target.value.length > 2) {
                       try {
+                        console.log(`Searching for location: "${e.target.value}"`)
                         const suggestions = await fetchLocation(e.target.value)
-                        setCitySuggestions(suggestions)
+                        
+                        if (Array.isArray(suggestions) && suggestions.length === 0) {
+                          console.log("No location suggestions found")
+                        } else {
+                          console.log(`Found ${suggestions.length} location suggestions`)
+                          setCitySuggestions(suggestions)
+                        }
                       } catch (error) {
                         console.error("Error fetching location suggestions:", error)
                         setCitySuggestions([])
+                        toast.error("Could not fetch location suggestions. You can still enter the city manually.")
                       }
                     } else {
                       setCitySuggestions([])
@@ -757,6 +809,17 @@ export function PropertyForm({ initialData, isEditing = false }: PropertyFormPro
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor={`room-monthly-rate-${index}`}>Monthly Rate</Label>
+                  <Input
+                    id={`room-monthly-rate-${index}`}
+                    type="number"
+                    step="0.01"
+                    value={room.monthly_rate || ''}
+                    onChange={(e) => updateRoom(index, { monthly_rate: e.target.value })}
+                    placeholder="Enter monthly rate"
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor={`room-discount-${index}`}>Discount</Label>
                   <Input
                     id={`room-discount-${index}`}
@@ -844,12 +907,13 @@ export function PropertyForm({ initialData, isEditing = false }: PropertyFormPro
                       <div key={amenity.id} className="flex items-center space-x-2">
                         <Checkbox
                           id={`room-${index}-amenity-${amenity.id}`}
-                          checked={room.amenities.includes(amenity.id)}
+                          checked={room.amenities.includes(Number(amenity.id))}
                           onCheckedChange={(checked) => {
+                            const amenityId = Number(amenity.id);
                             const updatedAmenities = checked
-                              ? [...room.amenities, amenity.id]
-                              : room.amenities.filter(a => a !== amenity.id);
-                            updateRoom(index, { amenities: updatedAmenities });
+                              ? [...room.amenities, amenityId]
+                              : (room.amenities as number[]).filter(a => a !== amenityId);
+                            updateRoom(index, { amenities: updatedAmenities as number[] });
                           }}
                         />
                         <Label htmlFor={`room-${index}-amenity-${amenity.id}`}>{amenity.name}</Label>
@@ -928,7 +992,6 @@ export function PropertyForm({ initialData, isEditing = false }: PropertyFormPro
       {cropImage && (
         <ImageCropper
           image={cropImage}
-          fileName="property-image.webp"
           aspectRatio={4/3}
           onCropComplete={handleCropComplete}
           onCancel={() => setCropImage(null)}
@@ -937,7 +1000,6 @@ export function PropertyForm({ initialData, isEditing = false }: PropertyFormPro
       {roomCropImage && selectedRoomIndexForImage !== null && (
         <ImageCropper
           image={roomCropImage}
-          fileName="room-image.webp"
           aspectRatio={4/3}
           onCropComplete={handleRoomCropComplete}
           onCancel={() => setRoomCropImage(null)}

@@ -1,16 +1,16 @@
 import type { ActionResponse } from '@/types/actions'
-import { Property } from '@/types/property'
 import { API_URL } from '../config'
 
-export async function editProperty(id: string, property: Property): Promise<ActionResponse> {
-  const response = await fetch(`${API_URL}/property/properties/${id}/`, {
+// Accept any property data, not just the full Property type
+export async function editProperty(id: string, propertyData: any): Promise<ActionResponse<any>> {
+  const response = await fetch(`${API_URL}property/properties/${id}/`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
       // Include token in headers if necessary
       'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
     },
-    body: JSON.stringify(property)
+    body: JSON.stringify(propertyData)
   })
 
   if (!response.ok) {

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue } from "framer-motion";
 import { NewButton } from "@/components/ui/new-button";
 import hotels from "/public/hotels.png";
 import hostels from "/public/hostels.png";
@@ -29,6 +29,33 @@ export function HomeHero({
   const [currentHostelImage, setCurrentHostelImage] = useState(0);
   const [nextHotelImage, setNextHotelImage] = useState(0);
   const [nextHostelImage, setNextHostelImage] = useState(0);
+  
+  // Shine effect for stickers
+  const hotelShineAngle = useMotionValue(15);
+  const hostelShineAngle = useMotionValue(15);
+  
+  // Auto-animate shine effects
+  useEffect(() => {
+    let hotelShineInterval: NodeJS.Timeout;
+    let hostelShineInterval: NodeJS.Timeout;
+    
+    if (expandedSection === "hotels" || expandedSection === null) {
+      hostelShineInterval = setInterval(() => {
+        hostelShineAngle.set((prev: number) => (prev + 2) % 50);
+      }, 100);
+    }
+    
+    if (expandedSection === "hostels" || expandedSection === null) {
+      hotelShineInterval = setInterval(() => {
+        hotelShineAngle.set((prev: number) => (prev + 2) % 50);
+      }, 100);
+    }
+    
+    return () => {
+      clearInterval(hotelShineInterval);
+      clearInterval(hostelShineInterval);
+    };
+  }, [expandedSection, hotelShineAngle, hostelShineAngle]);
 
   useEffect(() => {
     const hotelTimer = setInterval(() => {
@@ -127,8 +154,18 @@ export function HomeHero({
     }),
   };
 
+  // Colors for hotel sticker
+  const hotelPrimaryColor = "#A31C44";
+  const hotelAccentColor = "#FF3A5E";
+  const hotelBorderColor = "#FF9BAC";
+  
+  // Colors for hostel sticker
+  const hostelPrimaryColor = "#2A2B2E";
+  const hostelAccentColor = "#3bf0c1";
+  const hostelBorderColor = "#6BEFF0";
+
   return (
-    <div className="hidden md:flex flex-1 flex-col md:flex-row relative">
+    <div className="hidden md:flex flex-1 flex-col md:flex-row relative h-screen">
       <AnimatePresence>
         {!expandedSection && (
           <motion.div
@@ -242,17 +279,35 @@ export function HomeHero({
 
                   {/* Typewriter Effect for "Hostels" using Framer Motion */}
                   <div className="text-2xl font-semibold text-white flex">
-                    {text.split("").map((letter, i) => (
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ 
+                        width: [0, `${text.length}ch`], 
+                        transition: {
+                          duration: 2.5,
+                          repeat: Infinity,
+                          repeatType: "reverse",
+                          repeatDelay: 1,
+                          ease: "easeInOut",
+                        }
+                      }}
+                      className="overflow-hidden whitespace-nowrap"
+                    >
+                      {text}
+                    </motion.div>
                       <motion.span
-                        key={i}
-                        variants={textVariants}
-                        initial="hidden"
-                        animate="visible"
-                        custom={i}
-                      >
-                        {letter}
+                      animate={{ 
+                        opacity: [1, 0], 
+                        transition: {
+                          duration: 0.5,
+                          repeat: Infinity,
+                          repeatType: "reverse",
+                          ease: "easeInOut"
+                        }
+                      }}
+                    >
+                      |
                       </motion.span>
-                    ))}
                   </div>
 
                   <motion.p
@@ -291,25 +346,89 @@ export function HomeHero({
             )}
             {expandedSection === "hostels" && (
               <motion.div
-                className="h-full flex items-center cursor-pointer absolute inset-0 z-[-1] overflow-hidden"
+                className="h-full flex items-center justify-center cursor-pointer absolute inset-0 z-[-1] overflow-hidden"
                 initial={{ opacity: 0, scale: 0.8, x: "100%" }}
-                animate={{ opacity: 1, scale: 1, x: "70%", zIndex: 10 }}
+                animate={{ opacity: 1, scale: 1, x: "0", zIndex: 10 }}
                 exit={{ opacity: 0, scale: 0.8, x: "100%", zIndex: -1 }}
-                whileHover={{ x: "20%" }} // 👈 Moves left on hover
                 transition={{ duration: 0.8, ease: "easeInOut" }}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleSectionClick("hotels");
                 }}
               >
-                <div className="relative w-full overflow-hidden">
-                  <span className="text-2xl font-bold tracking-wider text-white whitespace-nowrap block">
-                    <Image
-                      src={hotels}
-                      alt="hotel"
-                      className="object-contain w-40 h-40"
-                    />
-                  </span>
+                <div className="w-[160px] h-[160px] relative">
+                  <motion.div 
+                    className="absolute inset-0 rounded-full flex items-center justify-center overflow-hidden"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    style={{
+                      background: "white",
+                      boxShadow: `0 0 20px rgba(0,0,0,0.3)`,
+                      border: `4px solid ${hotelBorderColor}`
+                    }}
+                  >
+                    <div className="sticker relative text-center" style={{
+                      fontFamily: "'Arial', sans-serif",
+                      fontStyle: "italic",
+                      fontWeight: 900,
+                      fontSize: "32px",
+                      lineHeight: "0.9",
+                      textTransform: "uppercase",
+                      padding: "8px",
+                    }}>
+                      <motion.div style={{
+                        backgroundImage: `
+                          linear-gradient(
+                            ${hotelShineAngle}deg, 
+                            rgba(255,255,255,0) 0%, 
+                            rgba(255,255,255,0) 40%, 
+                            rgba(255,255,255,0.98) 49.5%, 
+                            rgba(255,255,255,0.98) 50.5%, 
+                            rgba(255,255,255,0) 60%, 
+                            rgba(255,255,255,0)
+                          ),
+                          linear-gradient(
+                            to right, 
+                            ${hotelPrimaryColor}, 
+                            ${hotelAccentColor}, 
+                            ${hotelPrimaryColor}
+                          )
+                        `,
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        textShadow: "0.05em 0.05em 0.02em rgba(0,0,0,0.5)",
+                        position: "relative",
+                        zIndex: 2,
+                        display: "inline-block",
+                        transform: "rotate(-5deg)",
+                      }}>
+                        HOTELS
+                      </motion.div>
+                      
+                      <div style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        WebkitTextStroke: `0.15em ${hotelBorderColor}`,
+                        color: "transparent",
+                        fontFamily: "inherit",
+                        fontStyle: "inherit",
+                        fontWeight: "inherit",
+                        fontSize: "inherit",
+                        lineHeight: "inherit",
+                        textTransform: "inherit",
+                        zIndex: 1,
+                        transform: "rotate(-5deg)",
+                      }}>
+                        HOTELS
+                      </div>
+                    </div>
+                  </motion.div>
                 </div>
               </motion.div>
             )}
@@ -401,17 +520,35 @@ export function HomeHero({
                     ))}
                   </motion.h2>
                   <div className="text-2xl font-semibold text-white flex">
-                    {textHostel.split("").map((letter, i) => (
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ 
+                        width: [0, `${textHostel.length}ch`], 
+                        transition: {
+                          duration: 2.5,
+                          repeat: Infinity,
+                          repeatType: "reverse",
+                          repeatDelay: 1,
+                          ease: "easeInOut",
+                        }
+                      }}
+                      className="overflow-hidden whitespace-nowrap"
+                    >
+                      {textHostel}
+                    </motion.div>
                       <motion.span
-                        key={i}
-                        variants={textVariants}
-                        initial="hidden"
-                        animate="visible"
-                        custom={i}
-                      >
-                        {letter}
+                      animate={{ 
+                        opacity: [1, 0], 
+                        transition: {
+                          duration: 0.5,
+                          repeat: Infinity,
+                          repeatType: "reverse",
+                          ease: "easeInOut"
+                        }
+                      }}
+                    >
+                      |
                       </motion.span>
-                    ))}
                   </div>
                   <motion.p
                     className="mb-8 max-w-md text-white/90"
@@ -448,7 +585,7 @@ export function HomeHero({
             )}
             {expandedSection === "hotels" && (
               <motion.div
-                className="h-full flex items-center  cursor-pointer absolute inset-0 z-[-1] overflow-hidden"
+                className="h-full flex items-center justify-center cursor-pointer absolute inset-0 z-[-1] overflow-hidden"
                 initial={{ opacity: 0, scale: 0.8, x: "-100%" }}
                 animate={{ opacity: 1, scale: 1, x: "0%", zIndex: 10 }}
                 exit={{ opacity: 0, scale: 0.8, x: "-100%", zIndex: -1 }}
@@ -458,11 +595,79 @@ export function HomeHero({
                   handleSectionClick("hostels");
                 }}
               >
-                <div className="relative w-[150px] overflow-hidden left-0">
-                  <span className="text-2xl font-bold tracking-wider text-white whitespace-nowrap block -translate-x-[20%]">
-                    {/* HOSTELS */}
-                    <Image src={hostels} alt="hostel" />
-                  </span>
+                <div className="w-[160px] h-[160px] relative">
+                  <motion.div 
+                    className="absolute inset-0 rounded-full flex items-center justify-center overflow-hidden"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    style={{
+                      background: "white",
+                      boxShadow: `0 0 20px rgba(0,0,0,0.3)`,
+                      border: `4px solid ${hostelBorderColor}`
+                    }}
+                  >
+                    <div className="sticker relative text-center" style={{
+                      fontFamily: "'Arial', sans-serif",
+                      fontStyle: "italic",
+                      fontWeight: 900,
+                      fontSize: "30px",
+                      lineHeight: "0.9",
+                      textTransform: "uppercase",
+                      padding: "8px",
+                    }}>
+                      <motion.div style={{
+                        backgroundImage: `
+                          linear-gradient(
+                            ${hostelShineAngle}deg, 
+                            rgba(255,255,255,0) 0%, 
+                            rgba(255,255,255,0) 40%, 
+                            rgba(255,255,255,0.98) 49.5%, 
+                            rgba(255,255,255,0.98) 50.5%, 
+                            rgba(255,255,255,0) 60%, 
+                            rgba(255,255,255,0)
+                          ),
+                          linear-gradient(
+                            to right, 
+                            ${hostelPrimaryColor}, 
+                            ${hostelAccentColor}, 
+                            ${hostelPrimaryColor}
+                          )
+                        `,
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        textShadow: "0.05em 0.05em 0.02em rgba(0,0,0,0.5)",
+                        position: "relative",
+                        zIndex: 2,
+                        display: "inline-block",
+                        transform: "rotate(-5deg)",
+                      }}>
+                        HOSTELS
+                      </motion.div>
+                      
+                      <div style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        WebkitTextStroke: `0.15em ${hostelBorderColor}`,
+                        color: "transparent",
+                        fontFamily: "inherit",
+                        fontStyle: "inherit",
+                        fontWeight: "inherit",
+                        fontSize: "inherit",
+                        lineHeight: "inherit",
+                        textTransform: "inherit",
+                        zIndex: 1,
+                        transform: "rotate(-5deg)",
+                      }}>
+                        HOSTELS
+                      </div>
+                    </div>
+                  </motion.div>
                 </div>
               </motion.div>
             )}

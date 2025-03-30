@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import { PropertyForm } from "@/components/admin/PropertyForm"
 import { fetchProperty } from '@/lib/api/fetchProperty'
 import { toast } from 'react-toastify'
+import { LoadingIndicator } from '@/components/ui/LoadingIndicator'
 
 export default function EditProperty() {
   const params = useParams()
@@ -29,7 +30,14 @@ export default function EditProperty() {
   }, [propertyId])
 
   if (loading) {
-    return <div>Loading...</div>
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingIndicator 
+          variant="skeleton" 
+          text="Loading property information..." 
+        />
+      </div>
+    )
   }
 
   if (!propertyData) {

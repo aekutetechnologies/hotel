@@ -15,6 +15,7 @@ from .models import (
     City,
     Country,
     State,
+    FavoriteProperty
 )
 from .serializers import (
     PropertySerializer,
@@ -474,6 +475,7 @@ def public_search_properties(request):
     """
     Public API endpoint for searching properties - does not require authentication.
     Accepts query parameters: propertyType, rooms, guests, location, area, price, etc.
+    Also add is_favorite parameter to add or remove a property from the user's favorite list.
     """
     try:
         properties = Property.objects.all().distinct()
@@ -486,6 +488,7 @@ def public_search_properties(request):
         location = query_params.get("location")
         area = query_params.get("area")
         price = query_params.get("price")
+        id = query_params.get("id")
         
         print(f"Public search params: {query_params}")
 
@@ -541,10 +544,23 @@ def public_search_properties(request):
 
         print(f"Found {properties.count()} properties for public search")
         
+        # Add context with user favorites information if the user is authenticated
+        context = {"request": request}
+        if id:
+            # Get the user's favorite properties
+            print(f"Request user: {request.user}")
+            user_favorites = FavoriteProperty.objects.filter(
+                user=id, 
+                is_active=True
+            ).values_list('property_id', flat=True)
+
+            print(f"User favorites: {user_favorites}")
+            context['user_favorites'] = user_favorites
+            
         serializer = PropertyViewSerializer(
             properties, 
             many=True, 
-            context={"request": request}
+            context=context
         )
         return Response(serializer.data)
     except Exception as e:
@@ -553,3 +569,28 @@ def public_search_properties(request):
             {"error": "Failed to retrieve properties"}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+    
+
+@api_view(["POST"])
+@custom_authentication_and_permissions()
+def add_favorite_property(request):
+    """
+    Add or remove a property from the user's favorite list.
+    """
+
+    user = request.user
+    property_id = request.data.get("property_id")
+    property = get_object_or_404(Property, id=property_id)
+
+    is_favorite = request.data.get("is_favourite")   
+
+    if is_favorite:
+        favorite_property, created = FavoriteProperty.objects.get_or_create(user=user, property=property)
+        return Response({"message": "Property added to favorites"}, status=status.HTTP_200_OK)
+    else:
+        favorite_property = FavoriteProperty.objects.filter(user=user, property=property).first()
+        favorite_property.delete()
+        return Response({"message": "Property removed from favorites"}, status=status.HTTP_200_OK)
+    
+
+

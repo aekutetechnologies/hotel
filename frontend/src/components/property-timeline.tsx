@@ -11,7 +11,7 @@ export function PropertyTimeline({ type = "hotel" }: PropertyTimelineProps) {
   const hotelData = [
     {
       year: "Luxury Living",
-      title: "Not just four walls and a roof",
+      title: "",
       description: "Experience unparalleled comfort and elegance in our thoughtfully designed spaces.",
       content: (
         <div className="grid grid-cols-2 gap-4">
@@ -34,7 +34,7 @@ export function PropertyTimeline({ type = "hotel" }: PropertyTimelineProps) {
     },
     {
       year: "Premium Rooms",
-      title: "Space for luxury and comfort",
+      title: "",
       description: "Each room is a sanctuary of peace and luxury, designed for the discerning traveler.",
       content: (
         <div className="grid grid-cols-2 gap-4">
@@ -57,7 +57,7 @@ export function PropertyTimeline({ type = "hotel" }: PropertyTimelineProps) {
     },
     {
       year: "Fine Dining",
-      title: "Culinary excellence",
+      title: "",
       description: "Experience gourmet dining with our world-class chefs and premium ingredients.",
       content: (
         <div className="grid grid-cols-2 gap-4">
@@ -83,7 +83,7 @@ export function PropertyTimeline({ type = "hotel" }: PropertyTimelineProps) {
   const hostelData = [
     {
       year: "Day One",
-      title: "Start living your best life from day one",
+      title: "",
       description:
         "Bring a box full of hopes, dreams, ambitions... and of course, your personal belongings. Everything else - furniture, appliances, food - has already been taken care of.",
       content: (
@@ -114,7 +114,7 @@ export function PropertyTimeline({ type = "hotel" }: PropertyTimelineProps) {
     },
     {
       year: "Your Space",
-      title: "Step into a room that has room for everything",
+      title: "",
       description:
         "Your clothes and bag will not be fighting for space on the same chair. At Stanza Living, there's ample room for all your possessions. Even a framed photo of your family, for the rare occasions you miss home.",
       content: (
@@ -138,7 +138,7 @@ export function PropertyTimeline({ type = "hotel" }: PropertyTimelineProps) {
     },
     {
       year: "Services",
-      title: "Take your daily list of chores. And tear it up",
+      title: "",
       description:
         "You have better things to do than wash your clothes, clean up your room and cook your meals. So our team of pros will do them all for you.",
       content: (
@@ -162,7 +162,7 @@ export function PropertyTimeline({ type = "hotel" }: PropertyTimelineProps) {
     },
     {
       year: "Common Areas",
-      title: "Chill in a common area that's anything but common",
+      title: "",
       description:
         "Nope, we don't try to pass off a few plastic chairs and a TV as a common area. We've replaced them with sofas, bean bags and large-screen TVs. And we've also added gaming zones, fitness centres and chillout corners as a bonus.",
       content: (
@@ -193,7 +193,7 @@ export function PropertyTimeline({ type = "hotel" }: PropertyTimelineProps) {
     },
     {
       year: "Dining",
-      title: 'Don\'t come expecting "hostel-PG food"',
+      title: "",
       description:
         "Instead, bring along a big appetite for healthy, yummy meals. With freshly-made food that have a local touch. And that, at the same time, take your taste buds on a journey back home.",
       content: (

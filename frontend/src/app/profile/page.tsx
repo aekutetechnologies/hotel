@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Header } from '@/components/Header'
-import { Footer } from '@/components/Footer'
+import Footer from '@/components/Footer'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -104,7 +104,7 @@ export default function Profile() {
         </Card>
       </main>
       <ToastContainer />
-      <Footer />
+      <Footer sectionType="hotels" />
     </div>
   )
 }

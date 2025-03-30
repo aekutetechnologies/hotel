@@ -1,65 +1,43 @@
 // components/ShowMap.tsx
 'use client'
 
-import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet'
-import { useState, useEffect } from 'react'
-import { Icon } from 'leaflet'
-import 'leaflet/dist/leaflet.css'
-import React from 'react'
-
-const customIcon = new Icon({
-  iconUrl:
-    "data:image/svg+xml;base64," +
-    btoa(
-      '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>',
-    ),
-  iconSize: [24, 24],
-  iconAnchor: [12, 24],
-  popupAnchor: [0, -24],
-})
+import React, { useState, useEffect } from 'react'
+import dynamic from 'next/dynamic'
 
 interface ShowMapProps {
   latitude: number
   longitude: number
 }
 
-function LocationMarker({ lat, lng }: { lat: number; lng: number }) {
-  const map = useMap()
-  
-  useEffect(() => {
-    if (lat && lng) {
-      map.flyTo([lat, lng], map.getZoom())
-    }
-  }, [lat, lng, map])
+// Dynamically load the map component with no SSR
+// This solves both the "Map container is already initialized" error and the type issues
+const MapComponent = dynamic(
+  () => import('./Map').then(mod => mod.default),
+  { 
+    loading: () => <div className="h-96 w-full bg-gray-100 rounded-lg flex items-center justify-center">Loading map...</div>,
+    ssr: false // This is the key - never render on server
+  }
+)
 
-  return lat && lng ? <Marker position={[lat, lng]} icon={customIcon} /> : null
-}
-
-export default React.memo(function ShowMap({ latitude, longitude }: ShowMapProps) {
-  const [isClient, setIsClient] = useState(false)
+export default function ShowMap({ latitude, longitude }: ShowMapProps) {
+  const [mountKey, setMountKey] = useState(Date.now())
   
-  // Ensure we're on client side before rendering map
+  // Force remount when navigating between pages
   useEffect(() => {
-    setIsClient(true)
+    setMountKey(Date.now())
   }, [])
 
-  if (!isClient || !latitude || !longitude) return null
+  if (!latitude || !longitude) {
+    return (
+      <div className="h-96 w-full bg-gray-100 rounded-lg flex items-center justify-center">
+        No location data available
+      </div>
+    )
+  }
 
   return (
-    <>
-    <div className="h-96 w-full rounded-lg overflow-hidden z-10">
-      <MapContainer 
-        center={[latitude, longitude]} 
-        zoom={13} 
-        style={{ height: '100%', width: '100%' }}
-      >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        />
-        <LocationMarker lat={latitude} lng={longitude} />
-      </MapContainer>
+    <div className="h-96 w-full rounded-lg overflow-hidden">
+      <MapComponent key={mountKey} latitude={latitude} longitude={longitude} />
     </div>
-    </>
   )
-})
+}

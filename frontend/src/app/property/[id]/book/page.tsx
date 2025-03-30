@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { Header } from '@/components/Header'
-import { Footer } from '@/components/Footer'
+import Footer from '@/components/Footer'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -14,6 +14,7 @@ import { formatPrice } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { bookProperty } from '@/lib/api/bookProperty'
 import { SignIn } from '@/components/SignIn'
+import { LoadingIndicator } from '@/components/ui/LoadingIndicator'
 
 const capitalize = (s: string) => s && String(s[0]).toUpperCase() + String(s).slice(1)
 
@@ -128,7 +129,7 @@ export default function BookProperty() {
       room: selectedRoom.id,
       price: parseFloat(roomPrice || '0'),
       discount: parseFloat(selectedRoom.discount || '0'),
-      booking_time: capitalize(booking.bookingType), // Use the selected booking type
+      booking_time: booking.bookingType, // Use the selected booking type
       payment_type: 'upi', // Default payment type, can be updated later
       checkin_date: booking.checkIn,
       checkout_date: booking.checkOut,
@@ -166,7 +167,15 @@ export default function BookProperty() {
   };
 
   if (!property) {
-    return <div>Loading property details...</div> // Or a loading spinner
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingIndicator 
+          variant="spinner" 
+          size="lg" 
+          text="Loading property details..." 
+        />
+      </div>
+    );
   }
 
   return (
@@ -281,7 +290,7 @@ export default function BookProperty() {
           </CardContent>
         </Card>
       </main>
-      <Footer />
+      <Footer sectionType="hotels" />
     </div>
     )}
     </>

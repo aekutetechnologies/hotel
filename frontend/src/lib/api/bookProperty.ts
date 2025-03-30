@@ -8,7 +8,7 @@ interface BookPropertyParams {
   room: number
   price: number
   discount: number
-  booking_type: string
+  booking_time: string
   payment_type: string
   checkin_date: string
   checkout_date: string
@@ -24,7 +24,7 @@ export async function bookProperty(params: BookPropertyParams): Promise<ActionRe
     room,
     price,
     discount,
-    booking_type,
+    booking_time,
     payment_type,
     checkin_date,
     checkout_date,
@@ -45,7 +45,7 @@ export async function bookProperty(params: BookPropertyParams): Promise<ActionRe
       room,
       price,
       discount,
-      booking_type,
+      booking_time,
       payment_type,
       checkin_date,
       checkout_date,

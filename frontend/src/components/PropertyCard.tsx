@@ -3,13 +3,14 @@
 import { Property, Review } from '@/types/property'
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Star, MapPin, Wifi, Coffee, ShieldCheck, UserRoundCheck, BellRing, Beer, Soup, Building, BatteryCharging, Heater, ChefHat, AirVent, Tv, Utensils, StarHalf } from 'lucide-react'
+import { Star, MapPin, Wifi, Coffee, ShieldCheck, UserRoundCheck, BellRing, Beer, Soup, Building, BatteryCharging, Heater, ChefHat, AirVent, Tv, Utensils, StarHalf, Heart } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { ApiButton } from "@/components/ui/api-button"
 import { useApiRequest } from "@/hooks/useApiRequest"
 import { toast } from 'react-toastify'
+import { toggleFavourite } from '@/lib/api/toggleFavourite'
 
 interface PropertyCardProps {
   property: Property;
@@ -66,10 +67,61 @@ export function PropertyCard({ property, searchParams }: PropertyCardProps) {
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isImageLoaded, setIsImageLoaded] = useState(false);
+  const [isFavorite, setIsFavorite] = useState('is_favorite' in property ? !!property.is_favorite : false);
+  const [isUpdatingFavorite, setIsUpdatingFavorite] = useState(false);
 
   const handleThumbnailClick = (index: number) => {
     setCurrentImageIndex(index)
   }
+
+  const toggleFavoriteStatus = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Check if user is logged in (access token exists)
+    const accessToken = localStorage.getItem('accessToken');
+    if (!accessToken) {
+      toast.info('Please log in to save favorites', {
+        style: { background: '#E0F2FE', color: '#0369A1', borderLeft: '4px solid #0EA5E9' }
+      });
+      return;
+    }
+    
+    if (isUpdatingFavorite) return; // Prevent multiple clicks
+    setIsUpdatingFavorite(true);
+    
+    const newFavoriteStatus = !isFavorite;
+    
+    try {
+      // Optimistically update UI
+      setIsFavorite(newFavoriteStatus);
+      
+      // Call backend API
+      await toggleFavourite(property.id.toString(), newFavoriteStatus);
+      
+      // Show success message
+      if (newFavoriteStatus) {
+        toast.success('Added to favorites', {
+          style: { background: '#FFEAEF', color: '#B11E43', borderLeft: '4px solid #B11E43' }
+        });
+      } else {
+        toast.info('Removed from favorites', {
+          style: { background: '#F5F5F5', color: '#666', borderLeft: '4px solid #999' }
+        });
+      }
+    } catch (error) {
+      // Revert UI state in case of error
+      setIsFavorite(!newFavoriteStatus);
+      
+      // Show error message
+      toast.error('Failed to update favorite status. Please try again.', {
+        style: { background: '#FEE2E2', color: '#B91C1C', borderLeft: '4px solid #B91C1C' }
+      });
+      console.error('Error toggling favorite:', error);
+    } finally {
+      setIsUpdatingFavorite(false);
+    }
+  };
 
   // Calculate actual rating from property reviews
   const hasReviews = property.reviews && Array.isArray(property.reviews) && property.reviews.length > 0
@@ -80,7 +132,7 @@ export function PropertyCard({ property, searchParams }: PropertyCardProps) {
   const displayRating = averageRating > 0 ? averageRating.toFixed(1) : "New"
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+    <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 hover:border-[#B11E43] transition-colors duration-300">
       <div className="flex flex-col sm:flex-row">
         {/* Image Section */}
         <div className="w-full sm:w-2/5 relative flex pr-0">
@@ -95,10 +147,26 @@ export function PropertyCard({ property, searchParams }: PropertyCardProps) {
             />
             <Badge
               variant="secondary"
-              className="absolute top-2 left-2"
+              className="absolute top-2 left-2 bg-white/80 text-[#B11E43] border border-[#B11E43]"
             >
               {property.property_type.toUpperCase()}
             </Badge>
+            
+            {/* Favorite Button */}
+            <button
+              onClick={toggleFavoriteStatus}
+              className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white transition-colors duration-200 shadow-sm transform active:scale-90 active:rotate-12 transition-transform"
+              aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+              disabled={isUpdatingFavorite}
+            >
+              <Heart 
+                className={`h-5 w-5 transition-all duration-300 ${
+                  isFavorite 
+                    ? "text-[#B11E43] fill-[#B11E43] transform scale-110" 
+                    : "text-gray-400 hover:text-[#B11E43]"
+                } ${isUpdatingFavorite ? "opacity-80 animate-pulse" : "opacity-100"}`} 
+              />
+            </button>
           </div>
           {property.images.length > 1 && (
             <div className="flex flex-col w-24 p-2 space-y-1">
@@ -139,20 +207,9 @@ export function PropertyCard({ property, searchParams }: PropertyCardProps) {
                     <h2 className="text-xl sm:text-2xl font-semibold mb-1">{property.name}</h2>
                   </Link>
                   <p className="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-2 flex items-center">
-                    <MapPin className="w-4 h-4 mr-1" />
+                    <MapPin className="w-4 h-4 mr-1 text-[#B11E43]" />
                     {property.area && property.city ? `${property.area}, ${property.city.name}` : property.location}
                   </p>
-                </div>
-                <div className="flex items-center">
-                  {hasReviews ? (
-                    <>
-                      <Star className="w-4 h-4 text-yellow-500 fill-yellow-500 mr-1" />
-                      <span className="text-lg font-medium">{displayRating}</span>
-                      <span className="text-xs text-gray-500 ml-1">({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'})</span>
-                    </>
-                  ) : (
-                    <span className="text-xs text-gray-500">No reviews yet</span>
-                  )}
                 </div>
               </div>
             </div>
@@ -164,8 +221,8 @@ export function PropertyCard({ property, searchParams }: PropertyCardProps) {
                 const amenityName = amenity.name as keyof typeof amenityIcons;
                 const Icon = amenityIcons[amenityName] || Wifi;
                 return (
-                  <Badge key={index} variant="outline" className="text-xs flex items-center gap-1">
-                    {Icon && <Icon className="w-3 h-3" />}
+                  <Badge key={index} variant="outline" className="text-xs flex items-center gap-1 border-gray-200">
+                    {Icon && <Icon className="w-3 h-3 text-[#B11E43]" />}
                     {amenity.name}
                   </Badge>
                 )
@@ -177,8 +234,8 @@ export function PropertyCard({ property, searchParams }: PropertyCardProps) {
 
             {/* Pricing Section */}
             <div className="mt-auto">
-              <div className="flex items-center justify-between">
-                <div>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="flex-grow">
                   <p className="text-xs sm:text-sm text-gray-500">Starting from</p>
                   <div className="flex items-baseline gap-2">
                     <span className="text-xl sm:text-2xl font-bold">₹{lowestPrice}</span>
@@ -191,42 +248,39 @@ export function PropertyCard({ property, searchParams }: PropertyCardProps) {
                       <span className="text-xs sm:text-sm text-gray-500 line-through">
                         ₹{originalPrice}
                       </span>
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge variant="secondary" className="text-xs bg-[#FFEAEF] text-[#B11E43] border border-[#FFDCE6]">
                         {discount}% OFF
                       </Badge>
                     </div>
                   )}
                 </div>
-                <div className="flex flex-col sm:flex-row gap-2">
+
+                {/* Rating badge */}
+                <div className="bg-gray-50 px-3 py-1 rounded-full flex items-center shadow-sm border border-gray-100 self-center">
+                  {hasReviews ? (
+                    <>
+                      <Star className="w-4 h-4 text-[#B11E43] fill-[#B11E43] mr-1" />
+                      <span className="text-md font-medium mr-1">{displayRating}</span>
+                      <span className="text-xs text-gray-500">({reviewCount})</span>
+                    </>
+                  ) : (
+                    <span className="text-xs text-gray-500 flex items-center">
+                      <StarHalf className="w-4 h-4 mr-1 text-[#B11E43]" />
+                      New
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-row gap-2 justify-end sm:justify-start">
                   <Link href={{
                     pathname: `/property/${property.id}`,
                     query: searchParams? Object.fromEntries(searchParams.entries()) : {}
                   }}
                   target="_blank"
                   rel="noopener noreferrer">
-                    <Button variant="neutral" size="lg">
+                    <Button variant="default" size="sm" className="whitespace-nowrap bg-[#B11E43] hover:bg-[#8f1836]">
                       View Details
                     </Button>
-                  </Link>
-                  <Link href={{
-                    pathname: `/property/${property.id}/book`,
-                    query: searchParams? Object.fromEntries(searchParams.entries()) : {}
-                  }}
-                  target="_blank"
-                  rel="noopener noreferrer">
-                    <ApiButton
-                      className="bg-[#B11E43] hover:bg-[#8f1836]"
-                      size="lg"
-                      loadingText="Preparing..."
-                      onClick={async () => {
-                        // This simulates any pre-booking API call, like checking availability
-                        // Even with multiple rapid clicks, this will only execute once
-                        await new Promise(resolve => setTimeout(resolve, 500));
-                        return true;
-                      }}
-                    >
-                      Book Now
-                    </ApiButton>
                   </Link>
                 </div>
               </div>

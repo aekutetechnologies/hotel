@@ -16,6 +16,7 @@ import ShowMap from '@/components/ShowMap'
 import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog"
 import { GalleryModal } from '@/components/GalleryModal'
 import { Spinner } from '@/components/ui/spinner'
+import { LoadingIndicator } from '@/components/ui/LoadingIndicator'
 
 interface PropertyDetailsProps {
   property: Property;
@@ -100,6 +101,50 @@ export default function PropertyDetails() {
   const [checkInTime, setCheckInTime] = useState<string | null>(checkInTimeParam)
   const [checkOutTime, setCheckOutTime] = useState<string | null>(checkOutTimeParam)
 
+  // Log time values for debugging
+  useEffect(() => {
+    console.log("Page time values:", {
+      checkInTimeParam,
+      checkOutTimeParam,
+      checkInTime,
+      checkOutTime,
+      bookingType
+    });
+  }, [checkInTimeParam, checkOutTimeParam, checkInTime, checkOutTime, bookingType]);
+
+  // Format time values to ensure they're in HH:00 format if needed
+  useEffect(() => {
+    if (bookingType === 'hourly') {
+      // If we have time params but they don't include minutes, add ":00"
+      if (checkInTimeParam && !checkInTimeParam.includes(':')) {
+        setCheckInTime(`${checkInTimeParam}:00`);
+      }
+      
+      if (checkOutTimeParam && !checkOutTimeParam.includes(':')) {
+        setCheckOutTime(`${checkOutTimeParam}:00`);
+      }
+      
+      // If we don't have time params, set defaults
+      if (!checkInTimeParam) {
+        const now = new Date();
+        const nextHour = (now.getHours() + 1) % 24;
+        setCheckInTime(`${nextHour}:00`);
+      }
+      
+      if (!checkOutTimeParam) {
+        if (checkInTimeParam) {
+          const hour = parseInt(checkInTimeParam);
+          const nextHour = (hour + 2) % 24;
+          setCheckOutTime(`${nextHour}:00`);
+        } else {
+          const now = new Date();
+          const laterHour = (now.getHours() + 3) % 24;
+          setCheckOutTime(`${laterHour}:00`);
+        }
+      }
+    }
+  }, [bookingType, checkInTimeParam, checkOutTimeParam]);
+
   useEffect(() => {
     console.log("Fetching property with ID:", propertyId.toString());
     
@@ -127,7 +172,15 @@ export default function PropertyDetails() {
   }, [propertyId]);
 
   if (!property) {
-    return <div>Loading...</div>
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingIndicator 
+          variant="dots" 
+          size="md" 
+          text="Loading property details..." 
+        />
+      </div>
+    );
   }
 
   const nextImage = () => {
@@ -187,22 +240,22 @@ export default function PropertyDetails() {
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl font-bold mb-2">{property.name}</h1>
           <p className="text-gray-600 flex items-center gap-2 mb-4">
-            <MapPin className="h-5 w-5" />
+            <MapPin className="h-5 w-5 text-[#B11E43]" />
             {property.area && property.city ? `${property.area}, ${property.city.name}` : property.location}
           </p>
           <div className="flex flex-wrap items-center gap-4">
-            <Badge variant="outline" className="flex items-center gap-2">
-              <Building2 className="h-4 w-4" />
+            <Badge variant="outline" className="flex items-center gap-2 border-[#B11E43] text-[#B11E43]">
+              <Building2 className="h-4 w-4 text-[#B11E43]" />
               {property.property_type === 'hotel' ? 'Hotel' : property.property_type === 'hostel' ? 'Hostel' : 'Property'}
             </Badge>
             {property.discount && (
               <Badge variant="outline" className="bg-green-50 text-green-700">
                 {property.discount}% OFF
-              </Badge>
+            </Badge>
             )}
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className="bg-green-50">
-                <Star className="h-4 w-4 text-green-600 fill-current mr-1" />
+              <Badge variant="outline" className="bg-green-50 border-[#B11E43]">
+                <Star className="h-4 w-4 text-[#B11E43] fill-current mr-1" />
                 {property.reviews && property.reviews.length > 0 
                   ? (property.reviews.reduce((sum, review) => sum + review.rating, 0) / property.reviews.length).toFixed(1) 
                   : 'New'}
@@ -233,22 +286,22 @@ export default function PropertyDetails() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/50" />
                 <div className="absolute bottom-4 right-4 flex space-x-2">
-                  <Button
-                    size="icon"
-                    variant="secondary"
+                <Button
+                  size="icon"
+                    variant="default"
                     onClick={() => setCurrentImageIndex(prev => (prev > 0 ? prev - 1 : property.images.length - 1))}
-                    className="h-8 w-8 rounded-full"
-                  >
+                    className="h-8 w-8 rounded-full bg-white/80 text-[#B11E43] hover:bg-white hover:text-[#8f1836]"
+                >
                     <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="secondary"
+                </Button>
+                <Button
+                  size="icon"
+                    variant="default"
                     onClick={() => setCurrentImageIndex(prev => (prev < property.images.length - 1 ? prev + 1 : 0))}
-                    className="h-8 w-8 rounded-full"
-                  >
+                    className="h-8 w-8 rounded-full bg-white/80 text-[#B11E43] hover:bg-white hover:text-[#8f1836]"
+                >
                     <ChevronRight className="h-4 w-4" />
-                  </Button>
+                </Button>
                 </div>
               </div>
               
@@ -279,21 +332,21 @@ export default function PropertyDetails() {
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-8">
                 {property.amenities.map((amenity, index) => {
                   const amenityIcons: { [key: string]: React.ReactNode } = {
-                    "Security": <ShieldCheck className="h-5 w-5" />,
-                    "Caretaker": <UserRoundCheck className="h-5 w-5" />,
-                    "Reception": <BellRing className="h-5 w-5" />,
-                    "Bar": <Beer className="h-5 w-5" />,
-                    "Gym": <Dumbbell className="h-5 w-5" />,
-                    "In-house Restaurant": <Soup className="h-5 w-5" />,
-                    "Elevator": <Building className="h-5 w-5" />,
-                    "Power backup": <BatteryCharging className="h-5 w-5" />,
-                    "Geyser": <Heater className="h-5 w-5" />,
-                    "Kitchen": <ChefHat className="h-5 w-5" />,
-                    "Free Wifi": <Wifi className="h-5 w-5" />,
-                    "AC": <AirVent className="h-5 w-5" />,
-                    "TV": <Tv className="h-5 w-5" />,
-                    "Coffee": <Coffee className="h-5 w-5" />,
-                    "Utensils": <Utensils className="h-5 w-5" />,
+                    "Security": <ShieldCheck className="h-5 w-5 text-[#B11E43]" />,
+                    "Caretaker": <UserRoundCheck className="h-5 w-5 text-[#B11E43]" />,
+                    "Reception": <BellRing className="h-5 w-5 text-[#B11E43]" />,
+                    "Bar": <Beer className="h-5 w-5 text-[#B11E43]" />,
+                    "Gym": <Dumbbell className="h-5 w-5 text-[#B11E43]" />,
+                    "In-house Restaurant": <Soup className="h-5 w-5 text-[#B11E43]" />,
+                    "Elevator": <Building className="h-5 w-5 text-[#B11E43]" />,
+                    "Power backup": <BatteryCharging className="h-5 w-5 text-[#B11E43]" />,
+                    "Geyser": <Heater className="h-5 w-5 text-[#B11E43]" />,
+                    "Kitchen": <ChefHat className="h-5 w-5 text-[#B11E43]" />,
+                    "Free Wifi": <Wifi className="h-5 w-5 text-[#B11E43]" />,
+                    "AC": <AirVent className="h-5 w-5 text-[#B11E43]" />,
+                    "TV": <Tv className="h-5 w-5 text-[#B11E43]" />,
+                    "Coffee": <Coffee className="h-5 w-5 text-[#B11E43]" />,
+                    "Utensils": <Utensils className="h-5 w-5 text-[#B11E43]" />,
                   }
                   const IconComponent = amenityIcons[(amenity.name as string)] || null
 
@@ -337,18 +390,18 @@ export default function PropertyDetails() {
                             {/* Navigation Arrows */}
                             <div className="absolute inset-0 flex items-center justify-between p-2">
                               <Button
-                                variant="ghost"
+                                variant="default"
                                 size="icon"
-                                className="h-8 w-8 rounded-full bg-white/80 hover:bg-white"
+                                className="h-8 w-8 rounded-full bg-white/80 hover:bg-white text-[#B11E43] hover:text-[#8f1836]"
                                 onClick={() => prevRoomImage(room.id.toString())}
                                 disabled={(currentRoomImageIndices[room.id] || 0) === 0}
                               >
                                 <ChevronLeft className="h-4 w-4" />
                               </Button>
                               <Button
-                                variant="ghost"
+                                variant="default"
                                 size="icon"
-                                className="h-8 w-8 rounded-full bg-white/80 hover:bg-white"
+                                className="h-8 w-8 rounded-full bg-white/80 hover:bg-white text-[#B11E43] hover:text-[#8f1836]"
                                 onClick={() => nextRoomImage(room.id.toString())}
                                 disabled={(currentRoomImageIndices[room.id] || 0) === room.images.length - 1}
                               >
@@ -380,21 +433,21 @@ export default function PropertyDetails() {
                           <div className="flex gap-2 mb-2">
                             {room.amenities && room.amenities.map((amenity: CustomAmenity, index: number) => {
                               const amenityIcons: { [key: string]: React.ReactNode } = {
-                                "Security": <ShieldCheck className="h-5 w-5" />,
-                                "Caretaker": <UserRoundCheck className="h-5 w-5" />,
-                                "Reception": <BellRing className="h-5 w-5" />,
-                                "Bar": <Beer className="h-5 w-5" />,
-                                "Gym": <Dumbbell className="h-5 w-5" />,
-                                "In-house Restaurant": <Soup className="h-5 w-5" />,
-                                "Elevator": <Building className="h-5 w-5" />,
-                                "Power backup": <BatteryCharging className="h-5 w-5" />,
-                                "Geyser": <Heater className="h-5 w-5" />,
-                                "Kitchen": <ChefHat className="h-5 w-5" />,
-                                "Free Wifi": <Wifi className="h-5 w-5" />,
-                                "AC": <AirVent className="h-5 w-5" />,
-                                "TV": <Tv className="h-5 w-5" />,
-                                "Coffee": <Coffee className="h-5 w-5" />,
-                                "Utensils": <Utensils className="h-5 w-5" />,
+                                "Security": <ShieldCheck className="h-5 w-5 text-[#B11E43]" />,
+                                "Caretaker": <UserRoundCheck className="h-5 w-5 text-[#B11E43]" />,
+                                "Reception": <BellRing className="h-5 w-5 text-[#B11E43]" />,
+                                "Bar": <Beer className="h-5 w-5 text-[#B11E43]" />,
+                                "Gym": <Dumbbell className="h-5 w-5 text-[#B11E43]" />,
+                                "In-house Restaurant": <Soup className="h-5 w-5 text-[#B11E43]" />,
+                                "Elevator": <Building className="h-5 w-5 text-[#B11E43]" />,
+                                "Power backup": <BatteryCharging className="h-5 w-5 text-[#B11E43]" />,
+                                "Geyser": <Heater className="h-5 w-5 text-[#B11E43]" />,
+                                "Kitchen": <ChefHat className="h-5 w-5 text-[#B11E43]" />,
+                                "Free Wifi": <Wifi className="h-5 w-5 text-[#B11E43]" />,
+                                "AC": <AirVent className="h-5 w-5 text-[#B11E43]" />,
+                                "TV": <Tv className="h-5 w-5 text-[#B11E43]" />,
+                                "Coffee": <Coffee className="h-5 w-5 text-[#B11E43]" />,
+                                "Utensils": <Utensils className="h-5 w-5 text-[#B11E43]" />,
                               }
                               const IconComponent = amenityIcons[amenity.name] || null
 
@@ -443,7 +496,7 @@ export default function PropertyDetails() {
                             </div>
                             <Button
                               onClick={() => setSelectedRoom(room as ExtendedRoom)}
-                              variant={selectedRoom?.id === room.id ? "default" : "outline"}
+                              variant={selectedRoom?.id === room.id ? "default" : "neutral"}
                               className={selectedRoom?.id === room.id ? "bg-[#B11E43] hover:bg-[#8f1836]" : ""}
                             >
                               {selectedRoom?.id === room.id ? "Selected" : "Select"}
@@ -487,24 +540,24 @@ export default function PropertyDetails() {
                 <div className="p-6 bg-white shadow-lg rounded-xl">
                   <h3 className="text-xl font-semibold mb-4">Rules & Policies</h3>
                   <ul className="space-y-2">
-                    {property.rules.map((rule, index) => (
+                      {property.rules.map((rule, index) => (
                       <li key={rule.id || `rule-${index}`} className="flex items-start">
-                        <ClipboardList className="h-5 w-5 mr-2 text-muted-foreground" />
+                        <ClipboardList className="h-5 w-5 mr-2 text-[#B11E43]" />
                         <span>{rule.name}</span>
                       </li>
-                    ))}
+                      ))}
                   </ul>
                 </div>
                 
                 <div className="p-6 bg-white shadow-lg rounded-xl">
                   <h3 className="text-xl font-semibold mb-4">Documentation Required</h3>
                   <ul className="space-y-2">
-                    {property.documentation.map((doc, index) => (
+                      {property.documentation.map((doc, index) => (
                       <li key={doc.id || `doc-${index}`} className="flex items-start">
-                        <FileCheck className="h-5 w-5 mr-2 text-muted-foreground" />
+                        <FileCheck className="h-5 w-5 mr-2 text-[#B11E43]" />
                         <span>{doc.name}</span>
                       </li>
-                    ))}
+                      ))}
                   </ul>
                 </div>
               </div>

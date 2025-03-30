@@ -9,6 +9,7 @@ import { API_URL } from '../config'
  */
 export async function fetchProperties(params?: URLSearchParams, property_type?: string) {
   console.log("Fetching properties with params:", params)
+
   
   // Safely get token
   const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
@@ -21,7 +22,10 @@ export async function fetchProperties(params?: URLSearchParams, property_type?: 
     // Convert URLSearchParams to a query string, if params are provided
     const queryParams = params ? params.toString() : '';
     const propertyTypeParam = property_type ? `property_type=${property_type}` : '';
-    const queryString = [queryParams, propertyTypeParam].filter(Boolean).join('&');
+    const id = localStorage.getItem('userId');
+    console.log("User ID:", id);
+    const idParam = id ? `id=${id}` : '';
+    const queryString = [queryParams, propertyTypeParam, idParam].filter(Boolean).join('&');
     const url = `${API_URL}property/properties/${queryString ? `?${queryString}` : ''}`;
     
     console.log("Fetching properties from URL:", url);

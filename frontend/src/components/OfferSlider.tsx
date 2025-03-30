@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { toast } from "react-toastify"
 import { fetchOffers } from "@/lib/api/fetchOffers"
 import { Offer } from "@/types/offer"
+import { LoadingIndicator } from '@/components/ui/LoadingIndicator'
 
 
 export function OffersSlider() {
@@ -58,7 +59,15 @@ export function OffersSlider() {
   }
 
   if (isLoading) {
-    return <div>Loading offers...</div>
+    return (
+      <div className="w-full py-8 flex justify-center">
+        <LoadingIndicator 
+          variant="dots" 
+          size="sm" 
+          text="Loading offers..." 
+        />
+      </div>
+    )
   }
 
   if (!offers.length) {

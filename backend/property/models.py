@@ -160,3 +160,14 @@ class Reply(models.Model):
 
     def __str__(self):
         return f"Reply by {self.user.mobile} on {self.review}"
+
+
+class FavoriteProperty(models.Model):
+    user = models.ForeignKey(HsUser, on_delete=models.CASCADE)
+    property = models.ForeignKey(Property, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.user.mobile} - {self.property.name}"

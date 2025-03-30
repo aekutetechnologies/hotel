@@ -88,7 +88,7 @@ export function Header() {
         shadow-md 
         w-full 
         py-4 
-        z-[500]
+        z-10
       ">
         <div className="container mx-auto px-4 flex justify-between items-center">
           <Link href="/" className="flex items-center">
@@ -107,32 +107,22 @@ export function Header() {
               <span>+91 9876543210</span>
             </Link>
 
-            <Link href="#" className="text-base text-gray-600 hover:text-gray-900">
-            <span>
-              About Us
-            </span>
-            </Link>
-
-            <Link href="#" className="text-base text-gray-600 hover:text-gray-900">
-            <span>
-              Contact Us
-            </span>
-            </Link>
-
-            {isLoggedIn ? (
-              <ProfileDropdown 
-                onLogout={handleLogout} 
-                userName={userName}
-              />
-            ) : (
-              <NewButton 
-                variant="default" 
-                size="sm"
-                onClick={() => { console.log("Login/Signup button clicked"); setIsLoginOpen(true); }}
-              >
-                Login / Signup
-              </NewButton>
-            )}
+            <div className="relative">
+              {isLoggedIn ? (
+                <ProfileDropdown 
+                  onLogout={handleLogout} 
+                  userName={userName}
+                />
+              ) : (
+                <NewButton 
+                  variant="default" 
+                  size="sm"
+                  onClick={() => { console.log("Login/Signup button clicked"); setIsLoginOpen(true); }}
+                >
+                  Login
+                </NewButton>
+              )}
+            </div>
           </div>
         </div>
       </header>

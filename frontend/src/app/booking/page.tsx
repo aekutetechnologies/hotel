@@ -2,14 +2,46 @@
 
 import { useState, useEffect } from 'react'
 import { Header } from '@/components/Header'
-import { Footer } from '@/components/Footer'
+import Footer from '@/components/Footer'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Star } from 'lucide-react'
+import { Star, CalendarIcon, PackageSearch } from 'lucide-react'
 import { toast, ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { getUserBookings } from '@/lib/api/fetchUserBookings'
+import { motion } from 'framer-motion'
+import Link from 'next/link'
 
+// Define the Booking interface before using it
+interface Booking {
+  id: number
+  name: string
+  room_type: string
+  room: number
+  checkin_date: string
+  checkout_date: string
+  price: number
+  status: string
+  booking_id: string
+  number_of_guests: number
+  discount: number
+  payment_type: string
+  property: {
+    images: Array<{
+      image: string
+    }>
+    name: string
+    rooms: Array<{
+        id: number
+        name: string
+    }>
+  }
+  user: {
+    name: string
+    email: string
+    mobile: string
+  }
+}
 
 export default function BookingPage() {
   console.log("BookingPage component is rendering")
@@ -27,9 +59,10 @@ export default function BookingPage() {
       setIsLoading(true)
       try {
         const data = await getUserBookings()
+        console.log(data)
         setBookings(data)
-      } catch (error) {
-        toast.error(error.message)
+      } catch (error: any) {
+        toast.error(error.message || 'Failed to fetch bookings')
       } finally {
         setIsLoading(false)
       }
@@ -38,7 +71,23 @@ export default function BookingPage() {
   }, [])
 
   if (isLoading) {
-    return <div>Loading bookings...</div>
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-grow container mx-auto px-4 py-8 flex items-center justify-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="text-center"
+          >
+            <div className="w-16 h-16 border-4 border-t-[#B11E43] border-r-[#B11E43] border-b-[#B11E43] border-l-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-lg text-gray-600">Loading your bookings...</p>
+          </motion.div>
+        </main>
+        <Footer sectionType="hotels" />
+      </div>
+    )
   }
 
   // Function to generate invoice HTML (already defined in previous turns, ensure it's here)
@@ -207,76 +256,138 @@ export default function BookingPage() {
         <h1 className="text-3xl font-bold mb-8">My Bookings</h1>
 
         <div className="space-y-6">
-          {bookings.map((booking) => (
-            <Card key={booking.id}>
-              <CardHeader>
-                <CardTitle>Booking ID: {booking.id}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col md:flex-row gap-6">
-                  <div className="w-full md:w-1/3">
-                    <img
-                      src={booking.property.images[0].image || '/images/default-image.jpg'}
-                      alt={booking.property.name}
-                      width={300}
-                      height={200}
-                      className="rounded-lg object-cover w-full h-48"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-semibold mb-2">{booking.property.name}</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div>
-                        <p className="text-sm text-gray-500">Room Type</p>
-                        <p className="font-medium">{booking.property.rooms.find(room => room.id === booking.room)?.name}</p>
+          {bookings.length > 0 ? (
+            <>
+              {bookings.map((booking) => (
+                <Card key={booking.id}>
+                  <CardHeader>
+                    <CardTitle>Booking ID: {booking.id}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-col md:flex-row gap-6">
+                      <div className="w-full md:w-1/3">
+                        <img
+                          src={booking.property.images[0].image || '/images/default-image.jpg'}
+                          alt={booking.property.name}
+                          width={300}
+                          height={200}
+                          className="rounded-lg object-cover w-full h-48"
+                        />
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Amount Paid</p>
-                        <p className="font-medium">₹{booking.price}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Check-in</p>
-                        <p className="font-medium">{booking.checkin_date}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Check-out</p>
-                        <p className="font-medium">{booking.checkout_date}</p>
+                      <div className="flex-1">
+                        <h3 className="text-xl font-semibold mb-2">{booking.property.name}</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <p className="text-sm text-gray-500">Room Type</p>
+                            <p className="font-medium">{booking.property.rooms.find(room => room.id === booking.room)?.name}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">Amount Paid</p>
+                            <p className="font-medium">₹{booking.price}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">Check-in</p>
+                            <p className="font-medium">{booking.checkin_date}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">Check-out</p>
+                            <p className="font-medium">{booking.checkout_date}</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-4">
+                          <div className="flex items-center">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                              booking.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                              booking.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                              booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {booking.status}
+                            </span>
+                          </div>
+                          {booking.status === 'completed' && (
+                            <Button
+                              variant="neutral"
+                              onClick={() => setSelectedBooking(booking.id)}
+                            >
+                              Write a Review
+                            </Button>
+                          )}
+                          <Button variant="neutral" className="text-[#B11E43] border-[#B11E43]"
+                            onClick={() => downloadInvoice(booking)}
+                          >
+                            Download Invoice
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-4">
-                      <div className="flex items-center">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                          booking.status === 'completed' ? 'bg-blue-100 text-blue-800' :
-                          booking.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                          booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {booking.status}
-                        </span>
-                      </div>
-                      {booking.status === 'completed' && (
-                        <Button
-                          variant="outline"
-                          onClick={() => setSelectedBooking(booking.id)}
-                        >
-                          Write a Review
-                        </Button>
-                      )}
-                      {/* <Link href={`/booking/${booking.id}`}>
-                        <Button variant="outline">View Details</Button>
-                      </Link> */}
-                      <Button variant="outline" className="text-[#B11E43] border-[#B11E43]"
-                        onClick={() => downloadInvoice(booking)}
-                      >
-                        Download Invoice
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  </CardContent>
+                </Card>
+              ))}
+            </>
+          ) : (
+            <motion.div 
+              className="flex flex-col items-center justify-center py-16 px-8 bg-white rounded-lg shadow-sm"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.3, type: "spring", stiffness: 100 }}
+                className="w-32 h-32 rounded-full bg-gray-100 flex items-center justify-center mb-6"
+              >
+                <motion.div
+                  animate={{ 
+                    y: [0, -10, 0],
+                    rotate: [0, 5, 0, -5, 0]
+                  }}
+                  transition={{ 
+                    duration: 2.5, 
+                    repeat: Infinity,
+                    repeatType: "loop" 
+                  }}
+                >
+                  <CalendarIcon className="w-16 h-16 text-[#B11E43]" />
+                </motion.div>
+              </motion.div>
+              
+              <motion.h2 
+                className="text-2xl font-bold text-gray-800 mb-2 text-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+              >
+                No Bookings Found
+              </motion.h2>
+              
+              <motion.p 
+                className="text-gray-600 mb-8 max-w-md text-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.7 }}
+              >
+                You haven't made any bookings yet. Start your journey by exploring our amazing hotels and hostels!
+              </motion.p>
+              
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.9 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Link href="/">
+                  <Button className="bg-[#B11E43] hover:bg-[#8f1836] text-white px-6 py-2 flex items-center gap-2">
+                    <PackageSearch className="w-5 h-5" />
+                    Explore Hotels
+                  </Button>
+                </Link>
+              </motion.div>
+            </motion.div>
+          )}
 
           {selectedBooking && (
             <Card>
@@ -319,7 +430,7 @@ export default function BookingPage() {
                       id="review-image-upload"
                     />
                     <label htmlFor="review-image-upload">
-                      <Button type="button" variant="outline" className="cursor-pointer">
+                      <Button type="button" variant="neutral" className="cursor-pointer">
                         Upload Photos
                       </Button>
                     </label>
@@ -327,7 +438,7 @@ export default function BookingPage() {
                   <div className="flex justify-end gap-4">
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="neutral"
                       onClick={() => setSelectedBooking(null)}
                     >
                       Cancel
@@ -343,39 +454,8 @@ export default function BookingPage() {
         </div>
       </main>
       <ToastContainer />
-      <Footer />
+      <Footer sectionType="hotels" />
     </div>
   )
-}
-
-
-interface Booking {
-  id: number
-  name: string
-  room_type: string
-  room: number
-  checkin_date: string
-  checkout_date: string
-  price: number
-  status: string
-  booking_id: string
-  number_of_guests: number
-  discount: number
-  payment_type: string
-  property: {
-    images: Array<{
-      image: string
-    }>
-    name: string
-    rooms: Array<{
-        id: number
-        name: string
-    }>
-  }
-  user: {
-    name: string
-    email: string
-    mobile: string
-  }
 }
 

@@ -104,9 +104,6 @@ export default function TestimonialSection({ testimonials, theme }: any) {
               <div className={`${colors?.secondary} p-4 rounded-xl -mx-8 -mb-8`}>
                 <div className="flex justify-between items-center">
                   <h3 className="text-2xl md:text-3xl font-semibold">Are you the next one?</h3>
-                  <button className={`bg-white ${colors?.buttonText} px-4 py-2 rounded-lg font-medium`}>
-                    {theme === "hotel" ? "Post Experience" : "Post Memories"}
-                  </button>
                 </div>
               </div>
             </div>

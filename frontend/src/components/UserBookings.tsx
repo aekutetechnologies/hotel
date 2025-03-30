@@ -8,6 +8,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { toast } from 'react-toastify'
 import { getUserBookings } from '@/lib/api/fetchUserBookings'
+import { LoadingIndicator } from '@/components/ui/LoadingIndicator'
 
 export function UserBookings() {
   const [selectedBooking, setSelectedBooking] = useState<number | null>(null)
@@ -35,7 +36,15 @@ export function UserBookings() {
   }, [])
 
   if (isLoading) {
-    return <div>Loading bookings...</div>
+    return (
+      <div className="w-full py-8 flex justify-center">
+        <LoadingIndicator 
+          variant="pulse" 
+          size="md" 
+          text="Loading your bookings..." 
+        />
+      </div>
+    )
   }
 
   return (

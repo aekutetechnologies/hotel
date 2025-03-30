@@ -160,17 +160,27 @@ const useImagePreloader = (imageSources: string[]) => {
 
 export default function Home() {
   // State
-  const [isLoaded, setIsLoaded] = useState(false)
-  const [expandedSection, setExpandedSection] = useState<"hotels" | "hostels" | null>(null)
-  const [showDetailSection, setShowDetailSection] = useState<"hotels" | "hostels" | null>(null)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false)
-  const [userName, setUserName] = useState("")
-  
-  const { imagesPreloaded, loadingProgress } = useImagePreloader([...hotelImages, ...hostelImages])
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [expandedSection, setExpandedSection] = useState<"hotels" | "hostels" | null>(null);
+  const [showDetailSection, setShowDetailSection] = useState<"hotels" | "hostels" | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
+  const [userName, setUserName] = useState("");
+
+  const { imagesPreloaded, loadingProgress } = useImagePreloader([...hotelImages, ...hostelImages]);
 
   useEffect(() => {
     setIsLoaded(true);
+
+    const storedName = localStorage.getItem("name");
+    const storedAccessToken = localStorage.getItem("accessToken");
+    console.log("storedName", storedName);
+    console.log("storedAccessToken", storedAccessToken);
+    if (storedName && storedAccessToken) {
+      console.log("storedName", storedName);
+      setIsLoggedIn(true);
+      setUserName(storedName);
+    }
   }, []);
 
   // Handlers
@@ -190,19 +200,24 @@ export default function Home() {
     setIsLoginDialogOpen(true);
   };
 
-  const handleLoginSuccess = (name: string) => {
+  const handleLoginSuccess = (userData: any) => {
+    console.log("userData", userData);
+    if (!userData) {
+      console.error("Invalid user data:", userData);
+      return;
+    }
+
     setIsLoggedIn(true);
-    setUserName(name);
-    setIsLoginDialogOpen(false);
+    setUserName(userData);
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
     setUserName("");
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("role");
-    localStorage.removeItem("userId");
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("user_role");
     localStorage.removeItem("name");
+    localStorage.removeItem("id");
     localStorage.removeItem("permissions");
   };
 
@@ -220,7 +235,12 @@ export default function Home() {
         <div className="flex flex-col min-h-screen overflow-hidden">
           {/* Navbar for web view */}
           {!showDetailSection && (
-            <div className="hidden md:block fixed top-0 left-0 right-0 z-50">
+            <motion.div 
+              className="hidden md:block fixed top-0 left-0 right-0 z-50"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
               <nav
                 className="mx-auto px-6 flex justify-between items-center bg-gradient-to-r from-slate-300 via-transparent to-slate-300 backdrop-blur-md rounded-xl shadow-lg max-w-[95rem] w-[170%]"
                 style={{
@@ -247,31 +267,44 @@ export default function Home() {
                   </NewButton>
                 )}
               </nav>
-            </div>
+            </motion.div>
           )}
 
           {/* Home Hero Section */}
-          <HomeHero
-            hotelImages={hotelImages}
-            hostelImages={hostelImages}
-            expandedSection={expandedSection}
-            setExpandedSection={setExpandedSection}
-            handleDiscover={handleDiscover}
-          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <HomeHero
+              hotelImages={hotelImages}
+              hostelImages={hostelImages}
+              expandedSection={expandedSection}
+              setExpandedSection={setExpandedSection}
+              handleDiscover={handleDiscover}
+            />
+          </motion.div>
 
           {/* Detail Section */}
           <AnimatePresence>
             {(showDetailSection || window.innerWidth < 768) && (
-              <DetailSection
-                sectionType={showDetailSection || "hotels"}
-                isLoggedIn={isLoggedIn}
-                userName={userName} 
-                onClose={handleCloseDetail}
-                hotelTestimonials={hotelTestimonials}
-                hostelTestimonials={hostelTestimonials}
-                setShowDetailSection={setShowDetailSection}
-                handleLoginClick={handleLoginClick}
-              />
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.5 }}
+              >
+                <DetailSection
+                  sectionType={showDetailSection || "hotels"}
+                  isLoggedIn={isLoggedIn}
+                  userName={userName} 
+                  onClose={handleCloseDetail}
+                  hotelTestimonials={hotelTestimonials}
+                  hostelTestimonials={hostelTestimonials}
+                  setShowDetailSection={setShowDetailSection}
+                  handleLoginClick={handleLoginClick}
+                />
+              </motion.div>
             )}
             {/* <WhatsApp /> */}
           </AnimatePresence>

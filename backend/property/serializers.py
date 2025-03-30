@@ -255,6 +255,7 @@ class PropertyViewSerializer(serializers.ModelSerializer):
     documentation = DocumentationSerializer(many=True, required=False)
     offers = PropertyOfferSerializer(many=True, required=False)
     rooms = RoomViewSerializer(many=True, required=False)
+    is_favorite = serializers.SerializerMethodField()
 
     class Meta:
         model = Property
@@ -263,8 +264,19 @@ class PropertyViewSerializer(serializers.ModelSerializer):
             'city', 'country', 'state', 'area', 'longitude', 'latitude',
             'images', 'discount', 'amenities', 'rooms', 'rules',
             'documentation', 'created_at', 'updated_at', 'is_active',
-            'reviews', 'offers'  # Include the reviews field
+            'reviews', 'offers', 'is_favorite'  # Added is_favorite field
         ]
+
+    def get_is_favorite(self, obj):
+        # Check if user is authenticated and property is in user favorites
+        request = self.context.get('request')
+        user_favorites = self.context.get('user_favorites', [])
+
+        print(f"User favorites: {user_favorites}")
+        
+        if request and hasattr(request, 'user'):
+            return obj.id in user_favorites
+        return False
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

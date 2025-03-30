@@ -16,7 +16,7 @@ export async function searchProperties(
     }
     
     // Construct the search URL with query parameters
-    const url = new URL(`${API_URL}/property/public/search/`)
+    const url = new URL(`${API_URL}property/public/search/`)
     if (params) {
       // Append all parameters to the URL
       params.forEach((value, key) => {

@@ -59,8 +59,7 @@ export function SearchResults() {
 
   const [priceRange, setPriceRange] = useState([0, 50000])
   const [showMap, setShowMap] = useState(false)
-  const [selectedSort, setSelectedSort] = useState("Popularity")
-  const [propertyType, setPropertyType] = useState('all')
+  const [selectedSort, setSelectedSort] = useState("Price: Low to High")
   const [selectedLocations, setSelectedLocations] = useState<string[]>([])
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([])
   const [searchTerm, setSearchTerm] = useState('')
@@ -79,8 +78,9 @@ export function SearchResults() {
   const [isFilterLoading, setIsFilterLoading] = useState(false);
 
   useEffect(() => {
+    const id = localStorage.getItem('userId');
     const paramsObject = {
-      propertyType: searchParams?.get('propertyType') || 'all',
+      propertyType: searchParams?.get('propertyType') || '', // Default to 'all' since we removed the filter
       bookingType: bookingType,
       location: searchParams?.get('location') || '',
       checkInDate: searchParams?.get('checkInDate') || '',
@@ -90,6 +90,7 @@ export function SearchResults() {
       months: searchParams?.get('months') || '',
       rooms: searchParams?.get('rooms') || '',
       guests: searchParams?.get('guests') || '',
+      id: id || '',
     }
 
     const params = new URLSearchParams(paramsObject) // Convert to URLSearchParams
@@ -109,8 +110,8 @@ export function SearchResults() {
         setProperties(fetchedProperties)
 
         try {
-          const fetchedAmenities = await fetchAmenities()
-          console.log("fetchedAmenities", fetchedAmenities)
+        const fetchedAmenities = await fetchAmenities()
+        console.log("fetchedAmenities", fetchedAmenities)
           if (Array.isArray(fetchedAmenities)) {
             setRoomAmenities(fetchedAmenities.map((amenity: any) => ({
               id: amenity.id?.toString() || '',
@@ -128,7 +129,7 @@ export function SearchResults() {
             const areas = await fetchCityArea(paramsObject.location)
             console.log("areas", areas.unique_areas)
             if (areas && areas.unique_areas) {
-              setCityAreas(areas.unique_areas)
+            setCityAreas(areas.unique_areas)
             }
           } catch (error) {
             console.error("Error fetching city areas:", error)
@@ -151,7 +152,23 @@ export function SearchResults() {
     }
 
     loadProperties()
-  }, [searchParams, selectedAreas, bookingType])
+  }, [searchParams, bookingType]) // Remove selectedAreas from this dependency array
+
+  // Add a new useEffect to handle filter changes
+  useEffect(() => {
+    console.log("Filter changes detected, applying filters...");
+    
+    // We only want to trigger isFilterLoading, not a full reload
+    // This provides visual feedback while the client-side filtering happens
+    if (!loading) {
+      setIsFilterLoading(true);
+      
+      // Set a timeout to simulate processing time and ensure a smooth UI experience
+      setTimeout(() => {
+        setIsFilterLoading(false);
+      }, 500);
+    }
+  }, [selectedLocations, selectedAreas, selectedAmenities, priceRange, searchTerm]);
 
   const filteredLocations = useMemo(() => {
     return cityAreas.filter(loc =>
@@ -160,7 +177,7 @@ export function SearchResults() {
   }, [cityAreas, searchQuery]);
 
   const filteredProperties = useMemo(() => {
-    return properties.filter(property => {
+    let filtered = properties.filter(property => {
       // Safety check for property structure
       if (!property || !property.rooms || !Array.isArray(property.rooms)) {
         return false;
@@ -184,21 +201,21 @@ export function SearchResults() {
       
       const priceInRange = lowestPrice >= priceRange[0] && lowestPrice <= priceRange[1];
       
-      // Filter by property type
-      const typeMatches = propertyType === 'all' || property.property_type === propertyType;
-      
-      // Filter by location
+      // Fix the location filtering logic
       const locationMatches = selectedLocations.length === 0 || 
-        (property.location && selectedLocations.includes(property.location.split(',')[0].trim()));
+        (property.city && property.city.name && selectedLocations.includes(property.city.name)) ||
+        (property.location && selectedLocations.some(loc => property.location.includes(loc)));
       
-      // Filter by amenities
+      // Fix the amenities filtering logic  
       const amenityMatches = selectedAmenities.length === 0 || 
         (property.amenities && Array.isArray(property.amenities) && 
-          selectedAmenities.every(selectedAmenity =>
-            property.amenities.some((propertyAmenity: any) => 
-              propertyAmenity && propertyAmenity.name === selectedAmenity
-            )
-          )
+          selectedAmenities.every(selectedAmenity => {
+            return property.amenities.some(propertyAmenity => {
+              if (!propertyAmenity) return false;
+              return propertyAmenity.name === selectedAmenity || 
+                    (typeof propertyAmenity === 'string' && propertyAmenity === selectedAmenity);
+            });
+          })
         );
       
       // Filter by area
@@ -210,38 +227,131 @@ export function SearchResults() {
         (property.name && property.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (property.location && property.location.toLowerCase().includes(searchTerm.toLowerCase()));
 
-      return priceInRange && typeMatches && locationMatches && amenityMatches && searchMatches && areaMatches;
+      return priceInRange && locationMatches && amenityMatches && searchMatches && areaMatches;
     });
-  }, [priceRange, propertyType, selectedLocations, selectedAmenities, searchTerm, properties, selectedAreas, bookingType]);
+
+    // Sort properties based on selectedSort
+    if (selectedSort === "Price: Low to High") {
+      return filtered.sort((a, b) => {
+        // Calculate lowest price for both properties
+        const getLowestPrice = (property: Property) => {
+          const prices = property.rooms.map(room => {
+            if (property.property_type === 'hostel' && room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
+              return parseFloat(room.monthly_rate);
+            } else {
+              return bookingType === 'hourly' 
+                ? parseFloat(room.hourly_rate?.toString() || '0') 
+                : parseFloat(room.daily_rate?.toString() || '0');
+            }
+          });
+          return prices.length > 0 ? Math.min(...prices) : 0;
+        };
+        
+        return getLowestPrice(a) - getLowestPrice(b);
+      });
+    } else if (selectedSort === "Price: High to Low") {
+      return filtered.sort((a, b) => {
+        // Calculate lowest price for both properties
+        const getLowestPrice = (property: Property) => {
+          const prices = property.rooms.map(room => {
+            if (property.property_type === 'hostel' && room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
+              return parseFloat(room.monthly_rate);
+            } else {
+              return bookingType === 'hourly' 
+                ? parseFloat(room.hourly_rate?.toString() || '0') 
+                : parseFloat(room.daily_rate?.toString() || '0');
+            }
+          });
+          return prices.length > 0 ? Math.min(...prices) : 0;
+        };
+        
+        return getLowestPrice(b) - getLowestPrice(a);
+      });
+    } else if (selectedSort === "Rating: High to Low") {
+      return filtered.sort((a, b) => {
+        const getRating = (property: Property) => {
+          if (property.reviews && Array.isArray(property.reviews) && property.reviews.length > 0) {
+            return property.reviews.reduce((sum, review) => sum + review.rating, 0) / property.reviews.length;
+          }
+          return 0;
+        };
+        
+        return getRating(b) - getRating(a);
+      });
+    } else if (selectedSort === "Rating: Low to High") {
+      return filtered.sort((a, b) => {
+        const getRating = (property: Property) => {
+          if (property.reviews && Array.isArray(property.reviews) && property.reviews.length > 0) {
+            return property.reviews.reduce((sum, review) => sum + review.rating, 0) / property.reviews.length;
+          }
+          return 0;
+        };
+        
+        return getRating(a) - getRating(b);
+      });
+    }
+
+    return filtered;
+  }, [priceRange, selectedLocations, selectedAmenities, searchTerm, properties, selectedAreas, bookingType, selectedSort]);
 
   const handleLocationChange = (location: string) => {
-    setIsFilterLoading(true)
-    setSelectedLocations(prev =>
-      prev.includes(location)
-        ? prev.filter(l => l !== location)
-        : [...prev, location]
-    )
+    console.log("Location selected:", location);
+    setIsFilterLoading(true);
+    
+    const newLocations = selectedLocations.includes(location)
+      ? selectedLocations.filter(l => l !== location)
+      : [...selectedLocations, location];
+    
+    console.log("Updated locations:", newLocations);
+    setSelectedLocations(newLocations);
   }
 
   const handleAreaChange = (area: string) => {
-    setIsFilterLoading(true)
-    setSelectedAreas(prevAreas => {
-      if (prevAreas.includes(area)) {
-        return prevAreas.filter(a => a !== area)
-      } else {
-        return [...prevAreas, area]
-      }
-    })
+    console.log("Area selected:", area);
+    setIsFilterLoading(true);
+    
+    const newAreas = selectedAreas.includes(area)
+      ? selectedAreas.filter(a => a !== area)
+      : [...selectedAreas, area];
+    
+    console.log("Updated areas:", newAreas);
+    setSelectedAreas(newAreas);
   }
 
   const handleAmenityChange = (amenity: string) => {
-    setIsFilterLoading(true)
-    setSelectedAmenities(prevRoomAmenities =>
-      prevRoomAmenities.includes(amenity)
-        ? prevRoomAmenities.filter(a => a !== amenity)
-        : [...prevRoomAmenities, amenity]
-    )
+    console.log("Amenity selected:", amenity);
+    setIsFilterLoading(true);
+    
+    const newAmenities = selectedAmenities.includes(amenity)
+      ? selectedAmenities.filter(a => a !== amenity)
+      : [...selectedAmenities, amenity];
+    
+    console.log("Updated amenities:", newAmenities);
+    setSelectedAmenities(newAmenities);
   }
+
+  // Add a debug effect to log whenever filter states change
+  useEffect(() => {
+    console.log("Filter state changed:");
+    console.log("- Selected locations:", selectedLocations);
+    console.log("- Selected areas:", selectedAreas);
+    console.log("- Selected amenities:", selectedAmenities);
+    
+    // Log first few properties with their location and amenities data
+    if (properties.length > 0) {
+      console.log("Sample property data:");
+      properties.slice(0, 2).forEach((property, index) => {
+        console.log(`Property ${index + 1}:`, {
+          id: property.id,
+          name: property.name,
+          city: property.city,
+          location: property.location,
+          area: property.area,
+          amenities: property.amenities
+        });
+      });
+    }
+  }, [selectedLocations, selectedAreas, selectedAmenities, properties]);
 
   if (hasError) {
     return <ErrorPage message={errorMessage} onRetry={() => window.location.reload()} />
@@ -269,6 +379,18 @@ export function SearchResults() {
           height: 100%;
           width: 100%;
         }
+        
+        /* Range slider styles moved from nested location */
+        .range-slider [data-orientation="horizontal"] {
+          height: 20px;
+        }
+        .range-slider [role="slider"] {
+          width: 20px;
+          height: 20px;
+          background-color: white;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          border: 2px solid #B11E43;
+        }
       `}</style>
       <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row h-screen">
@@ -293,63 +415,6 @@ export function SearchResults() {
                 Filters
               </motion.h2>
 
-              {/* Property Type */}
-              <motion.div 
-                className="space-y-4"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-              >
-                <h3 className="font-medium">Property Type</h3>
-                <div className="space-y-2">
-                  <motion.label 
-                    className="flex items-center cursor-pointer p-2 rounded-md hover:bg-gray-50"
-                    whileHover={{ backgroundColor: "rgb(249 250 251)", x: 2 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <input
-                      type="radio"
-                      name="propertyType"
-                      value="all"
-                      checked={propertyType === 'all'}
-                      onChange={() => setPropertyType('all')}
-                      className="mr-2"
-                    />
-                    <span className="text-sm">All</span>
-                  </motion.label>
-                  <motion.label 
-                    className="flex items-center cursor-pointer p-2 rounded-md hover:bg-gray-50"
-                    whileHover={{ backgroundColor: "rgb(249 250 251)", x: 2 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <input
-                      type="radio"
-                      name="propertyType"
-                      value="hotel"
-                      checked={propertyType === 'hotel'}
-                      onChange={() => setPropertyType('hotel')}
-                      className="mr-2"
-                    />
-                    <span className="text-sm">Hotels</span>
-                  </motion.label>
-                  <motion.label 
-                    className="flex items-center cursor-pointer p-2 rounded-md hover:bg-gray-50"
-                    whileHover={{ backgroundColor: "rgb(249 250 251)", x: 2 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <input
-                      type="radio"
-                      name="propertyType"
-                      value="hostel"
-                      checked={propertyType === 'hostel'}
-                      onChange={() => setPropertyType('hostel')}
-                      className="mr-2"
-                    />
-                    <span className="text-sm">Hostels</span>
-                  </motion.label>
-                </div>
-              </motion.div>
-
               {/* Price Range */}
               <motion.div 
                 className="space-y-4"
@@ -358,14 +423,16 @@ export function SearchResults() {
                 transition={{ delay: 0.4 }}
               >
                 <h3 className="font-medium mb-4">Price Range</h3>
+                <div className="range-slider">
                 <Slider
                   min={0}
-                  max={50000}
+                    max={20000}
                   step={1000}
                   value={priceRange}
                   onValueChange={setPriceRange}
                   className="mb-2"
                 />
+                </div>
                 <div className="flex justify-between text-sm">
                   <span>₹{priceRange[0]}</span>
                   <span>₹{priceRange[1]}</span>
@@ -458,16 +525,19 @@ export function SearchResults() {
                     />
                   </div>
                 </div> */}
-                <select
+                <motion.select
                   value={selectedSort}
                   onChange={(e) => setSelectedSort(e.target.value)}
-                  className="border rounded-md px-3 py-1.5 text-sm"
+                  className="border rounded-md px-3 py-1.5 text-sm border-gray-200 focus:border-[#B11E43] outline-none"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ duration: 0.2 }}
                 >
                   <option>Price: Low to High</option>
                   <option>Price: High to Low</option>
                   <option>Rating: High to Low</option>
                   <option>Rating: Low to High</option>
-                </select>
+                </motion.select>
               </div>
             </div>
 
@@ -492,16 +562,28 @@ export function SearchResults() {
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
+                  <svg
+  xmlns="http://www.w3.org/2000/svg"
+  className="h-5 w-5 transform -translate-y-2" 
+  fill="none"
+  viewBox="0 0 30 30"
+  stroke="currentColor"
+>
+  <path 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    strokeWidth={2} 
+    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" 
+  />
+</svg>
+
                 </motion.div>
               </div>
             </motion.div>
 
             {/* Active Filters */}
             <AnimatePresence>
-              {(selectedLocations.length > 0 || selectedAmenities.length > 0) && (
+            {(selectedLocations.length > 0 || selectedAmenities.length > 0) && (
                 <motion.div 
                   className="flex flex-wrap gap-2 mb-4"
                   initial={{ opacity: 0, y: -10 }}
@@ -509,7 +591,7 @@ export function SearchResults() {
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.3 }}
                 >
-                  {selectedLocations.map(location => (
+                {selectedLocations.map(location => (
                     <motion.div
                       key={location}
                       initial={{ opacity: 0, scale: 0.8 }}
@@ -517,21 +599,21 @@ export function SearchResults() {
                       exit={{ opacity: 0, scale: 0.8 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <Badge
-                        variant="secondary"
-                        className="flex items-center gap-1"
-                      >
-                        {location}
-                        <button
-                          onClick={() => handleLocationChange(location)}
-                          className="ml-1 hover:text-red-500"
-                        >
-                          ×
-                        </button>
-                      </Badge>
+                  <Badge
+                    variant="secondary"
+                    className="flex items-center gap-1"
+                  >
+                    {location}
+                    <button
+                      onClick={() => handleLocationChange(location)}
+                      className="ml-1 hover:text-red-500"
+                    >
+                      ×
+                    </button>
+                  </Badge>
                     </motion.div>
-                  ))}
-                  {selectedAmenities.map(amenity => (
+                ))}
+                {selectedAmenities.map(amenity => (
                     <motion.div
                       key={amenity}
                       initial={{ opacity: 0, scale: 0.8 }}
@@ -539,61 +621,26 @@ export function SearchResults() {
                       exit={{ opacity: 0, scale: 0.8 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <Badge
-                        variant="secondary"
-                        className="flex items-center gap-1"
-                      >
-                        {amenity}
-                        <button
-                          onClick={() => handleAmenityChange(amenity)}
-                          className="ml-1 hover:text-red-500"
-                        >
-                          ×
-                        </button>
-                      </Badge>
+                  <Badge
+                    variant="secondary"
+                    className="flex items-center gap-1"
+                  >
+                    {amenity}
+                    <button
+                      onClick={() => handleAmenityChange(amenity)}
+                      className="ml-1 hover:text-red-500"
+                    >
+                      ×
+                    </button>
+                  </Badge>
                     </motion.div>
                   ))}
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {selectedLocations.length > 0 && cityAreas.length > 0 && (
-              <motion.div 
-                className="flex flex-col mb-4"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <Label className="mb-2">Areas in {selectedLocations[0]}</Label>
-                <div className="flex flex-wrap gap-2">
-                  {cityAreas.map(area => (
-                    <motion.div
-                      key={area}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <Badge
-                        variant={selectedAreas.includes(area) ? "default" : "outline"}
-                        className="flex items-center gap-1 cursor-pointer"
-                        onClick={() => handleAreaChange(area)}
-                      >
-                        <Checkbox
-                          id={`area-${area}`}
-                          checked={selectedAreas.includes(area)}
-                          onCheckedChange={() => handleAreaChange(area)}
-                          className="mr-1"
-                        />
-                        <Label htmlFor={`area-${area}`}>{area}</Label>
-                      </Badge>
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-
             {/* Property Listings */}
-            <div className="space-y-2 mb-8">
+            <div className="space-y-6 mb-8">
               <AnimatePresence mode="wait">
                 {isFilterLoading ? (
                   <FilterLoader key="loader" />
@@ -619,10 +666,10 @@ export function SearchResults() {
                           transition: { duration: 0.2 }
                         }}
                       >
-                        <PropertyCard
-                          property={property}
-                          searchParams={searchParams}
-                        />
+                <PropertyCard
+                  property={property}
+                  searchParams={searchParams}
+                />
                       </motion.div>
                     ))}
                   </motion.div>

@@ -2,12 +2,17 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Star, MessageSquare } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function TestimonialSection({ testimonials, theme }: any) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const testimonialRefs = useRef<(HTMLDivElement | null)[]>([]);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const scrollDuration = 8000; // Increased from 4000ms to 8000ms for slower scrolling
+  const detailSectionRef = useRef<HTMLDivElement>(null);
 
   const themeColors = {
     maroon: {
@@ -46,18 +51,24 @@ export default function TestimonialSection({ testimonials, theme }: any) {
   const selectedTheme = themeMap[theme] || "grey";
   const colors = themeColors[selectedTheme];
 
+  // Check if user is logged in
   useEffect(() => {
-    // Auto-scroll every 4 seconds
+    const token = localStorage.getItem("accessToken");
+    setIsLoggedIn(!!token);
+  }, []);
+
+  useEffect(() => {
+    // Auto-scroll with increased interval for slower scrolling
     intervalRef.current = setInterval(() => {
       setActiveIndex((prevIndex) =>
         prevIndex === testimonials.length - 1 ? 0 : prevIndex + 1
       );
-    }, 4000);
+    }, scrollDuration);
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [testimonials.length]);
+  }, [testimonials.length, scrollDuration]);
 
   // Pause scrolling on hover
   const handleMouseEnter = () => {
@@ -69,7 +80,31 @@ export default function TestimonialSection({ testimonials, theme }: any) {
       setActiveIndex((prevIndex) =>
         prevIndex === testimonials.length - 1 ? 0 : prevIndex + 1
       );
-    }, 4000);
+    }, scrollDuration);
+  };
+
+  // Scroll to top of page for "Book Now"
+  const scrollToTop = () => {
+    // Find the main content container in DetailSection with the updated structure
+    const contentElement = document.querySelector('.overflow-y-auto.h-full.scrollbar-hide');
+    if (contentElement) {
+      contentElement.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    } else if (detailSectionRef.current) {
+      // Fallback to the main container
+      detailSectionRef.current.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    } else {
+      // Last resort fallback to window scroll
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      });
+    }
   };
 
   return (
@@ -97,13 +132,36 @@ export default function TestimonialSection({ testimonials, theme }: any) {
               </div>
 
               <div className="mt-auto mb-16">
-                <p className="text-6xl md:text-7xl font-bold">10.9K+</p>
+                <p className="text-6xl md:text-7xl font-bold">1.2K+</p>
                 <p className="text-xl opacity-90">Happy guests</p>
               </div>
 
               <div className={`${colors?.secondary} p-4 rounded-xl -mx-8 -mb-8`}>
-                <div className="flex justify-between items-center">
-                  <h3 className="text-2xl md:text-3xl font-semibold">Are you the next one?</h3>
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+                  {isLoggedIn ? (
+                    <>
+                      <h3 className="text-xl md:text-2xl font-semibold">Share your experience</h3>
+                      <Link href="/booking">
+                        <Button 
+                          className={`text-white bg-white hover:bg-opacity-90 whitespace-nowrap ${colors?.accent}`}
+                        >
+                          <MessageSquare className="w-4 h-4 mr-2" />
+                          Add Review
+                        </Button>
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <h3 className="text-xl md:text-2xl font-semibold">Are you the next one?</h3>
+                      <Button 
+                        onClick={scrollToTop}
+                        className={`text-white bg-white hover:bg-opacity-90 whitespace-nowrap ${colors?.accent}`}
+                      >
+                        <Star className="w-4 h-4 mr-2" />
+                        Book Now
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -119,7 +177,9 @@ export default function TestimonialSection({ testimonials, theme }: any) {
           {testimonials?.map((testimonial: any, index: number) => (
             <div
               key={index}
-              ref={(el) => (testimonialRefs.current[index] = el)}
+              ref={(el) => {
+                testimonialRefs.current[index] = el;
+              }}
               className={`p-6 rounded-2xl relative transition-colors duration-300 ${
                 index === activeIndex ? `${colors?.primary} text-white` : "bg-gray-100 text-gray-800"
               }`}

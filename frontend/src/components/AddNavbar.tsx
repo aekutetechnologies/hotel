@@ -15,17 +15,17 @@ const AddNavbar = ({ type, onClose }: AddNavbarProps) => {
 
   return (
     <motion.div
-      className={`w-full relative px-4 ${
+      className={`w-full px-4 max-w-[100vw] overflow-x-hidden h-[40px] z-[60] ${
         type === "hotel"
-          ? "bg-gradient-to-r from-[#b95372] via-[#7A1533] to-[#b95372]"
-          : "bg-gradient-to-r from-slate-400 via-slate-700 to-slate-400"
+          ? "bg-[#B21D46]"
+          : "bg-[#343F52]"
       }`}
       initial={{ x: -2 }}
       animate={{ x: [0, -3, 3, -3, 3, 0] }}
       transition={{ duration: 0.5, ease: "easeInOut", repeat: 1 }}
     >
-      <div className="max-w-screen-2xl mx-auto">
-        <section className="flex justify-center items-center text-white font-semibold py-2 text-sm md:text-base lg:text-lg gap-2 font-sans">
+      <div className="max-w-screen-2xl mx-auto w-full h-full">
+        <section className="flex justify-center items-center text-white font-semibold text-sm md:text-base lg:text-lg gap-2 font-sans h-full">
           <motion.div
             animate={{ rotate: [-5, 5, -5, 5, 0] }}
             transition={{ duration: 0.5, repeat: 1, ease: "easeInOut" }}

@@ -13,14 +13,6 @@ import TestimonialSection from "@/components/testimonial-section";
 import { HeroSection } from "./HeroSection";
 import WhatsApp from "./WhatsApp";
 import Footer from "./Footer";
-import { ProfileDropdown } from "./profile-dropdown";
-import {
-  FaInstagram,
-  FaTiktok,
-  FaYoutube,
-  FaFacebook,
-  FaLinkedin,
-} from "react-icons/fa";
 
 interface DetailSectionProps {
   sectionType: "hotels" | "hostels";
@@ -59,6 +51,7 @@ export function DetailSection({
 }: DetailSectionProps) {
   const detailSectionRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
+  const [isNavModalOpen, setIsNavModalOpen] = useState(false);
   
   // Value for shine animation
   const shineAngle = useMotionValue(15);
@@ -87,11 +80,11 @@ export function DetailSection({
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("user_role");
-    localStorage.removeItem("name");
-    localStorage.removeItem("id");
-    localStorage.removeItem("permissions");
+    // Clear all localStorage items
+    localStorage.clear()
+    
+    // Redirect to home page (reload)
+    window.location.href = "/"
   };
 
   const handleLoginSuccess = (userData: any) => {
@@ -116,8 +109,8 @@ export function DetailSection({
 
   const scrollToTop = () => {
     console.log("Scrolling to top");
-    // Direct approach to scroll the content div
-    const contentElement = document.querySelector('.overflow-y-auto.h-full.scrollbar-hide.mt-16');
+    // Find the main content container with our updated structure
+    const contentElement = document.querySelector('.overflow-y-auto.h-full.scrollbar-hide');
     if (contentElement) {
       contentElement.scrollTo({
         top: 0,
@@ -145,9 +138,14 @@ export function DetailSection({
   }, []);
 
   // Themed colors based on section type
-  const primaryColor = sectionType === "hotels" ? "#A31C44" : "#2A2B2E";
-  const accentColor = sectionType === "hotels" ? "#FF3A5E" : "#3bf0c1";
-  const borderColor = sectionType === "hotels" ? "#FF9BAC" : "#6BEFF0";
+  const primaryColor = sectionType === "hotels" ? "#A31C44" : "#343F52";
+  const accentColor = sectionType === "hotels" ? "#FF3A5E" : "#475569";
+  const borderColor = sectionType === "hotels" ? "#FF9BAC" : "#64748B";
+
+  // Handle navModal state change from Navbar
+  const handleNavModalChange = (isOpen: boolean) => {
+    setIsNavModalOpen(isOpen);
+  };
 
   return (
     <motion.div
@@ -157,43 +155,35 @@ export function DetailSection({
       exit={{ opacity: 0 }}
       onClick={onClose}
     >
-      {/* Book Now Sticker */}
-      <motion.div 
-        className="fixed right-8 top-1/2 z-[60] transform -translate-y-1/2"
-        initial={{ opacity: 0, scale: 0, x: 100 }}
-        animate={{ opacity: 1, scale: 1, x: 0 }}
-        transition={{ 
-          delay: 2, 
-          duration: 0.6,
-          type: "spring",
-          stiffness: 200,
-          damping: 15
-        }}
-        onClick={scrollToTop}
-      >
+      {/* Book Now Sticker - Only visible when navModal is closed */}
+      {!isNavModalOpen && (
         <motion.div 
-          className="relative w-[180px] h-[180px] cursor-pointer"
-          style={{ rotate: springRotate }}
-          animate={isPulsing ? { 
-            scale: [1, 1.05, 1],
-            transition: { 
-              repeat: Infinity, 
-              repeatType: "loop", 
-              duration: 2,
-              ease: "easeInOut" 
-            }
-          } : {}}
-          whileHover={{ scale: 1.1, rotate: [null, -10, 10, 0] }}
-          whileTap={{ scale: 0.9 }}
+          className="fixed right-8 top-1/2 z-[60] transform -translate-y-1/2"
+          initial={{ opacity: 0, scale: 0, x: 100 }}
+          animate={{ opacity: 1, scale: 1, x: 0 }}
+          transition={{ 
+            delay: 2, 
+            duration: 0.6,
+            type: "spring",
+            stiffness: 200,
+            damping: 15
+          }}
+          onClick={scrollToTop}
         >
-          {/* Circular background for sticker with themed border */}
-          <div 
-            className="absolute inset-0 rounded-full flex items-center justify-center overflow-hidden"
-            style={{
-              background: "white",
-              boxShadow: `0 0 20px rgba(0,0,0,0.3)`,
-              border: `4px solid ${borderColor}`
-            }}
+          <motion.div 
+            className="relative cursor-pointer w-auto"
+            style={{ rotate: springRotate }}
+            animate={isPulsing ? { 
+              scale: [1, 1.05, 1],
+              transition: { 
+                repeat: Infinity, 
+                repeatType: "loop", 
+                duration: 2,
+                ease: "easeInOut" 
+              }
+            } : {}}
+            whileHover={{ scale: 1.1, rotate: [null, -10, 10, 0] }}
+            whileTap={{ scale: 0.9 }}
           >
             {/* The sticker text with styling */}
             <div 
@@ -279,13 +269,13 @@ export function DetailSection({
                 BOOK<br/>NOW
               </div>
             </div>
-          </div>
+          </motion.div>
         </motion.div>
-      </motion.div>
+      )}
 
       <motion.div
         ref={detailSectionRef}
-        className="absolute inset-x-0 top-0 bottom-0 bg-white text-black overflow-y-auto shadow-2xl scrollbar-hide"
+        className="absolute inset-x-0 top-0 bottom-0 bg-white text-black overflow-y-auto shadow-2xl scrollbar-hide max-w-[100vw]"
         variants={{
           hidden: { y: "100%" },
           visible: { y: 0 },
@@ -297,32 +287,37 @@ export function DetailSection({
         transition={{ type: "spring", damping: 30, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Responsive navbar container */}
-        <div className="w-full relative">
+        {/* Fixed position navbars */}
+        <div className="fixed top-0 left-0 right-0 z-50 flex flex-col w-full">
+          {/* Add Navbar at the top */}
           {isClosed && (
-            <AddNavbar
-              type={getSingularType(sectionType)}
-              onClose={() => setIsClosed(false)}
-            />
-          )}
-
-          <div className="flex justify-between items-center px-6 py-3 bg-white shadow-sm">
-            <div className="flex-1">
-              <Navbar
-                isLoggedIn={isLoggedIn}
-                userName={userName}
-                handleLogout={handleLogout}
-                handleLoginClick={() => handleLoginClick()}
-                setShowDetailSection={(section: string) => {
-                  setShowDetailSection(section as "hotels" | "hostels" | null);
-                }}
-                isClosed={isClosed}
+            <div className="w-full">
+              <AddNavbar
+                type={getSingularType(sectionType)}
+                onClose={() => setIsClosed(false)}
               />
             </div>
+          )}
+          
+          {/* Main Navbar below */}
+          <div className="w-full">
+            <Navbar
+              isLoggedIn={isLoggedIn}
+              userName={userName}
+              handleLogout={handleLogout}
+              handleLoginClick={() => handleLoginClick()}
+              setShowDetailSection={(section: string) => {
+                setShowDetailSection(section as "hotels" | "hostels" | null);
+              }}
+              isClosed={isClosed}
+              currentSection={getSingularType(sectionType)}
+              onNavModalChange={handleNavModalChange}
+            />
           </div>
         </div>
 
-        <div className="overflow-y-auto h-full scrollbar-hide mt-16">
+        {/* Content with appropriate top margin */}
+        <div className="overflow-y-auto h-full scrollbar-hide" style={{ marginTop: isClosed ? '110px' : '70px' }}>
           {/* Hero Section with Search */}
           <HeroSection sectionType={sectionType} />
 

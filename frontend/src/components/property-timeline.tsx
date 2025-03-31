@@ -10,21 +10,21 @@ interface PropertyTimelineProps {
 export function PropertyTimeline({ type = "hotel" }: PropertyTimelineProps) {
   const hotelData = [
     {
-      year: "Luxury Living",
+      year: "Premium Accommodations",
       title: "",
-      description: "Experience unparalleled comfort and elegance in our thoughtfully designed spaces.",
+      description: "At HSquare Hotels, we set new standards for luxury living. Our thoughtfully designed spaces feature premium furnishings, plush bedding, and ambient lighting to create the perfect retreat after a busy day.",
       content: (
         <div className="grid grid-cols-2 gap-4">
           <Image
             src="/images/hotels/hotel_1.webp"
-            alt="Luxury hotel exterior"
+            alt="HSquare hotel exterior"
             width={500}
             height={500}
             className="rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full shadow-lg"
           />
           <Image
             src="/images/hotels/hotel_2.png"
-            alt="Hotel lobby"
+            alt="HSquare hotel lobby"
             width={500}
             height={500}
             className="rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full shadow-lg"
@@ -33,21 +33,21 @@ export function PropertyTimeline({ type = "hotel" }: PropertyTimelineProps) {
       ),
     },
     {
-      year: "Premium Rooms",
+      year: "Personalized Service",
       title: "",
-      description: "Each room is a sanctuary of peace and luxury, designed for the discerning traveler.",
+      description: "We believe every guest deserves individual attention. Our dedicated staff provides round-the-clock service, from expedited check-in to custom room amenities. At HSquare Hotels, your preferences become our priorities.",
       content: (
         <div className="grid grid-cols-2 gap-4">
           <Image
             src="/images/hotels/hotel_3.webp"
-            alt="Luxury bedroom"
+            alt="HSquare concierge service"
             width={500}
             height={500}
             className="rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full shadow-lg"
           />
           <Image
             src="/images/hotels/hotel_1.webp"
-            alt="Hotel bathroom"
+            alt="HSquare room service"
             width={500}
             height={500}
             className="rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full shadow-lg"
@@ -56,21 +56,21 @@ export function PropertyTimeline({ type = "hotel" }: PropertyTimelineProps) {
       ),
     },
     {
-      year: "Fine Dining",
+      year: "Culinary Excellence",
       title: "",
-      description: "Experience gourmet dining with our world-class chefs and premium ingredients.",
+      description: "HSquare's signature restaurants fuse local ingredients with global techniques. Our executive chefs craft seasonal menus that celebrate authentic flavors while offering modern interpretations of classic dishes. Dining with us is a journey for your palate.",
       content: (
         <div className="grid grid-cols-2 gap-4">
           <Image
             src="/images/hotels/hotel_2.png"
-            alt="Restaurant interior"
+            alt="HSquare restaurant interior"
             width={500}
             height={500}
             className="rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full shadow-lg"
           />
           <Image
             src="/images/hotels/hotel_3.webp"
-            alt="Gourmet dish"
+            alt="HSquare signature dish"
             width={500}
             height={500}
             className="rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full shadow-lg"
@@ -82,29 +82,29 @@ export function PropertyTimeline({ type = "hotel" }: PropertyTimelineProps) {
 
   const hostelData = [
     {
-      year: "Day One",
+      year: "Move-In Experience",
       title: "",
       description:
-        "Bring a box full of hopes, dreams, ambitions... and of course, your personal belongings. Everything else - furniture, appliances, food - has already been taken care of.",
+        "Starting your HSquare Hostel journey is effortless. We've taken care of the essentials—quality furniture, reliable appliances, and a fully-stocked kitchen. Simply bring your personal items and immediately feel at home in our community-focused environment.",
       content: (
         <div className="grid grid-cols-3 gap-4">
           <Image
             src="/images/hostels/hostel_1.jpg"
-            alt="Building exterior"
+            alt="HSquare hostel exterior"
             width={500}
             height={500}
             className="rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full shadow-lg"
           />
           <Image
             src="/images/hostels/hostel_2.jpg"
-            alt="Common area with yellow chairs"
+            alt="HSquare common area"
             width={500}
             height={500}
             className="rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full shadow-lg"
           />
           <Image
             src="/images/hostels/hostel_3.jpg"
-            alt="Modern corridor"
+            alt="HSquare modern corridor"
             width={500}
             height={500}
             className="rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full shadow-lg"
@@ -113,22 +113,22 @@ export function PropertyTimeline({ type = "hotel" }: PropertyTimelineProps) {
       ),
     },
     {
-      year: "Your Space",
+      year: "Private Spaces",
       title: "",
       description:
-        "Your clothes and bag will not be fighting for space on the same chair. At Stanza Living, there's ample room for all your possessions. Even a framed photo of your family, for the rare occasions you miss home.",
+        "HSquare Hostels redefine shared living with thoughtfully designed private rooms. Each space features built-in storage solutions, comfortable workspaces, and quality bedding. Enjoy the perfect balance between community interaction and personal retreat.",
       content: (
         <div className="grid grid-cols-2 gap-4">
           <Image
             src="/images/hostels/hostel_1.jpg"
-            alt="Spacious bedroom"
+            alt="HSquare private room"
             width={500}
             height={500}
             className="rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full shadow-lg"
           />
           <Image
             src="/images/hostels/hostel_2.jpg"
-            alt="Room storage"
+            alt="HSquare room storage"
             width={500}
             height={500}
             className="rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full shadow-lg"
@@ -137,22 +137,22 @@ export function PropertyTimeline({ type = "hotel" }: PropertyTimelineProps) {
       ),
     },
     {
-      year: "Services",
+      year: "Hassle-Free Living",
       title: "",
       description:
-        "You have better things to do than wash your clothes, clean up your room and cook your meals. So our team of pros will do them all for you.",
+        "At HSquare, we handle the daily chores so you can focus on what matters. Our professional staff takes care of cleaning, laundry, and maintenance while our digital platform lets you request services with a simple tap. We've reimagined hostel living for the modern resident.",
       content: (
         <div className="grid grid-cols-2 gap-4">
           <Image
             src="/images/hostels/hostel_1.jpg"
-            alt="Cleaning service"
+            alt="HSquare cleaning service"
             width={500}
             height={500}
             className="rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full shadow-lg"
           />
           <Image
             src="/images/hostels/hostel_2.jpg"
-            alt="Laundry service"
+            alt="HSquare laundry service"
             width={500}
             height={500}
             className="rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full shadow-lg"
@@ -161,29 +161,29 @@ export function PropertyTimeline({ type = "hotel" }: PropertyTimelineProps) {
       ),
     },
     {
-      year: "Common Areas",
+      year: "Community Spaces",
       title: "",
       description:
-        "Nope, we don't try to pass off a few plastic chairs and a TV as a common area. We've replaced them with sofas, bean bags and large-screen TVs. And we've also added gaming zones, fitness centres and chillout corners as a bonus.",
+        "HSquare's signature communal areas foster genuine connections. Our designer spaces include high-tech entertainment zones, fully-equipped fitness centers, collaborative workspaces, and relaxing lounges—all thoughtfully designed to bring people together while respecting the need for different activity zones.",
       content: (
         <div className="grid grid-cols-3 gap-4">
           <Image
             src="/images/hostels/hostel_1.jpg"
-            alt="Modern common area"
+            alt="HSquare common lounge"
             width={500}
             height={500}
             className="rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full shadow-lg"
           />
           <Image
             src="/images/hostels/hostel_2.jpg"
-            alt="Gaming zone"
+            alt="HSquare gaming zone"
             width={500}
             height={500}
             className="rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full shadow-lg"
           />
           <Image
             src="/images/hostels/hostel_3.jpg"
-            alt="Fitness center"
+            alt="HSquare fitness center"
             width={500}
             height={500}
             className="rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full shadow-lg"
@@ -192,29 +192,29 @@ export function PropertyTimeline({ type = "hotel" }: PropertyTimelineProps) {
       ),
     },
     {
-      year: "Dining",
+      year: "Curated Dining",
       title: "",
       description:
-        "Instead, bring along a big appetite for healthy, yummy meals. With freshly-made food that have a local touch. And that, at the same time, take your taste buds on a journey back home.",
+        "HSquare's culinary program blends nutrition with community. Our dining halls serve diverse menus with healthy, flavorful options that cater to all dietary preferences. Regular community meals and food events create opportunities to share stories and cultures over delicious food.",
       content: (
         <div className="grid grid-cols-3 gap-4">
           <Image
             src="/images/hostels/hostel_1.jpg"
-            alt="Healthy meal"
+            alt="HSquare dining hall"
             width={500}
             height={500}
             className="rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full shadow-lg"
           />
           <Image
             src="/images/hostels/hostel_2.jpg"
-            alt="Fresh sandwiches"
+            alt="HSquare healthy meals"
             width={500}
             height={500}
             className="rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full shadow-lg"
           />
           <Image
             src="/images/hostels/hostel_3.jpg"
-            alt="Local cuisine"
+            alt="HSquare community dinner"
             width={500}
             height={500}
             className="rounded-lg object-cover h-20 md:h-44 lg:h-60 w-full shadow-lg"
@@ -226,18 +226,22 @@ export function PropertyTimeline({ type = "hotel" }: PropertyTimelineProps) {
 
   return (
     <div className="w-full">
-      {/* <div className="max-w-7xl mx-auto py-12 px-4 md:px-8 lg:px-10">
+      <div className="max-w-7xl mx-auto py-12 px-4 md:px-8 lg:px-10">
         <h2
-          className={`text-lg md:text-4xl mb-4 text-center font-bold font-rock-salt ${
-            type === "hotel" ? "text-[#A31C44]" : "text-[#2A2B2E]"
+          className={`text-lg md:text-4xl mb-4 text-center font-bold ${
+            type === "hotel" ? "text-[#A31C44]" : "text-[#343F52]"
           }`}
         >
-          Not just four walls and a roof
+          {type === "hotel" 
+            ? "The HSquare Hotel Experience" 
+            : "Life at HSquare Hostels"}
         </h2>
         <p className="text-neutral-700 dark:text-neutral-300 text-sm md:text-base text-center max-w-2xl mx-auto">
-          Come over and experience how a place to stay can be so much more
+          {type === "hotel"
+            ? "Discover what makes our properties the preferred choice for discerning travelers"
+            : "More than just a place to stay – it's a lifestyle designed for today's urban residents"}
         </p>
-      </div> */}
+      </div>
       <div className="relative">
         <Timeline data={type === "hotel" ? hotelData : hostelData} theme={type} />
       </div>

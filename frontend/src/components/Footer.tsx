@@ -2,12 +2,10 @@ import { motion } from "framer-motion";
 import PropTypes from "prop-types";
 import {
   FaInstagram,
-  FaTiktok,
-  FaYoutube,
   FaFacebook,
   FaLinkedin,
-  FaTwitter,
 } from "react-icons/fa";
+import Link from "next/link";
 
 interface FooterProps {
   sectionType: "hotels" | "hostels";
@@ -17,7 +15,7 @@ const Footer = ({ sectionType }: FooterProps) => {
   return (
     <footer
       className={`text-white py-12 ${
-        sectionType === "hotels" ? "bg-[#A31C44]" : "bg-[#2A2B2E]"
+        sectionType === "hotels" ? "bg-[#A31C44]" : "bg-[#343F52]"
       }`}
     >
       <div className="container mx-auto px-4">
@@ -32,47 +30,51 @@ const Footer = ({ sectionType }: FooterProps) => {
             <h4 className="font-bold text-xl mb-4 border-b border-white/20 pb-2">About Us</h4>
             <p className="text-gray-200 leading-relaxed">
               {sectionType === "hotels"
-                ? "Discover luxury and comfort with our carefully curated selection of premium hotels across India."
-                : "Experience vibrant and affordable stays with our network of social hostels designed for modern travelers."}
+                ? "At HSquare Living, we are more than just a team; we are a closely-knit family of handpicked individuals, each possessing exceptional expertise and a shared passion for excellence. Discover luxury and comfort with our carefully curated selection of premium hotels across India."
+                : "At HSquare Living, we are more than just a team; we are a closely-knit family of handpicked individuals, each possessing exceptional expertise and a shared passion for excellence. Experience vibrant and affordable stays with our network of social hostels designed for modern travelers."}
             </p>
             
             {/* Social Media Icons */}
             <div className="flex flex-wrap gap-5 mt-6 text-2xl">
-              <motion.div whileHover={{ y: -3, scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+              <motion.a 
+                href="https://www.instagram.com/hsquareliving/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                whileHover={{ y: -3, scale: 1.1 }} 
+                whileTap={{ scale: 0.9 }}
+              >
                 <FaInstagram
                   className={`cursor-pointer transition-all duration-300 ${
                     sectionType === "hotels" ? "hover:text-pink-300" : "hover:text-white"
                   }`}
                 />
-              </motion.div>
-              <motion.div whileHover={{ y: -3, scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                <FaTiktok
-                  className={`cursor-pointer transition-all duration-300 ${
-                    sectionType === "hotels" ? "hover:text-pink-300" : "hover:text-white"
-                  }`}
-                />
-              </motion.div>
-              <motion.div whileHover={{ y: -3, scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                <FaYoutube
-                  className={`cursor-pointer transition-all duration-300 ${
-                    sectionType === "hotels" ? "hover:text-pink-300" : "hover:text-white"
-                  }`}
-                />
-              </motion.div>
-              <motion.div whileHover={{ y: -3, scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+              </motion.a>
+              <motion.a 
+                href="https://www.facebook.com/profile.php?id=100093746289256&mibextid=LQQJ4d" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                whileHover={{ y: -3, scale: 1.1 }} 
+                whileTap={{ scale: 0.9 }}
+              >
                 <FaFacebook
                   className={`cursor-pointer transition-all duration-300 ${
                     sectionType === "hotels" ? "hover:text-pink-300" : "hover:text-white"
                   }`}
                 />
-              </motion.div>
-              <motion.div whileHover={{ y: -3, scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                <FaTwitter
+              </motion.a>
+              <motion.a 
+                href="https://www.linkedin.com/company/hsquare-living/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                whileHover={{ y: -3, scale: 1.1 }} 
+                whileTap={{ scale: 0.9 }}
+              >
+                <FaLinkedin
                   className={`cursor-pointer transition-all duration-300 ${
                     sectionType === "hotels" ? "hover:text-pink-300" : "hover:text-white"
                   }`}
                 />
-              </motion.div>
+              </motion.a>
             </div>
           </div>
           
@@ -84,37 +86,25 @@ const Footer = ({ sectionType }: FooterProps) => {
                 whileHover={{ x: 5 }}
                 className="cursor-pointer hover:text-white transition-all duration-200"
               >
-                {sectionType === "hotels" ? "Hotels" : "Hostels"}
+                <Link href="/careers">Careers</Link>
               </motion.li>
               <motion.li 
                 whileHover={{ x: 5 }}
                 className="cursor-pointer hover:text-white transition-all duration-200"
               >
-                Locations
+                <Link href="/refund-policy">Refund Policy</Link>
               </motion.li>
               <motion.li 
                 whileHover={{ x: 5 }}
                 className="cursor-pointer hover:text-white transition-all duration-200"
               >
-                Special Offers
+                <Link href="/terms-and-conditions">Terms & Conditions</Link>
               </motion.li>
               <motion.li 
                 whileHover={{ x: 5 }}
                 className="cursor-pointer hover:text-white transition-all duration-200"
               >
-                Contact Us
-              </motion.li>
-              <motion.li 
-                whileHover={{ x: 5 }}
-                className="cursor-pointer hover:text-white transition-all duration-200"
-              >
-                Terms & Conditions
-              </motion.li>
-              <motion.li 
-                whileHover={{ x: 5 }}
-                className="cursor-pointer hover:text-white transition-all duration-200"
-              >
-                Privacy Policy
+                <Link href="/privacy-policy">Privacy Policy</Link>
               </motion.li>
             </ul>
           </div>
@@ -127,20 +117,20 @@ const Footer = ({ sectionType }: FooterProps) => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
-                <span>info@hsquare.com</span>
+                <span>booking@hsquareliving.com</span>
               </li>
               <li className="flex items-center gap-2 hover:text-white transition-all duration-200">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                 </svg>
-                <span>+91 9876543210</span>
+                <span>+919090151524</span>
               </li>
-              <li className="flex items-center gap-2 hover:text-white transition-all duration-200">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <li className="flex items-start gap-2 hover:text-white transition-all duration-200">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                <span>123 Travel Street, Mumbai, India</span>
+                <span className="leading-tight">4R8P+FHV, Juhu Galli, above Tata Motors Showroom, Mahavi Darshan, Dhangar wadi, Andheri West, Mumbai, Maharashtra 400049</span>
               </li>
             </ul>
           </div>
@@ -153,7 +143,7 @@ const Footer = ({ sectionType }: FooterProps) => {
           transition={{ delay: 0.6 }}
           className="border-t border-gray-700 mt-8 pt-6 text-center text-gray-300"
         >
-          <p className="text-sm">&copy; 2024 HSquare. All rights reserved.</p>
+          <p className="text-sm">&copy; {new Date().getFullYear()} HSquare Living. All rights reserved.</p>
         </motion.div>
       </div>
     </footer>

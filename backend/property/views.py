@@ -32,7 +32,8 @@ from .serializers import (
     StateSerializer,
     ReviewSerializer,
     ReplySerializer,
-    CitySerializer
+    CitySerializer,
+    FavoritePropertySerializer
 )
 
 from users.decorators import custom_authentication_and_permissions
@@ -593,4 +594,13 @@ def add_favorite_property(request):
         return Response({"message": "Property removed from favorites"}, status=status.HTTP_200_OK)
     
 
-
+@api_view(["GET"])
+@custom_authentication_and_permissions()
+def get_favorite_properties(request):
+    """
+    Get the user's favorite properties.
+    """
+    user = request.user
+    favorite_properties = FavoriteProperty.objects.filter(user=user, is_active=True)
+    serializer = FavoritePropertySerializer(favorite_properties, many=True, context={"request": request})
+    return Response(serializer.data)

@@ -42,9 +42,11 @@ export default function AdminLayout({
 
   // Handle logout
   const handleLogout = () => {
-    localStorage.removeItem('accessToken')
-    localStorage.removeItem('permissions')
-    router.push('/admin/login')
+    // Clear all localStorage items
+    localStorage.clear()
+    
+    // Redirect to public home page
+    window.location.href = "/"
   }
 
   // Show login page directly without layout

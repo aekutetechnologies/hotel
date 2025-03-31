@@ -112,7 +112,7 @@ export function HelpSection() {
         <div className="space-y-2">
           <p className="flex items-center">
             <span className="font-medium mr-2">Phone:</span>
-            <a href="tel:+919876543210" className="text-[#B11E43]">+91 98765 43210</a>
+            <a href="tel:+919090151524" className="text-[#B11E43]">+91 98765 43210</a>
           </p>
           <p className="flex items-center">
             <span className="font-medium mr-2">Email:</span>

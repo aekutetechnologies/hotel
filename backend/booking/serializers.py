@@ -19,13 +19,13 @@ class BookingUserViewSerializer(serializers.ModelSerializer):
 
     def get_property(self, obj):
         property_data = PropertyViewSerializer(obj.property, context=self.context).data
-        if 'images' in property_data:
-            updated_images = []
-            for image_data in property_data['images']:
-                if 'image' in image_data and image_data['image']:
-                    image_data['image'] = settings.WEBSITE_URL + image_data['image']
-                updated_images.append(image_data)
-            property_data['images'] = updated_images
+        # if 'images' in property_data:
+        #     updated_images = []
+        #     for image_data in property_data['images']:
+        #         if 'image' in image_data and image_data['image']:
+        #             image_data['image'] = settings.WEBSITE_URL + image_data['image']
+        #         updated_images.append(image_data)
+        #     property_data['images'] = updated_images
         return property_data
 
 

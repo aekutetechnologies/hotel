@@ -470,7 +470,7 @@ export function BookingCard({
           pathname: `/property/${property.id}/book`,
           query: searchParams? Object.fromEntries(searchParams.entries()) : {}
         }}
-        target="_blank"
+        // target="_blank"
         rel="noopener noreferrer">
           <Button className="w-full bg-[#B11E43] hover:bg-[#8f1836]">
           Book Now

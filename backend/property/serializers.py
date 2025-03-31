@@ -12,6 +12,7 @@ from .models import (
     City,
     State,
     Country,
+    FavoriteProperty,
 )
 
 from offer.models import PropertyOffer
@@ -283,3 +284,10 @@ class PropertyViewSerializer(serializers.ModelSerializer):
         data['offers'] = PropertyOfferSerializer(instance.propertyoffer_set.all(), many=True).data
         data['reviews'] = ReviewSerializer(instance.reviews.all(), many=True).data
         return data
+
+class FavoritePropertySerializer(serializers.ModelSerializer):
+    property = PropertyViewSerializer(required=False)
+
+    class Meta:
+        model = FavoriteProperty
+        fields = "__all__"

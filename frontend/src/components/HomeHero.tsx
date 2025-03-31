@@ -41,13 +41,15 @@ export function HomeHero({
     
     if (expandedSection === "hotels" || expandedSection === null) {
       hostelShineInterval = setInterval(() => {
-        hostelShineAngle.set((prev: number) => (prev + 2) % 50);
+        const currentValue = hostelShineAngle.get();
+        hostelShineAngle.set((currentValue + 2) % 50);
       }, 100);
     }
     
     if (expandedSection === "hostels" || expandedSection === null) {
       hotelShineInterval = setInterval(() => {
-        hotelShineAngle.set((prev: number) => (prev + 2) % 50);
+        const currentValue = hotelShineAngle.get();
+        hotelShineAngle.set((currentValue + 2) % 50);
       }, 100);
     }
     
@@ -147,7 +149,7 @@ export function HomeHero({
   const textHostel = "Hostels";
   const textVariants = {
     hidden: { opacity: 0, y: 10 },
-    visible: (i) => ({
+    visible: (i: number) => ({
       opacity: 1,
       y: 0,
       transition: { delay: i * 0.1 }, // Delay each letter for the typewriter effect
@@ -160,9 +162,9 @@ export function HomeHero({
   const hotelBorderColor = "#FF9BAC";
   
   // Colors for hostel sticker
-  const hostelPrimaryColor = "#2A2B2E";
-  const hostelAccentColor = "#3bf0c1";
-  const hostelBorderColor = "#6BEFF0";
+  const hostelPrimaryColor = "#343F52";
+  const hostelAccentColor = "#A8B3C1";
+  const hostelBorderColor = "#A8B3C1";
 
   return (
     <div className="hidden md:flex flex-1 flex-col md:flex-row relative h-screen">
@@ -367,15 +369,24 @@ export function HomeHero({
                       border: `4px solid ${hotelBorderColor}`
                     }}
                   >
-                    <div className="sticker relative text-center" style={{
+                    <div className="sticker relative text-center flex flex-col items-center" style={{
                       fontFamily: "'Arial', sans-serif",
                       fontStyle: "italic",
                       fontWeight: 900,
-                      fontSize: "32px",
                       lineHeight: "0.9",
                       textTransform: "uppercase",
                       padding: "8px",
                     }}>
+                      <span style={{
+                        fontSize: "14px",
+                        fontWeight: 700,
+                        marginBottom: "2px",
+                        color: hotelPrimaryColor,
+                        opacity: 0.9,
+                        transform: "rotate(-5deg)",
+                      }}>
+                        switch to
+                      </span>
                       <motion.div style={{
                         backgroundImage: `
                           linear-gradient(
@@ -401,6 +412,7 @@ export function HomeHero({
                         zIndex: 2,
                         display: "inline-block",
                         transform: "rotate(-5deg)",
+                        fontSize: "32px",
                       }}>
                         HOTELS
                       </motion.div>
@@ -419,11 +431,12 @@ export function HomeHero({
                         fontFamily: "inherit",
                         fontStyle: "inherit",
                         fontWeight: "inherit",
-                        fontSize: "inherit",
+                        fontSize: "32px",
                         lineHeight: "inherit",
                         textTransform: "inherit",
                         zIndex: 1,
                         transform: "rotate(-5deg)",
+                        marginTop: "6px", // Adjust to compensate for "switch to" text
                       }}>
                         HOTELS
                       </div>
@@ -438,7 +451,7 @@ export function HomeHero({
         {/* Hostel Section - Right */}
         <motion.section
           key="hostels"
-          className="w-full md:w-1/2 bg-gradient-to-b from-[#2A2B2E] to-[#1A1B1E] text-white relative overflow-hidden cursor-pointer"
+          className="w-full md:w-1/2 bg-gradient-to-b from-[#343F52] to-[#1A1B1E] text-white relative overflow-hidden cursor-pointer"
           variants={sectionVariants}
           initial="initial"
           animate={
@@ -606,15 +619,24 @@ export function HomeHero({
                       border: `4px solid ${hostelBorderColor}`
                     }}
                   >
-                    <div className="sticker relative text-center" style={{
+                    <div className="sticker relative text-center flex flex-col items-center" style={{
                       fontFamily: "'Arial', sans-serif",
                       fontStyle: "italic",
                       fontWeight: 900,
-                      fontSize: "30px",
                       lineHeight: "0.9",
                       textTransform: "uppercase",
                       padding: "8px",
                     }}>
+                      <span style={{
+                        fontSize: "14px",
+                        fontWeight: 700,
+                        marginBottom: "2px",
+                        color: hostelPrimaryColor,
+                        opacity: 0.9,
+                        transform: "rotate(-5deg)",
+                      }}>
+                        switch to
+                      </span>
                       <motion.div style={{
                         backgroundImage: `
                           linear-gradient(
@@ -640,6 +662,7 @@ export function HomeHero({
                         zIndex: 2,
                         display: "inline-block",
                         transform: "rotate(-5deg)",
+                        fontSize: "30px",
                       }}>
                         HOSTELS
                       </motion.div>
@@ -658,11 +681,12 @@ export function HomeHero({
                         fontFamily: "inherit",
                         fontStyle: "inherit",
                         fontWeight: "inherit",
-                        fontSize: "inherit",
+                        fontSize: "30px",
                         lineHeight: "inherit",
                         textTransform: "inherit",
                         zIndex: 1,
                         transform: "rotate(-5deg)",
+                        marginTop: "6px", // Adjust to compensate for "switch to" text
                       }}>
                         HOSTELS
                       </div>

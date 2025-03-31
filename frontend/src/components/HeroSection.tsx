@@ -8,10 +8,10 @@ import { useEffect, useState } from "react";
 // Custom CSS for radial gradient overlay
 const overlayStyles = {
   hotels: {
-    background: "radial-gradient(circle at center, rgba(94, 15, 38, 0.6) 0%, rgba(94, 15, 38, 0) 65%)",
+    background: "radial-gradient(circle at center, rgba(94, 15, 38, 0.9) 0%, rgba(94, 15, 38, 0.7) 90%)",
   },
   hostels: {
-    background: "radial-gradient(circle at center, rgba(30, 41, 59, 0.6) 0%, rgba(30, 41, 59, 0) 65%)",
+    background: "radial-gradient(circle at center, rgba(30, 41, 59, 0.9) 0%, rgba(30, 41, 59, 0.7) 90%)",
   },
 };
 
@@ -45,7 +45,7 @@ export function HeroSection({ sectionType }: HeroSectionProps) {
   return (
     <>
       <div
-        className={`py-16 ${
+        className={`pt-8 pb-16 ${
           sectionType === "hotels"
             ? "bg-gradient-to-r from-[#e28ca9] via-[#a42145] to-[#e28ca9]"
             : "bg-gradient-to-r from-slate-300 via-slate-600 to-slate-300"
@@ -114,9 +114,9 @@ export function HeroSection({ sectionType }: HeroSectionProps) {
                 </div>
               </motion.div>
               <h3 className="text-4xl font-bold mb-2">
-                {isInView ? <Counter value={50} /> : "0+"}
+                {isInView ? <Counter value={10} /> : "0+"}
               </h3>
-              <p className="text-gray-600">Cities Covered</p>
+              <p className="text-gray-600">Areas Covered in Mumbai</p>
             </motion.div>
 
             {/* Properties Stat */}
@@ -144,7 +144,7 @@ export function HeroSection({ sectionType }: HeroSectionProps) {
                 </div>
               </motion.div>
               <h3 className="text-4xl font-bold mb-2">
-                {isInView ? <Counter value={1000} /> : "0+"}
+                {isInView ? <Counter value={12} /> : "0+"}
               </h3>
               <p className="text-gray-600">
                 {sectionType === "hotels" ? "Hotels" : "Hostels"} Available
@@ -176,7 +176,7 @@ export function HeroSection({ sectionType }: HeroSectionProps) {
                 </div>
               </motion.div>
               <h3 className="text-4xl font-bold mb-2">
-                {isInView ? <Counter value={10000} /> : "0+"}
+                {isInView ? <Counter value={1000} /> : "0+"}
               </h3>
               <p className="text-gray-600">Happy Customers</p>
             </motion.div>
@@ -216,7 +216,7 @@ export function HeroSection({ sectionType }: HeroSectionProps) {
                   animate={{ y: isInView ? 0 : 20 }}
                   transition={{ duration: 0.5 }}
                 >
-                  4.8
+                  4.9
                 </motion.span>
               </motion.h3>
               <p className="text-gray-600">Average Rating</p>

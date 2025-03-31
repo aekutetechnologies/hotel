@@ -7,6 +7,7 @@ import { PermissionProvider } from "@/providers/PermissionProvider";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { AppErrorProvider } from "@/components/AppErrorProvider";
+import { CookieConsentWrapper } from "@/components/CookieConsentWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -65,6 +66,7 @@ export default function RootLayout({
             {children}
           </AppErrorProvider>
           <ToastContainer position="top-right" autoClose={5000} />
+          <CookieConsentWrapper />
         </PermissionProvider>
       </body>
     </html>

@@ -30,14 +30,15 @@ export function Header() {
   }
 
   const handleLogout = () => {
+    // Update state
     setIsLoggedIn(false)
     setUserName("")
-    localStorage.removeItem('userId')
-    localStorage.removeItem('name')
-    localStorage.removeItem('accessToken')
-    localStorage.removeItem('role')
-    // Update cache on logout
-    localStorage.removeItem('isLoggedIn')
+    
+    // Clear all localStorage items
+    localStorage.clear()
+    
+    // Redirect to home page (reload)
+    window.location.href = "/"
   }
 
   useEffect(() => {
@@ -104,7 +105,7 @@ export function Header() {
           <div className="flex items-center gap-8">
             <Link href="#" className="flex items-center gap-2 text-base text-gray-600 hover:text-gray-900">
               <Phone className="h-5 w-5" />
-              <span>+91 9876543210</span>
+              <span>+91 9090151524</span>
             </Link>
 
             <div className="relative">

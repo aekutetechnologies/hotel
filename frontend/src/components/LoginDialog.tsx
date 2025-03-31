@@ -43,12 +43,12 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
   const benefits = [
     {
       icon: Gift,
-      title: "Earn Fab credits",
+      title: "Earn Hsquare credits",
       description: "Earn credits for your subsequent bookings",
     },
     {
       icon: Users,
-      title: "Join the A-list",
+      title: "Join the Hsquare club",
       description: "Become our club member for exclusive discounts",
     },
     {
@@ -172,7 +172,7 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">Log In/Sign Up</DialogTitle>
-          <p className="text-sm text-gray-500">Sign-up to become a member, and get exclusive discounts.</p>
+          <p className="text-sm text-gray-500">Sign-up to become a member of Hsquare, and get exclusive discounts.</p>
         </DialogHeader>
 
         <div className="flex flex-col gap-6 py-4">
@@ -190,7 +190,7 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
               {benefits.map((benefit, index) => (
                 <div key={index} className="flex items-start gap-4">
                   <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
-                    <benefit.icon className="h-6 w-6 text-red-600" />
+                    <benefit.icon className="h-6 w-6 text-[#A31C44]" />
                   </div>
                   <div>
                     <h3 className="font-medium">{benefit.title}</h3>
@@ -198,7 +198,7 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
                   </div>
                 </div>
               ))}
-              <Button className="w-full bg-red-600 hover:bg-red-700 text-white" onClick={() => setView("phone")}>
+              <Button className="w-full bg-[#A31C44] hover:bg-[#7A1533] text-white" onClick={() => setView("phone")}>
                 Continue
               </Button>
             </div>
@@ -225,7 +225,7 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, "").slice(0, 10))}
                       placeholder="Enter your phone number"
-                      className="flex-1 h-10 border rounded-md px-3 focus:outline-none focus:ring-2 focus:ring-red-500"
+                      className="flex-1 h-10 border rounded-md px-3 focus:outline-none focus:ring-2 focus:ring-[#A31C44]"
                       onFocus={clearMessages}
                     />
                   </div>
@@ -233,7 +233,7 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
                 <p className="text-xs text-gray-500">We'll send you a verification code to this number</p>
               </div>
               <Button
-                className="w-full bg-red-600 hover:bg-red-700 text-white"
+                className="w-full bg-[#A31C44] hover:bg-[#7A1533] text-white"
                 disabled={phoneNumber.length !== 10}
                 onClick={handleSendOTP}
               >
@@ -265,7 +265,7 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
                       onChange={(e) => handleOtpChange(index, e.target.value)}
                       onKeyDown={(e) => handleKeyDown(index, e)}
                       className={cn(
-                        "w-12 h-12 text-center border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500",
+                        "w-12 h-12 text-center border rounded-md focus:outline-none focus:ring-2 focus:ring-[#A31C44]",
                         "text-lg font-semibold"
                       )}
                       onFocus={clearMessages}
@@ -278,7 +278,7 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
               </div>
 
               <Button 
-                className="w-full bg-red-600 hover:bg-red-700 text-white"
+                className="w-full bg-[#A31C44] hover:bg-[#7A1533] text-white"
                 disabled={otp.join('').length !== 6}
                 onClick={handleVerifyOTP}
               >
@@ -316,7 +316,7 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
                   />
                 </div>
               </div>
-              <Button className="w-full bg-red-600 hover:bg-red-700 text-white" onClick={handleSubmitUserInfo}>
+              <Button className="w-full bg-[#A31C44] hover:bg-[#7A1533] text-white" onClick={handleSubmitUserInfo}>
                 Complete Profile
               </Button>
             </div>

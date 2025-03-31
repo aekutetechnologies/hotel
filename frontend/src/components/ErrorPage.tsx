@@ -60,7 +60,7 @@ export function ErrorPage({
           </div>
           
           <h1 className="text-2xl font-bold text-center text-gray-800 mb-2">Oops!</h1>
-          <p className="text-center text-gray-600 mb-6">We're sorry, but an error occurred while loading this page. Please try again or contact our support team at help@hssquare.com.</p>
+          <p className="text-center text-gray-600 mb-6">We're sorry, but an error occurred while loading this page. Please try again or contact our support team at help@hsquare.com.</p>
           
           <div className="flex flex-col sm:flex-row justify-center gap-3 mb-6">
             {onRetry && (

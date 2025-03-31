@@ -92,9 +92,13 @@ export default function Profile() {
                 <label className="block text-sm font-medium mb-2">Phone Number</label>
                 <Input
                   value={profile.mobile}
-                  onChange={(e) => setProfile(prev => ({ ...prev, mobile: e.target.value }))}
-                  required
+                  readOnly
+                  className="bg-gray-100 cursor-not-allowed"
+                  aria-label="Phone number (cannot be edited)"
                 />
+                {profile.mobile && (
+                  <p className="text-xs text-gray-500 mt-1">Phone number cannot be changed. Please contact support if you need to update it.</p>
+                )}
               </div>
               <Button type="submit" className="bg-[#B11E43] hover:bg-[#8f1836] text-white">
                 Update Profile

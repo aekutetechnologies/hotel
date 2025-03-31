@@ -212,14 +212,16 @@ export default function Home() {
   };
 
   const handleLogout = () => {
-    setIsLoggedIn(false);
-    setUserName("");
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("user_role");
-    localStorage.removeItem("name");
-    localStorage.removeItem("id");
-    localStorage.removeItem("permissions");
-  };
+    // Clear all localStorage items
+    localStorage.clear()
+    
+    // Set states
+    setIsLoggedIn(false)
+    setUserName("")
+    
+    // Reload home page
+    window.location.href = "/"
+  }
 
   if (!imagesPreloaded) {
     return <LoadingScreen progress={loadingProgress} />;

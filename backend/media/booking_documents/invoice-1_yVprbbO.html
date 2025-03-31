@@ -1,0 +1,141 @@
+
+    <html>
+    <head>
+      <style>
+        .invoice-box {
+          max-width: 800px;
+          margin: auto;
+          padding: 30px;
+          border: 1px solid #eee;
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+          font-family: 'Arial', sans-serif;
+          color: #555;
+        }
+        
+        .header {
+          display: flex;
+          justify-content: space-between;
+          border-bottom: 2px solid #eee;
+          padding-bottom: 20px;
+          margin-bottom: 20px;
+        }
+        
+        .company-address {
+          text-align: right;
+        }
+        
+        .invoice-title {
+          font-size: 24px;
+          color: #333;
+          margin-bottom: 5px;
+        }
+        
+        .details-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 20px 0;
+        }
+        
+        .details-table td {
+          padding: 12px;
+          border: 1px solid #eee;
+        }
+        
+        .details-table tr:nth-child(odd) {
+          background-color: #f9f9f9;
+        }
+        
+        .total {
+          font-size: 18px;
+          font-weight: bold;
+          color: #2c3e50;
+          margin-top: 20px;
+        }
+        
+        .footer {
+          margin-top: 30px;
+          padding-top: 20px;
+          border-top: 2px solid #eee;
+          text-align: center;
+          color: #777;
+        }
+        
+        .highlight {
+          color: #3498db;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="invoice-box">
+        <div class="header">
+          <div>
+            <h1 class="invoice-title">Invoice #1</h1>
+            <p>Invoice Date: 02/02/2025</p>
+          </div>
+          <div class="company-address">
+            <h2>HotelSphere</h2>
+            <p>123 Hospitality Street</p>
+            <p>Mumbai, MH 400001</p>
+            <p>GSTIN: 27ABCDE1234F1Z2</p>
+          </div>
+        </div>
+  
+        <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
+          <div>
+            <h3>Billed To:</h3>
+            <p>Smruti sahoo</p>
+            <p>admin@admin123.com</p>
+            <p>9876543210</p>
+          </div>
+          <div>
+            <h3>Booking Details:</h3>
+            <p>Booking ID: undefined</p>
+            <p>Check-in: 03/02/2025</p>
+            <p>Check-out: 04/02/2025</p>
+          </div>
+        </div>
+  
+        <table class="details-table">
+          <tr>
+            <td>Property Name</td>
+            <td>Hotel 12</td>
+          </tr>
+          <tr>
+            <td>Room Type</td>
+            <td>Suite</td>
+          </tr>
+          <tr>
+            <td>Number of Guests</td>
+            <td>2</td>
+          </tr>
+          <tr>
+            <td>Base Price</td>
+            <td>₹5000.00</td>
+          </tr>
+          
+          <tr>
+            <td>Discount</td>
+            <td>- ₹25.00</td>
+          </tr>
+          
+        </table>
+  
+        <div class="total">
+          Total Amount: ₹4975
+        </div>
+  
+        <div style="margin-top: 30px;">
+          <h3>Payment Details:</h3>
+          <p>Payment Method: UPI</p>
+          <p>Payment Status: <span class="highlight">PENDING</span></p>
+        </div>
+  
+        <div class="footer">
+          <p>Thank you for choosing HotelSphere!</p>
+          <p>For any inquiries, contact us at support@hotelsphere.in</p>
+          <p>This is computer generated invoice and does not require signature</p>
+        </div>
+      </div>
+    </body>
+    </html>
+    

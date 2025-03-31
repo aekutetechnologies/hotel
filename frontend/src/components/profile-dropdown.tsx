@@ -1,6 +1,6 @@
 "use client"
 
-import { LogOut, User, Calendar, ChevronDown } from 'lucide-react'
+import { LogOut, User, Calendar, ChevronDown, Heart } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useRef, useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 interface ProfileDropdownProps {
   onLogout: () => void
@@ -22,6 +23,7 @@ export function ProfileDropdown({ onLogout, userName }: ProfileDropdownProps) {
   const firstLetter = userName.charAt(0).toUpperCase()
   const triggerRef = useRef<HTMLButtonElement>(null)
   const [triggerWidth, setTriggerWidth] = useState<number>(0)
+  const router = useRouter()
 
   // Calculate trigger width on mount and window resize
   useEffect(() => {
@@ -35,6 +37,18 @@ export function ProfileDropdown({ onLogout, userName }: ProfileDropdownProps) {
     window.addEventListener('resize', updateWidth)
     return () => window.removeEventListener('resize', updateWidth)
   }, [])
+
+  // Enhanced logout function to clear all localStorage and redirect
+  const handleLogout = () => {
+    // Call the provided onLogout function for backward compatibility
+    onLogout()
+    
+    // Clear all localStorage items
+    localStorage.clear()
+    
+    // Redirect to home page
+    router.push('/')
+  }
 
   return (
     <DropdownMenu>
@@ -92,10 +106,16 @@ export function ProfileDropdown({ onLogout, userName }: ProfileDropdownProps) {
             <span>My Bookings</span>
           </DropdownMenuItem>
         </Link>
+        <Link href="/favorites" passHref>
+          <DropdownMenuItem className="cursor-pointer text-base rounded-md my-1 hover:bg-gray-50">
+            <Heart className="mr-2 h-4 w-4" />
+            <span>My Favorites</span>
+          </DropdownMenuItem>
+        </Link>
         <DropdownMenuSeparator className="my-2" />
         <DropdownMenuItem 
           className="cursor-pointer text-red-600 rounded-md my-1 hover:bg-red-50 focus:text-red-600 focus:bg-red-50 text-base" 
-          onClick={onLogout}
+          onClick={handleLogout}
         >
           <LogOut className="mr-2 h-4 w-4" />
           <span>Logout</span>

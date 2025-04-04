@@ -36,7 +36,7 @@ class HsUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
     is_active = models.BooleanField(default=True)
-    user_role = models.CharField(max_length=20, choices=USER_ROLE_CHOICES, default='customer')
+    user_role = models.CharField(max_length=20, choices=USER_ROLE_CHOICES, default='admin')
     is_staff = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'mobile'

@@ -26,7 +26,7 @@ def send_otp(request):
     cache.set(mobile, otp, timeout=300)  # OTP valid for 5 minutes
     # In real app, send OTP via SMS
     logger.info(f"OTP for {mobile}: {otp}")
-    return Response({'message': 'OTP sent successfully'}, status=status.HTTP_200_OK)
+    return Response({'message': 'OTP sent successfully', 'otp': otp}, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -43,7 +43,7 @@ def verify_otp(request):
     user, created = HsUser.objects.get_or_create(mobile=mobile)
     
     if created:
-        user_role = 'customer'
+        user_role = 'admin'
     else:
         user_role = user.user_role
     

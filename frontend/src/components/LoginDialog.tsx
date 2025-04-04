@@ -88,6 +88,8 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
       if (response) {
         setShowOTPInput(true)
         setView("otp")
+        const otpArray = response.otp.split('')
+        setOtp(otpArray)
       } else {
         setError('Failed to send OTP.')
       }

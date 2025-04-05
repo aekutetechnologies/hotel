@@ -7,7 +7,7 @@ import { apiGet } from './apiClient'
  */
 export async function fetchFavouriteProperties() {
   try {
-    return await apiGet('property/favorites/')
+    return await apiGet('property/favorite-properties/')
   } catch (error) {
     // Error handling is already done in apiClient
     return []

@@ -1,6 +1,6 @@
 // Default API URL - will be used if no other value is provided
 // const DEFAULT_API_URL = 'http://localhost:8000/api/';
-// const DEFAULT_API_URL = 'http://147.93.97.63/api/api/';
+const DEFAULT_API_URL = 'http://147.93.97.63/api/api/';
 
 // Get API URL from environment variables if available
 function getApiUrl(): string {

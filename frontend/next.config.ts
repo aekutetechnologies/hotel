@@ -9,6 +9,11 @@ const nextConfig: NextConfig = {
         port: '8000',
         pathname: '/media/**',
       },
+      {
+        protocol: 'http',
+        hostname: '147.93.97.63',
+        pathname: '/media/**',
+      },
     ],
   },
   eslint: {

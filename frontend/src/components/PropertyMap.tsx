@@ -36,7 +36,7 @@ function FitToBounds({ properties }: { properties: Property[] }) {
     const bounds = new LatLngBounds([]);
     properties.forEach(property => {
       if (property.latitude && property.longitude) {
-        bounds.extend([property.latitude, property.longitude] as LatLngExpression);
+        bounds.extend([parseFloat(property.latitude), parseFloat(property.longitude)] as LatLngExpression);
       }
     });
 
@@ -79,7 +79,7 @@ export function PropertyMap({ properties }: PropertyMapProps) {
           property.latitude && property.longitude ? (
             <Marker
               key={property.id}
-              position={[property.latitude, property.longitude]}
+              position={[parseFloat(property.latitude), parseFloat(property.longitude)]}
               icon={customIcon}
             >
               <Popup>

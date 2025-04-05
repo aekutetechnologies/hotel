@@ -11,9 +11,10 @@ import { deleteProperty } from '@/lib/api/deleteProperty'
 import { toast } from 'react-toastify'
 import { Spinner } from '@/components/ui/spinner'
 import { getUserPermissions, Permission } from '@/lib/permissions'
+import { Property } from '@/types/property'
 
 export default function Properties() {
-  const [properties, setProperties] = useState([])
+  const [properties, setProperties] = useState<Property[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isDeleting, setIsDeleting] = useState(false)
   const { can, isLoaded } = usePermissions()
@@ -77,7 +78,7 @@ export default function Properties() {
     setIsDeleting(true)
     try {
       await deleteProperty(id.toString())
-      setProperties(properties.filter((property: any) => property.id !== id))
+      setProperties(properties.filter((property: Property) => property.id !== id))
       toast.success('Property deleted successfully')
     } catch (error: any) {
       console.error('Failed to delete property:', error)
@@ -141,7 +142,7 @@ export default function Properties() {
               setTimeout(() => window.location.reload(), 1000);
             }}
             size="sm"
-            variant="outline"
+            variant="neutral"
             className="mb-2"
           >
             Debug: Grant All Permissions
@@ -181,7 +182,7 @@ export default function Properties() {
                 <div className="flex flex-wrap gap-2 mt-4">
                   <PermissionGuard permission="property:view">
                     <Link href={`/admin/properties/${property.id}`}>
-                      <Button size="sm" variant="outline">
+                      <Button size="sm" variant="neutral">
                         <Eye className="h-4 w-4 mr-1" />
                         View
                       </Button>
@@ -190,7 +191,7 @@ export default function Properties() {
                   
                   <PermissionGuard permission="property:update">
                     <Link href={`/admin/properties/${property.id}/edit`}>
-                      <Button size="sm" variant="outline">
+                      <Button size="sm" variant="neutral">
                         <Edit className="h-4 w-4 mr-1" />
                         Edit
                       </Button>
@@ -200,12 +201,11 @@ export default function Properties() {
                   <PermissionGuard permission="property:delete">
                     <Button 
                       size="sm" 
-                      variant="outline" 
-                      className="text-red-600 hover:bg-red-50"
+                      variant="neutral" 
                       onClick={() => handleDelete(property.id)}
                       disabled={isDeleting}
                     >
-                      <Trash2 className="h-4 w-4 mr-1" />
+                      <Trash2 className="h-4 w-4 mr-1 text-red-500" />
                       Delete
                     </Button>
                   </PermissionGuard>

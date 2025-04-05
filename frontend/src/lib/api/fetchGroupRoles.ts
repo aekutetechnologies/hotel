@@ -1,18 +1,16 @@
-import type { ActionResponse } from '@/types/actions'
-import { API_URL } from '../config'
+import { apiGet } from './apiClient'
+import { GroupRole } from '@/types/groupRole'
 
-export async function fetchGroupRoles() {
-  const response = await fetch(`${API_URL}users/permissions/group/`, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-    }
-  })
-
-  if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.message || 'Failed to fetch group roles')
+/**
+ * Fetches group roles
+ * 
+ * @returns Promise with group roles data
+ */
+export async function fetchGroupRoles(): Promise<GroupRole[]> {
+  try {
+    return await apiGet<GroupRole[]>('users/permissions/group/')
+  } catch (error) {
+    // Error handling is already done in apiClient
+    return []
   }
-
-  return await response.json()
 } 

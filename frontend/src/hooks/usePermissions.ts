@@ -27,11 +27,15 @@ export function usePermissions() {
   // Check if user has a specific permission
   const can = (permission: Permission): boolean => {
     if (!mounted) {
+      console.log('usePermissions - not mounted yet')
       console.debug(`usePermissions - not mounted yet - can('${permission}') => false`)
       return false
     }
-    
+    console.log('usePermissions - mounted')
+    console.log('userPermissions', userPermissions)
+    console.log('permission', permission)
     const result = userPermissions.includes(permission)
+    console.log('result', result)
     console.debug(`usePermissions - can('${permission}') => ${result}`)
     return result
   }

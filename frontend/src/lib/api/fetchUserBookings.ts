@@ -1,18 +1,14 @@
-import { API_URL } from '../config'
+import { apiGet } from './apiClient'
+import { Booking } from '@/types/booking'
 
-export async function getUserBookings() {
-    console.log("fetching bookings")
-  const response = await fetch(`${API_URL}booking/bookings/user/`, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-    }
-  })
-
-  if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.message || 'Failed to fetch amenities')
+/**
+ * Fetches bookings for the current logged-in user
+ * @returns Promise with the user's bookings
+ */
+export async function getUserBookings(): Promise<Booking[]> {
+  try {
+    return await apiGet<Booking[]>('booking/bookings/user/')
+  } catch (error) {
+    throw error
   }
-
-  return await response.json()
 } 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -21,19 +21,38 @@ export function PropertiesSlider() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [properties, setProperties] = useState<Property[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [hasFetched, setHasFetched] = useState(false)
+
+  // Use useCallback to ensure the function reference doesn't change on re-renders
+  const loadProperties = useCallback(async () => {
+    // Skip if we've already fetched the properties
+    if (hasFetched) return
+    
+    setIsLoading(true)
+    try {
+      console.log("Fetching properties in PropertySlider")
+      const data = await fetchProperties()
+      const transformedData = data.map((property: any) => ({
+        id: property.id,
+        name: property.name,
+        location: property.location,
+        property_type: property.property_type,
+        images: property.images.map((img: any) => ({
+          image: typeof img === 'string' ? img : (img.image_url || img.image || '')
+        }))
+      }))
+      setProperties(transformedData)
+      setHasFetched(true)
+    } catch (error) {
+      console.error("Error fetching properties:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [hasFetched])
 
   useEffect(() => {
-    setIsLoading(true)
-    fetchProperties()
-      .then(data => {
-        setProperties(data)
-        setIsLoading(false)
-      })
-      .catch(error => {
-        console.error("Error fetching properties:", error)
-        setIsLoading(false)
-      })
-  }, [])
+    loadProperties()
+  }, [loadProperties])
 
   useEffect(() => {
     if (!properties.length) return

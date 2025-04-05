@@ -1,22 +1,16 @@
-import { API_URL } from '../config';
+import { apiGet } from './apiClient'
 
-export async function fetchCityArea(city: string) {
+/**
+ * Fetches areas by city id
+ * 
+ * @param cityId City ID to filter areas by
+ * @returns Promise with array of areas
+ */
+export async function fetchCityArea(cityId: string) {
   try {
-    const response = await fetch(`${API_URL}property/areas/${city}/`, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch areas for ${city}`);
-    }
-
-    const data = await response.json();
-    return data;
+    return await apiGet(`property/areas/${cityId}/`)
   } catch (error) {
-    console.error("Error fetching city areas:", error);
-    throw error;
+    // Error handling is already done in apiClient
+    return []
   }
 }

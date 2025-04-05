@@ -1,20 +1,23 @@
-import { API_URL } from '../config'
+import { apiPut } from './apiClient'
 
+interface UpdateUserRoleParams {
+  userId: number | string;
+  groupId: number | string;
+}
 
-export async function updateUserRole(userId: string) {
-  const response = await fetch(`${API_URL}users/profile/assign-permissions/`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-    },
-    body: JSON.stringify({ userId })
-  })
-
-  if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.message || 'Failed to update user role')
+/**
+ * Updates a user's role/group
+ * 
+ * @param params User and role data
+ * @returns Promise with update result
+ */
+export async function updateUserRole(params: UpdateUserRoleParams) {
+  const { userId, groupId } = params
+  
+  try {
+    return await apiPut(`users/${userId}/group/`, { group: groupId })
+  } catch (error) {
+    // Error handling is already done in apiClient
+    throw error
   }
-
-  return await response.json()
 } 

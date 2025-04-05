@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { fetchProperties } from '@/lib/api/fetchProperties'
 import { toast } from 'react-toastify'
 
@@ -17,27 +17,35 @@ export function Statistics() {
   const [propertyTypesCount, setPropertyTypesCount] = useState(0)
   const [citiesCount, setCitiesCount] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [hasFetched, setHasFetched] = useState(false)
+
+  const loadStats = useCallback(async () => {
+    // Skip if we've already fetched the data
+    if (hasFetched) return
+    
+    setLoading(true)
+    try {
+      console.log('Fetching properties for stats')
+      const properties = await fetchProperties()
+      if (properties) {
+        setPremiumPropertiesCount(properties.length)
+        setPropertyTypesCount([...new Set(properties.map((property: Property) => property.property_type))].length)
+        setCitiesCount([...new Set(properties.map((property: Property) => 
+          property.city && property.city.name ? property.city.name : 'Unknown'
+        ))].length)
+        setHasFetched(true)
+      }
+    } catch (error) {
+      console.error('Error fetching properties for stats:', error)
+      toast.error('Failed to load property statistics.')
+    } finally {
+      setLoading(false)
+    }
+  }, [hasFetched])
 
   useEffect(() => {
-    const loadStats = async () => {
-      setLoading(true)
-      try {
-        const properties = await fetchProperties()
-        if (properties) {
-          setPremiumPropertiesCount(properties.length)
-          setPropertyTypesCount([...new Set(properties.map((property: Property) => property.property_type))].length)
-          setCitiesCount([...new Set(properties.map((property: Property) => property.city.name))].length)
-        }
-      } catch (error) {
-        console.error('Error fetching properties for stats:', error)
-        toast.error('Failed to load property statistics.')
-      } finally {
-        setLoading(false)
-      }
-    }
-
     loadStats()
-  }, [])
+  }, [loadStats])
 
   return (
     <div className="bg-gradient-to-b from-white to-gray-100 py-16">

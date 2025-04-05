@@ -26,22 +26,11 @@ import {
 import { fetchOffers } from '@/lib/api/fetchOffers'
 import { updateOffer } from '@/lib/api/updateOffer'
 import { uploadOfferImage } from '@/lib/api/uploadOfferImage'
-import { listOfferImage } from '@/lib/api/listOfferimage'
+import { listOfferimage } from '@/lib/api/listOfferimage'
 import { toast } from 'react-toastify'
 import { createOffer } from '@/lib/api/createOffer'
 import { ImageCropper } from '@/components/ImageCropper'
-
-interface Offer {
-  id: number;
-  title: string;
-  description: string;
-  code: string;
-  discount_percentage: number;
-  offer_start_date: string;
-  offer_end_date: string;
-  is_active: boolean;
-  image?: string; // Assuming offers have an image URL
-}
+import { type Offer, type OfferFormData } from '@/types/offer'
 
 export default function Offers() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -257,10 +246,16 @@ export default function Offers() {
         <Pagination className="mt-8">
           <PaginationContent>
             <PaginationItem>
-              <PaginationPrevious
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-              />
+              {currentPage === 1 ? (
+                <span className="opacity-50">
+                  <PaginationPrevious size="default" />
+                </span>
+              ) : (
+                <PaginationPrevious 
+                  size="default"
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))} 
+                />
+              )}
             </PaginationItem>
             {generatePageNumbers().map((pageNumber, index) => (
               <PaginationItem key={index}>
@@ -268,6 +263,7 @@ export default function Offers() {
                   <PaginationEllipsis />
                 ) : (
                   <PaginationLink
+                    size="default"
                     onClick={() => setCurrentPage(pageNumber as number)}
                     isActive={currentPage === pageNumber}
                   >
@@ -277,10 +273,16 @@ export default function Offers() {
               </PaginationItem>
             ))}
             <PaginationItem>
-              <PaginationNext
-                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-              />
+              {currentPage === totalPages ? (
+                <span className="opacity-50">
+                  <PaginationNext size="default" />
+                </span>
+              ) : (
+                <PaginationNext 
+                  size="default"
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))} 
+                />
+              )}
             </PaginationItem>
           </PaginationContent>
         </Pagination>

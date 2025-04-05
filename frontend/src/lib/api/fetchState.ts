@@ -45,8 +45,8 @@ export async function fetchState() {
       const data = await response.json();
       console.log(`Successfully fetched ${data.length || 0} states`);
       return data;
-    } catch (fetchError) {
-      if (fetchError.name === 'AbortError') {
+    } catch (fetchError: unknown) {
+      if ((fetchError as { name?: string }).name === 'AbortError') {
         console.error("Request timed out after", DEFAULT_TIMEOUT, "ms");
         return [];
       }

@@ -71,7 +71,7 @@ export default function BookProperty() {
       }
       
       setProperty(data)
-      if (data && data.rooms.length > 0) {
+      if (data?.rooms && Array.isArray(data.rooms) && data.rooms.length > 0) {
         setSelectedRoom(data.rooms[0]) // Select the first room by default
       }
     })
@@ -130,6 +130,8 @@ export default function BookProperty() {
       price: parseFloat(roomPrice || '0'),
       discount: parseFloat(selectedRoom.discount || '0'),
       booking_time: booking.bookingType, // Use the selected booking type
+      booking_type: 'online', // Same as booking_time
+      status: 'pending', // Default status
       payment_type: 'upi', // Default payment type, can be updated later
       checkin_date: booking.checkIn,
       checkout_date: booking.checkOut,
@@ -249,15 +251,15 @@ export default function BookProperty() {
                 <Select
                   value={selectedRoom?.name || selectedRoom?.occupancyType || ''} // Display selected room name
                   onValueChange={(value) => {
-                    const room = property.rooms.find(room => (room.name || room.occupancyType) === value);
-                    setSelectedRoom(room)
+                    const room = property?.rooms?.find(room => (room.name || room.occupancyType) === value);
+                    if (room) setSelectedRoom(room);
                   }}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select room type" />
                   </SelectTrigger>
                   <SelectContent>
-                    {property.rooms.map((room) => (
+                    {property?.rooms?.map((room) => (
                       <SelectItem
                         key={room.id}
                         value={room.name || room.occupancyType}

@@ -18,7 +18,7 @@ export function AccessDenied() {
             Go to Dashboard
           </Link>
         </Button>
-        <Button variant="outline" asChild>
+        <Button variant="neutral" asChild>
           <Link href="/">
             Back to Home
           </Link>

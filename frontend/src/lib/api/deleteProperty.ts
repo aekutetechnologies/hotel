@@ -1,22 +1,16 @@
-import type { ActionResponse } from '@/types/actions'
-import { API_URL } from '../config'
+import { apiDelete } from './apiClient'
 
-export async function deleteProperty(id: string): Promise<ActionResponse<any, any>> {
-  const response = await fetch(`${API_URL}property/properties/${id}/`, {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-    }
-  })
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ message: 'Failed to delete property' }))
-    throw new Error(errorData.message || 'Failed to delete property')
-  }
-
-  return {
-    data: null,
-    error: null
+/**
+ * Deletes a property by ID
+ * 
+ * @param propertyId Property ID to delete
+ * @returns Promise with deletion result
+ */
+export async function deleteProperty(propertyId: number | string) {
+  try {
+    return await apiDelete(`property/properties/${propertyId}/`)
+  } catch (error) {
+    // Error handling is already done in apiClient
+    throw error
   }
 } 

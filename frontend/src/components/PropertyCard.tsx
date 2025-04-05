@@ -40,22 +40,33 @@ export function PropertyCard({ property, searchParams }: PropertyCardProps) {
   const bookingType = searchParams.get('bookingType') || 'daily'
   
   // For hostels, use monthly rates when available
-  const originalPrice = Math.min(...property.rooms.map(room => {
-    if (isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
-      return parseFloat(room.monthly_rate);
-    } else {
-      return bookingType === 'hourly' ? parseFloat(room.hourly_rate) : parseFloat(room.daily_rate);
-    }
-  }));
+  const originalPrice = property.rooms && property.rooms.length > 0 ? 
+    Math.min(...property.rooms.map(room => {
+      if (isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
+        return parseFloat(room.monthly_rate);
+      } else {
+        return parseFloat(room.daily_rate || room.price || '0');
+      }
+    })) :
+    0;
   
-  const discount = Math.max(...property.rooms.map(room => room.discount || 0))
-  const lowestPrice = originalPrice - (originalPrice * (discount || 0)) / 100
+  const discount = property.rooms && property.rooms.length > 0 ? 
+    Math.max(...property.rooms.map(room => parseFloat(room.discount || '0'))) : 
+    0;
+  
+  // Calculate the sale price after applying the discount
+  const salePrice = originalPrice * (1 - discount / 100);
+  
+  // Count available rooms
+  const availableRoomsCount = property.rooms && property.rooms.length > 0 ?
+    property.rooms.filter(room => room.is_available !== false).length :
+    0;
 
   // Calculate the appropriate price label based on property type and booking type
   const getPriceLabel = () => {
     if (isHostel) {
       // Check if we're using monthly rate
-      if (property.rooms.some(room => room.monthly_rate && parseFloat(room.monthly_rate) > 0)) {
+      if (property.rooms && property.rooms.some(room => room.monthly_rate && parseFloat(room.monthly_rate) > 0)) {
         return '/month';
       } else {
         return bookingType === 'hourly' ? '/hour' : '/night';
@@ -238,7 +249,7 @@ export function PropertyCard({ property, searchParams }: PropertyCardProps) {
                 <div className="flex-grow">
                   <p className="text-xs sm:text-sm text-gray-500">Starting from</p>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-xl sm:text-2xl font-bold">₹{lowestPrice}</span>
+                    <span className="text-xl sm:text-2xl font-bold">₹{salePrice}</span>
                     <span className="text-xs sm:text-sm text-gray-500">
                       {getPriceLabel()}
                     </span>

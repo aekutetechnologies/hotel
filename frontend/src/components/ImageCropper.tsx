@@ -60,7 +60,7 @@ export function ImageCropper({ image, aspectRatio, onCropComplete, onCancel }: I
           />
         </div>
         <div className="mt-4 flex justify-between">
-          <Button onClick={onCancel} variant="outline">Cancel</Button>
+          <Button onClick={onCancel} variant="neutral">Cancel</Button>
           <Button onClick={showCroppedImage}>Crop</Button>
         </div>
       </div>

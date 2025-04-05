@@ -37,7 +37,14 @@ interface BookingModalProps {
 export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, onBookingAction, properties, users }: BookingModalProps) {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null)
-  const [selectedRoom, setSelectedRoom] = useState<Property['rooms'][0] | null>(null)
+  const [selectedRoom, setSelectedRoom] = useState<{
+    id: number;
+    name?: string;
+    images?: { id: number; image?: string; image_url?: string }[];
+    roomImages?: { id: number; image_url: string }[];
+    amenities?: any[];
+    [key: string]: any;
+  } | null>(null)
 
   const [booking, setBooking] = useState({
     propertyName: '',
@@ -47,32 +54,53 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
     checkOut: '',
     status: 'pending',
     amount: '',
-    bookingType: '',
-    paymentMethod: '',
-    guests: '',
+    bookingType: 'walkin',
+    bookingTime: 'daily',
+    paymentMethod: 'upi',
+    guests: '1',
     numberOfRooms: 1,
   })
 
   useEffect(() => {
     if (initialData && properties && properties.length > 0) {
       setBooking({
-        propertyName: initialData.property.name,
-        guestName: initialData.user.name,
-        roomName: initialData.property.rooms.find((room: any) => room.id === initialData.room)?.name,
+        propertyName: typeof initialData.property === 'object' ? initialData.property.name : '',
+        guestName: typeof initialData.user === 'object' ? initialData.user.mobile : '',
+        roomName: '',
         checkIn: initialData.checkin_date,
         checkOut: initialData.checkout_date,
         status: initialData.status,
         amount: initialData.price,
         bookingType: initialData.booking_type,
+        bookingTime: initialData.booking_time || 'daily',
         paymentMethod: initialData.payment_type,
         guests: initialData.number_of_guests,
         numberOfRooms: initialData.number_of_rooms,
       })
-      const initialProperty = properties.find(property => property.name === initialData.property.name)
+      
+      // Find the selected property
+      const initialProperty = properties.find(property => {
+        if (typeof initialData.property === 'object') {
+          return property.id === initialData.property.id
+        } else {
+          return property.id === initialData.property
+        }
+      })
+      
       setSelectedProperty(initialProperty || null)
-      if (!initialProperty) return
-      const initialRoom = initialProperty.rooms.find(room => room.id === initialData.room)
-      setSelectedRoom(initialRoom || null)
+      
+      if (initialProperty) {
+        // Find the selected room
+        const initialRoom = initialProperty.rooms?.find(room => room.id === initialData.room)
+        setSelectedRoom(initialRoom || null)
+        
+        if (initialRoom) {
+          setBooking(prev => ({ 
+            ...prev, 
+            roomName: initialRoom.name
+          }))
+        }
+      }
     } else {
       setBooking({
         propertyName: '',
@@ -82,9 +110,10 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
         checkOut: '',
         status: 'pending',
         amount: '',
-        bookingType: '',
-        paymentMethod: '',
-        guests: '',
+        bookingType: 'walkin',
+        bookingTime: 'daily',
+        paymentMethod: 'upi',
+        guests: '1',
         numberOfRooms: 1,
       })
       setSelectedProperty(null)
@@ -99,6 +128,33 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
 
   const handleSelectChange = (name: string, value: string) => {
     setBooking(prev => ({ ...prev, [name]: value }))
+    
+    // Update price when booking time changes
+    if (name === 'bookingTime' && selectedRoom) {
+      updatePriceBasedOnBookingTime(value, selectedRoom)
+    }
+  }
+  
+  const updatePriceBasedOnBookingTime = (bookingTime: string, room: any) => {
+    let baseRate = 0
+    switch (bookingTime) {
+      case 'hourly':
+        baseRate = parseFloat(room.hourly_rate || '0')
+        break
+      case 'monthly':
+        baseRate = parseFloat(room.monthly_rate || '0')
+        break
+      case 'daily':
+      default:
+        baseRate = parseFloat(room.daily_rate || '0')
+    }
+    
+    // Apply discount if any
+    const discount = parseFloat(room.discount || '0')
+    const discountedPrice = baseRate - (baseRate * discount / 100)
+    
+    // Update the amount field
+    setBooking(prev => ({ ...prev, amount: discountedPrice.toFixed(2) }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -126,6 +182,7 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
         discount: parseFloat(selectedRoom?.discount || '0'),
         price: parseFloat(booking.amount),
         booking_type: booking.bookingType,
+        booking_time: booking.bookingTime,
         payment_type: booking.paymentMethod,
         number_of_guests: parseInt(booking.guests),
         number_of_rooms: booking.numberOfRooms,
@@ -140,10 +197,14 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
       onBookingAction?.()
     } catch (error: any) {
       console.error("Error updating booking:", error.message)
+      toast.error(`Error: ${error.message}`)
     } finally {
       setIsSubmitting(false)
     }
   }
+
+  // Check if property type is hostel
+  const isHostel = selectedProperty?.property_type === 'hostel'
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -176,6 +237,27 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
                 </SelectContent>
               </Select>
             </div>
+            
+            <div>
+              <Label htmlFor="bookingTime">Booking Time</Label>
+              <Select 
+                name="bookingTime" 
+                value={booking.bookingTime} 
+                onValueChange={(value) => handleSelectChange('bookingTime', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select booking time" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="daily">Daily</SelectItem>
+                  <SelectItem value="hourly">Hourly</SelectItem>
+                  {(isHostel || selectedProperty?.property_type === 'hostel') && (
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            
             {selectedProperty && (
               <div>
                 <Label htmlFor="roomName">Room Name</Label>
@@ -183,16 +265,13 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
                   name="roomName"
                   value={booking.roomName}
                   onValueChange={(value) => {
-                    const selectedRoom = selectedProperty.rooms.find(r => r.name === value)
-                    handleSelectChange('roomName', value)
-                    setSelectedRoom(selectedRoom || null)
-                    if (selectedRoom) {
-                      const price = parseFloat(selectedRoom.price) || 0
-                      const discount = parseFloat(selectedRoom.discount) || 0
-                      const calculatedFinalPrice = price - (price * discount / 100)
-                      setBooking(prev => ({ ...prev, amount: calculatedFinalPrice.toFixed(2) }))
-                    } else {
-                      setBooking(prev => ({ ...prev, amount: '' }))
+                    if (selectedProperty) {
+                      const selectedRoom = selectedProperty.rooms?.find(room => room.name === value)
+                      handleSelectChange('roomName', value)
+                      setSelectedRoom(selectedRoom || null)
+                      if (selectedRoom) {
+                        updatePriceBasedOnBookingTime(booking.bookingTime, selectedRoom)
+                      }
                     }
                   }}
                 >
@@ -200,13 +279,14 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
                     <SelectValue placeholder="Select Room" />
                   </SelectTrigger>
                   <SelectContent>
-                    {selectedProperty.rooms.map((room) => (
-                      <SelectItem key={room.id} value={room.name}>{room.name} ({room.price} - {room.discount}% discount)</SelectItem>
+                    {selectedProperty?.rooms?.map((room) => (
+                      <SelectItem key={room.id} value={room.name || ''}>{room.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
             )}
+            
             <div>
               <Label htmlFor="guestName">Guest Name</Label>
               <Select
@@ -219,7 +299,7 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
                 </SelectTrigger>
                 <SelectContent>
                   {users.map((user) => (
-                    <SelectItem key={user.id} value={user.name}>{user.name}</SelectItem>
+                    <SelectItem key={user.id} value={user.mobile}>{user.mobile}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -234,6 +314,7 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
                   type="number"
                   value={booking.guests}
                   onChange={handleChange}
+                  min="1"
                   required
                 />
               </div>
@@ -245,6 +326,7 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
                   type="number"
                   value={booking.numberOfRooms}
                   onChange={handleChange}
+                  min="1"
                   required
                 />
               </div>
@@ -313,11 +395,15 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
                     <SelectValue placeholder="Select booking type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="makemytrip">MakeMyTrip</SelectItem>
-                    <SelectItem value="goibibo">Goibibo</SelectItem>
-                    <SelectItem value="oyo">OYO</SelectItem>
-                    <SelectItem value="online">Online</SelectItem>
                     <SelectItem value="walkin">Walk-in</SelectItem>
+                    <SelectItem value="online">Online</SelectItem>
+                    <SelectItem value="makemytrip">MakeMyTrip</SelectItem>
+                    <SelectItem value="tripadvisor">TripAdvisor</SelectItem>
+                    <SelectItem value="expedia">Expedia</SelectItem>
+                    <SelectItem value="agoda">Agoda</SelectItem>
+                    <SelectItem value="bookingcom">Booking.com</SelectItem>
+                    <SelectItem value="airbnb">Airbnb</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

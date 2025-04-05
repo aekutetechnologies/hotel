@@ -1,18 +1,23 @@
-import type { ActionResponse } from '@/types/actions'
-import { API_URL } from '../config'
+import { apiGet } from './apiClient'
 
-export async function fetchDocumentation() {
-  const response = await fetch(`${API_URL}property/documentations/`, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-    }
-  })
+interface Documentation {
+  id: number;
+  name: string;
+  created_at: string;
+  updated_at: string;
+  is_active: boolean;
+}
 
-  if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.message || 'Failed to fetch documentation')
+/**
+ * Fetches documentation types
+ * 
+ * @returns Promise with documentation data
+ */
+export async function fetchDocumentation(): Promise<Documentation[]> {
+  try {
+    return await apiGet<Documentation[]>('property/documentations/')
+  } catch (error) {
+    // Error handling is already done in apiClient
+    return []
   }
-
-  return await response.json()
 } 

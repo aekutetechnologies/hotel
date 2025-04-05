@@ -47,7 +47,7 @@ export interface Document {
 export interface Booking {
   property: { id: number; name: string } | number;
   room: number;
-  user: { id: number; name: string } | number;
+  user: { id: number; name: string, mobile: string } | number;
   checkin_date: string;
   checkout_date: string;
   status: string;
@@ -75,6 +75,7 @@ interface BookPropertyParams {
   payment_type: string;
   number_of_guests: number;
   number_of_rooms: number;
+  booking_time: string;
   token?: string;
 }
 
@@ -96,15 +97,66 @@ export default function Bookings() {
   const getBookingsData = useCallback(async () => {
     setIsLoadingBookings(true)
     try {
-      const fetchedBookings = await fetchBookings()
-      setBookings(fetchedBookings)
-      const fetchedProperties = await fetchProperties()
-      setProperties(fetchedProperties)
-      const fetchedUsers = await fetchUsers()
-      setUsers(fetchedUsers)
+      console.log('Fetching bookings data...')
+      const bookingsResponse = await fetchBookings()
+      
+      // Process booking data to ensure we have primitive values
+      const processedBookings = Array.isArray(bookingsResponse) 
+        ? bookingsResponse 
+        : bookingsResponse && typeof bookingsResponse === 'object' && 'results' in (bookingsResponse as any)
+          ? (bookingsResponse as any).results
+          : [];
+      
+      // Process each booking to ensure property and user are correctly handled
+      const normalizedBookings = processedBookings.map((booking: any) => {
+        return {
+          ...booking,
+          // Ensure property is either an object with needed fields or null
+          property: typeof booking.property === 'object' 
+            ? booking.property 
+            : booking.property 
+              ? { id: Number(booking.property), name: `Property ${booking.property}` }
+              : null,
+          // Ensure user is either an object with needed fields or null
+          user: typeof booking.user === 'object' 
+            ? booking.user 
+            : booking.user
+              ? { id: Number(booking.user), name: `User ${booking.user}`, mobile: '' }
+              : null,
+          // Ensure all other fields are primitive values
+          checkin_date: booking.checkin_date || '',
+          checkout_date: booking.checkout_date || '',
+          status: booking.status || 'pending',
+          price: typeof booking.price === 'number' ? booking.price : 0,
+          booking_type: booking.booking_type || '',
+          payment_type: booking.payment_type || '',
+        };
+      });
+      
+      setBookings(normalizedBookings);
+      
+      // Fetch properties and users
+      const propertiesResponse = await fetchProperties()
+      const processedProperties = Array.isArray(propertiesResponse) 
+        ? propertiesResponse 
+        : propertiesResponse && typeof propertiesResponse === 'object' && 'results' in (propertiesResponse as any)
+          ? (propertiesResponse as any).results
+          : [];
+      setProperties(processedProperties)
+      
+      const usersResponse = await fetchUsers()
+      const processedUsers = Array.isArray(usersResponse) 
+        ? usersResponse 
+        : usersResponse && typeof usersResponse === 'object' && 'results' in (usersResponse as any)
+          ? (usersResponse as any).results
+          : [];
+      setUsers(processedUsers)
     } catch (error: any) {
       console.error('Error fetching bookings:', error)
       toast.error(`Failed to fetch bookings: ${error.message}`)
+      setBookings([])
+      setProperties([])
+      setUsers([])
     } finally {
       setIsLoadingBookings(false)
     }
@@ -137,7 +189,7 @@ export default function Bookings() {
     console.log('Adding new booking:', bookingData)
     const token = localStorage.getItem('accessToken')
     if (!token) {
-      alert('Please log in to book.')
+      toast.error('Please log in to book')
       return
     }
     
@@ -215,7 +267,7 @@ export default function Bookings() {
     <div className="container mx-auto px-4 py-6 max-w-7xl">
       <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-2xl font-bold">Bookings</h1>
-        <Button className="bg-[#B11E43] hover:bg-[#8f1836]" onClick={() => setIsAddModalOpen(true)}>
+        <Button variant="default" onClick={() => setIsAddModalOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Add New Booking
         </Button>
@@ -270,19 +322,19 @@ export default function Bookings() {
                   <TableCell>{booking.payment_type}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => {
+                      <Button variant="neutral" size="icon" onClick={() => {
                         setSelectedBooking(booking)
                         setIsEditModalOpen(true)
                       }}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => {
+                      <Button variant="neutral" size="icon" onClick={() => {
                         setSelectedBooking(booking)
                         setIsDocumentModalOpen(true)
                       }}>
                         <Upload className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => {
+                      <Button variant="neutral" size="icon" onClick={() => {
                         setSelectedBooking(booking)
                         setIsDocumentListModalOpen(true)
                       }}>
@@ -302,9 +354,9 @@ export default function Bookings() {
         onClose={() => setIsAddModalOpen(false)}
         onSubmit={handleAddBooking}
         title="Add New Booking"
-        onBookingAction={getBookingsData}
         properties={properties}
         users={users}
+        onBookingAction={getBookingsData}
       />
 
       {selectedBooking && (
@@ -314,9 +366,9 @@ export default function Bookings() {
           onSubmit={handleUpdateBooking}
           title="Edit Booking"
           initialData={selectedBooking}
-          onBookingAction={getBookingsData}
           properties={properties}
           users={users}
+          onBookingAction={getBookingsData}
         />
       )}
 
@@ -366,7 +418,7 @@ export default function Bookings() {
                         View
                       </a>
                       <Button
-                        variant="ghost"
+                        variant="neutral"
                         size="icon"
                         onClick={() => handleDeleteDocument(document.id)}
                         className="text-red-600 hover:bg-red-50"

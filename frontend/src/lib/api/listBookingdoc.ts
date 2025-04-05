@@ -1,22 +1,17 @@
-import { API_URL } from '../config'
+import { apiGet } from './apiClient'
+import { Document } from '@/app/admin/bookings/page'
 
-export interface BookingDocument {
-  id: number
-  document: string
-}
-
-export async function listBookingDoc(bookingId: string): Promise<BookingDocument[]> {
-  const response = await fetch(`${API_URL}booking/bookings/${bookingId}/documents/`, {
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-    }
-  })
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch booking documents')
+/**
+ * Lists documents for a booking
+ * 
+ * @param bookingId Booking ID to fetch documents for
+ * @returns Promise with array of booking documents
+ */
+export async function listBookingDoc(bookingId: string): Promise<Document[]> {
+  try {
+    return await apiGet<Document[]>(`booking/bookings/${bookingId}/documents/`)
+  } catch (error) {
+    // Error handling is already done in apiClient
+    return []
   }
-
-  const data = await response.json()
-  return data as BookingDocument[]
 } 

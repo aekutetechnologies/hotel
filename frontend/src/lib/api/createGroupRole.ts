@@ -1,21 +1,18 @@
-import type { ActionResponse } from '@/types/actions'
-import { GroupRole } from '@/types/groupRole'
-import { API_URL } from '../config'
+import { apiPost } from './apiClient'
+import { GroupRole, GroupRoleFormData } from '@/types/groupRole'
 
-export async function createGroupRole(groupRole: GroupRole): Promise<ActionResponse> {
-  const response = await fetch(`${API_URL}users/permissions/group/`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-    },
-    body: JSON.stringify(groupRole)
-  })
-
-  if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.message || 'Failed to create group role')
+/**
+ * Creates a new group role
+ * 
+ * @param groupRoleData Group role data to create
+ * @returns Promise with success status and created group role data
+ */
+export async function createGroupRole(groupRoleData: GroupRoleFormData): Promise<{success: boolean, data?: GroupRole}> {
+  try {
+    const data = await apiPost<GroupRole>('users/permissions/group/', groupRoleData)
+    return { success: true, data }
+  } catch (error) {
+    // Error handling is already done in apiClient
+    return { success: false }
   }
-
-  return await response.json()
 } 

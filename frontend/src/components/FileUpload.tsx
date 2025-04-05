@@ -32,15 +32,19 @@ export function FileUpload({ onFileUpload }: FileUploadProps) {
     }
   }
 
-  const handleCropComplete = (croppedImage: string) => {
-    setPreview(croppedImage)
+  const handleCropComplete = (croppedImage: Blob) => {
+    // Convert blob to data URL for preview
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      setPreview(e.target?.result as string)
+    }
+    reader.readAsDataURL(croppedImage)
+    
     setShowCropper(false)
-    fetch(croppedImage)
-      .then(res => res.blob())
-      .then(blob => {
-        const croppedFile = new File([blob], file!.name, { type: 'image/jpeg' })
-        onFileUpload(croppedFile)
-      })
+    
+    // Create a file from the blob
+    const croppedFile = new File([croppedImage], file!.name, { type: 'image/jpeg' })
+    onFileUpload(croppedFile)
   }
 
   const handleRemove = () => {
@@ -71,7 +75,7 @@ export function FileUpload({ onFileUpload }: FileUploadProps) {
             </div>
           )}
           <Button
-            variant="destructive"
+            variant="neutral"
             size="icon"
             className="absolute top-2 right-2"
             onClick={handleRemove}
@@ -83,6 +87,7 @@ export function FileUpload({ onFileUpload }: FileUploadProps) {
       {showCropper && preview && (
         <ImageCropper
           image={preview}
+          aspectRatio={1}
           onCropComplete={handleCropComplete}
           onCancel={() => setShowCropper(false)}
         />

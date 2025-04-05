@@ -11,32 +11,20 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
+import { GroupRole, GroupRoleFormData } from '@/types/groupRole' 
+import { PermissionData } from '@/types/permission'
 
 interface GroupRoleModalProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (groupRole: GroupRole) => void
+  onSubmit: (groupRole: GroupRoleFormData) => void
   title: string
   initialData?: GroupRole
-  permissions: Permission[]
-}
-
-interface GroupRole {
-  id: number
-  name: string
-  permissions: string[] // Stores permission IDs as strings
-  is_active: boolean
-}
-
-interface Permission {
-  id: number
-  name: string
-  description: string
+  permissions: PermissionData[]
 }
 
 export function GroupRoleModal({ isOpen, onClose, onSubmit, title, initialData, permissions }: GroupRoleModalProps) {
-  const [groupRole, setGroupRole] = useState<GroupRole>({
-    id: 0,
+  const [groupRole, setGroupRole] = useState<GroupRoleFormData>({
     name: '',
     permissions: [],
     is_active: true,
@@ -51,7 +39,6 @@ export function GroupRoleModal({ isOpen, onClose, onSubmit, title, initialData, 
         .map((p: any) => typeof p === 'object' ? String(p.id) : String(p))
       
       setGroupRole({
-        id: initialData.id,
         name: initialData.name,
         permissions: initialPermissions,
         is_active: initialData.is_active
@@ -103,7 +90,7 @@ export function GroupRoleModal({ isOpen, onClose, onSubmit, title, initialData, 
       const filteredPermissionIds = filteredPermissions.map(p => String(p.id))
       setGroupRole(prev => ({
         ...prev,
-        permissions: prev.permissions.filter(id => !filteredPermissionIds.includes(id)),
+        permissions: prev.permissions.filter(id => !filteredPermissionIds.includes(String(id))),
       }))
     }
   }
@@ -167,7 +154,7 @@ export function GroupRoleModal({ isOpen, onClose, onSubmit, title, initialData, 
               <div className="space-x-2 flex items-center">
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="neutral"
                   size="sm"
                   onClick={handleSelectAll}
                 >

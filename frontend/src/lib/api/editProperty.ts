@@ -1,22 +1,18 @@
-import type { ActionResponse } from '@/types/actions'
-import { API_URL } from '../config'
+import { apiPut } from './apiClient'
+import { Property } from '@/types/property'
 
-// Accept any property data, not just the full Property type
-export async function editProperty(id: string, propertyData: any): Promise<ActionResponse<any>> {
-  const response = await fetch(`${API_URL}property/properties/${id}/`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      // Include token in headers if necessary
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-    },
-    body: JSON.stringify(propertyData)
-  })
-
-  if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.message || 'Failed to edit property')
+/**
+ * Updates an existing property
+ * 
+ * @param id Property ID to update
+ * @param property Property data to update
+ * @returns Promise with updated property data
+ */
+export async function editProperty(id: string | number, property: Partial<Property>) {
+  try {
+    return await apiPut(`property/properties/${id}/`, property)
+  } catch (error) {
+    // Error handling is already done in apiClient
+    throw error
   }
-
-  return await response.json()
 } 

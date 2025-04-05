@@ -97,7 +97,7 @@ const Navbar: React.FC<NavbarProps> = ({
     try {
       setIsLoadingLocations(true);
       const data = await fetchCityArea("Mumbai");
-      setLocations(data.unique_areas);
+      setLocations((data as any).unique_areas || []);
     } catch (error) {
       console.error("Error fetching locations:", error);
       toast.error("Failed to load locations");

@@ -1,21 +1,27 @@
-import type { ActionResponse } from '@/types/actions'
-import { Offer } from '@/types/offer'
-import { API_URL } from '../config'
+import { apiPost } from './apiClient'
 
-export async function createOffer(offer: Offer): Promise<ActionResponse> {
-  const response = await fetch(`${API_URL}offers/offers/`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-    },
-    body: JSON.stringify(offer)
-  })
+interface OfferData {
+  title: string;
+  description: string;
+  discount_percentage: number;
+  code: string;
+  offer_start_date: string;
+  offer_end_date: string;
+  is_active: boolean;
+  [key: string]: any;
+}
 
-  if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.message || 'Failed to create offer')
+/**
+ * Creates a new offer
+ * 
+ * @param offer Offer data to create
+ * @returns Promise with created offer data
+ */
+export async function createOffer(offer: OfferData) {
+  try {
+    return await apiPost('offers/offers/', offer)
+  } catch (error) {
+    // Error handling is already done in apiClient
+    throw error
   }
-
-  return await response.json()
 } 

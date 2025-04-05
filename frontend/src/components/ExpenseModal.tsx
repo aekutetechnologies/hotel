@@ -17,35 +17,28 @@ import { updateExpense } from '@/lib/api/updateExpense'
 import { toast } from 'react-toastify'
 import { fetchExpenseCategory } from '@/lib/api/fetchExpenseCategory'
 import { Spinner } from '@/components/ui/spinner'
+import { type ExpenseFormData, type ExpenseCategory, type Expense } from '@/types/expense'
+import { type Property } from '@/types/property'
 
 interface ExpenseModalProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit?: (expense: any) => void
+  onSubmit?: (expense: ExpenseFormData) => void
   title: string
-  initialData?: any
-  properties: any[]
-}
-
-interface ExpenseFormData {
-  property: string
-  category: string
-  description: string
-  amount: number
-  date: string
-  status: string
+  initialData?: Expense
+  properties: Property[]
 }
 
 export function ExpenseModal({ isOpen, onClose, onSubmit, title, initialData, properties }: ExpenseModalProps) {
   const [expenseFormData, setExpenseFormData] = useState<ExpenseFormData>({
-    property: initialData?.property.id || '',
-    category: initialData?.category.id || '',
+    property: initialData?.property.id?.toString() || '',
+    category: initialData?.category.id?.toString() || '',
     description: initialData?.description || '',
     amount: initialData?.amount || 0,
     date: initialData?.date ? new Date(initialData.date).toISOString().split('T')[0] : '',
     status: initialData?.status || 'pending',
   })
-  const [expenseCategories, setExpenseCategories] = useState([])
+  const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>([])
   const [isLoadingCategories, setIsLoadingCategories] = useState(false)
   const isUpdate = !!initialData?.id
 
@@ -69,8 +62,8 @@ export function ExpenseModal({ isOpen, onClose, onSubmit, title, initialData, pr
   useEffect(() => {
     if (initialData) {
       setExpenseFormData({
-        property: initialData.property.id || '',
-        category: initialData.category.id || '',
+        property: initialData.property.id.toString() || '',
+        category: initialData.category.id.toString() || '',
         description: initialData.description || '',
         amount: initialData.amount || 0,
         date: initialData.date ? new Date(initialData.date).toISOString().split('T')[0] : '',
@@ -109,28 +102,27 @@ export function ExpenseModal({ isOpen, onClose, onSubmit, title, initialData, pr
     e.preventDefault()
 
     try {
-      const payload = {
-        ...expenseFormData,
-        property: parseInt(expenseFormData.property),
-        category: parseInt(expenseFormData.category),
-      }
-      const response = isUpdate
-        ? await updateExpense(initialData.id, payload)
-        : await createExpense(payload)
-
-      if (response.success) {
-        toast.success(`Expense ${isUpdate ? 'updated' : 'created'} successfully!`)
-        onClose()
+      if (onSubmit) {
+        onSubmit(expenseFormData)
       } else {
-        toast.error(`Failed to ${isUpdate ? 'update' : 'create'} expense.`)
+        const payload = {
+          ...expenseFormData,
+          property: expenseFormData.property,
+          category: expenseFormData.category,
+        }
+        
+        if (isUpdate && initialData) {
+          await updateExpense(initialData.id, expenseFormData)
+          toast.success('Expense updated successfully!')
+        } else {
+          await createExpense(expenseFormData)
+          toast.success('Expense created successfully!')
+        }
+        onClose()
       }
     } catch (error: any) {
       console.error(`Expense ${isUpdate ? 'update' : 'creation'} failed:`, error)
       toast.error(error.message || `Failed to ${isUpdate ? 'update' : 'create'} expense.`)
-    }
-
-    if (onSubmit) {
-      onSubmit(expenseFormData)
     }
   }
 
@@ -168,7 +160,7 @@ export function ExpenseModal({ isOpen, onClose, onSubmit, title, initialData, pr
           <div>
             <Label htmlFor="category">Category</Label>
             {isLoadingCategories ? (
-              <Spinner size="sm" className="ml-2" />
+              <Spinner className="ml-2" />
             ) : (
               <Select onValueChange={handleCategoryChange} defaultValue={initialData?.category?.id ? String(initialData.category.id) : expenseFormData.category}>
                 <SelectTrigger className="w-full">

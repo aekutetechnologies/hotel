@@ -1,7 +1,7 @@
 "use client"
 
 import { FavoriteProperties } from "@/components/favorite-properties"
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useRouter } from "next/navigation"
 import Navbar from "@/components/Navbar"
 import Footer from "@/components/Footer"
@@ -60,7 +60,16 @@ export default function FavoritesPage() {
       
       {/* Main content */}
       <main className="flex-1 bg-gray-50">
-        <FavoriteProperties />
+        <Suspense fallback={
+          <div className="w-full py-8 flex justify-center">
+            <div className="flex flex-col items-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#B11E43]"></div>
+              <p className="mt-4 text-gray-600">Loading your favorite properties...</p>
+            </div>
+          </div>
+        }>
+          <FavoriteProperties />
+        </Suspense>
       </main>
       
       {/* Footer */}

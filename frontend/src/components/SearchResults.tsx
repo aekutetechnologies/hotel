@@ -127,9 +127,9 @@ export function SearchResults() {
           try {
             console.log("Fetching city areas for:", paramsObject.location)
             const areas = await fetchCityArea(paramsObject.location)
-            console.log("areas", areas.unique_areas)
-            if (areas && areas.unique_areas) {
-            setCityAreas(areas.unique_areas)
+            console.log("areas", (areas as any).unique_areas)
+            if (areas && (areas as any).unique_areas) {
+              setCityAreas((areas as any).unique_areas)
             }
           } catch (error) {
             console.error("Error fetching city areas:", error)
@@ -235,6 +235,8 @@ export function SearchResults() {
       return filtered.sort((a, b) => {
         // Calculate lowest price for both properties
         const getLowestPrice = (property: Property) => {
+          if (!property.rooms || property.rooms.length === 0) return 0;
+          
           const prices = property.rooms.map(room => {
             if (property.property_type === 'hostel' && room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
               return parseFloat(room.monthly_rate);
@@ -253,6 +255,8 @@ export function SearchResults() {
       return filtered.sort((a, b) => {
         // Calculate lowest price for both properties
         const getLowestPrice = (property: Property) => {
+          if (!property.rooms || property.rooms.length === 0) return 0;
+          
           const prices = property.rooms.map(room => {
             if (property.property_type === 'hostel' && room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
               return parseFloat(room.monthly_rate);

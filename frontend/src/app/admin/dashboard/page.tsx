@@ -20,27 +20,12 @@ import { Spinner } from '@/components/ui/spinner'
 import { PermissionGuard } from '@/components/PermissionGuard'
 import { usePermissions } from '@/hooks/usePermissions'
 import { Permission } from '@/lib/permissions'
+import { Property } from '@/types/property'
 
-// Define Property interface to fix type errors
-interface PropertyImage {
+// Helper type for property image display
+interface DisplayImage {
   id: number;
-  image_url: string;
-}
-
-interface PropertyRoom {
-  id: number;
-  name: string;
-  length: number;
-}
-
-interface Property {
-  id: number;
-  name: string;
-  location: string;
-  property_type: string;
-  is_active: boolean;
-  rooms: PropertyRoom[];
-  images: PropertyImage[];
+  url: string;
 }
 
 export default function Dashboard() {
@@ -48,6 +33,12 @@ export default function Dashboard() {
   const [properties, setProperties] = useState<Property[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const { can, isLoaded } = usePermissions()
+
+  const dashboardStats = {
+    activeBookings: 10,
+    monthlyRevenue: 10000,
+    occupancyRate: 50
+  }
   
   useEffect(() => {
     // Only fetch properties once when component is mounted and permissions are loaded
@@ -74,6 +65,13 @@ export default function Dashboard() {
     property.location.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
+  // Helper function to get image URL
+  const getImageUrl = (property: Property): string => {
+    return property.images && property.images.length > 0 
+      ? (property.images[0].image || property.images[0].image_url || '/placeholder.jpg')
+      : '/placeholder.jpg';
+  }
+
   if (!isLoaded) {
     return (
       <div className="flex justify-center items-center p-12">
@@ -95,7 +93,7 @@ export default function Dashboard() {
   return (
     <div>
       {/* Stats Overview */}
-      {/* <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Properties</CardTitle>
@@ -132,7 +130,7 @@ export default function Dashboard() {
             <div className="text-2xl font-bold">{dashboardStats.occupancyRate}%</div>
           </CardContent>
         </Card>
-      </div> */}
+      </div>
 
       {/* Properties Section */}
       <div className="mb-8">
@@ -140,7 +138,7 @@ export default function Dashboard() {
           <h2 className="text-2xl font-bold">Properties</h2>
           <PermissionGuard permission="property:create">
             <Link href="/admin/properties/new">
-              <Button className="bg-[#B11E43] hover:bg-[#8f1836]">
+              <Button variant="neutral">
                 <Plus className="mr-2 h-4 w-4" />
                 Add New Property
               </Button>
@@ -170,7 +168,7 @@ export default function Dashboard() {
             <p className="text-lg text-gray-600 mb-4">No properties found</p>
             <PermissionGuard permission="property:create">
               <Link href="/admin/properties/new">
-                <Button className="bg-[#B11E43] hover:bg-[#8f1836]">
+                <Button variant="default">
                   Add your first property
                 </Button>
               </Link>
@@ -204,7 +202,7 @@ export default function Dashboard() {
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <PermissionGuard permission="property:view">
-                          <Button variant="ghost" size="icon" asChild>
+                          <Button variant="neutral" size="icon" asChild>
                             <Link href={`/admin/properties/${property.id}`}>
                               <Eye className="h-4 w-4" />
                             </Link>
@@ -212,7 +210,7 @@ export default function Dashboard() {
                         </PermissionGuard>
                         
                         <PermissionGuard permission="property:update">
-                          <Button variant="ghost" size="icon" asChild>
+                          <Button variant="neutral" size="icon" asChild>
                             <Link href={`/admin/properties/${property.id}/edit`}>
                               <Edit className="h-4 w-4" />
                             </Link>
@@ -220,7 +218,7 @@ export default function Dashboard() {
                         </PermissionGuard>
                         
                         <PermissionGuard permission="property:delete">
-                          <Button variant="ghost" size="icon" className="text-red-600">
+                          <Button variant="neutral" size="icon" className="text-red-600">
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </PermissionGuard>

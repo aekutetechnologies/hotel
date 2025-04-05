@@ -1,18 +1,16 @@
+import { apiGet } from './apiClient'
+import { PermissionData } from '@/types/permission'
 
-import { API_URL } from '../config'
-
-export async function fetchPermissions() {
-  const response = await fetch(`${API_URL}users/permissions/`, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-    }
-  })
-
-  if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.message || 'Failed to fetch permissions')
+/**
+ * Fetches available permissions
+ * 
+ * @returns Promise with permissions data
+ */
+export async function fetchPermissions(): Promise<PermissionData[]> {
+  try {
+    return await apiGet<PermissionData[]>('users/permissions/')
+  } catch (error) {
+    // Error handling is already done in apiClient
+    return []
   }
-
-  return await response.json()
 } 

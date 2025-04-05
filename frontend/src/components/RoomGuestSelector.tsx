@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Users, Building } from "lucide-react"
+import { Users, Building, Minus, Plus } from "lucide-react"
 
 interface RoomGuestSelectorProps {
   onSelect: (rooms: number, guests: number) => void
@@ -49,7 +49,7 @@ export function RoomGuestSelector({
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button 
-          variant="outline" 
+          variant="neutral" 
           className="w-full justify-start text-left font-normal"
         >
           <Users className="mr-2 h-4 w-4" />
@@ -68,21 +68,22 @@ export function RoomGuestSelector({
             </div>
             <div className="flex items-center gap-2">
               <Button
-                variant="outline"
+                variant="neutral"
                 size="icon"
                 onClick={() => handleDecrement('rooms')}
                 disabled={rooms <= 1}
+                className="h-8 w-8"
               >
-                -
+                <Minus className="h-3 w-3" />
               </Button>
               <span className="w-8 text-center">{rooms}</span>
               <Button
-                variant="outline"
+                variant="neutral"
                 size="icon"
                 onClick={() => handleIncrement('rooms')}
-                disabled={rooms >= 5}
+                className="h-8 w-8"
               >
-                +
+                <Plus className="h-3 w-3" />
               </Button>
             </div>
           </div>
@@ -97,21 +98,22 @@ export function RoomGuestSelector({
             </div>
             <div className="flex items-center gap-2">
               <Button
-                variant="outline"
+                variant="neutral"
                 size="icon"
                 onClick={() => handleDecrement('guests')}
                 disabled={guests <= 1}
+                className="h-8 w-8"
               >
-                -
+                <Minus className="h-3 w-3" />
               </Button>
               <span className="w-8 text-center">{guests}</span>
               <Button
-                variant="outline"
+                variant="neutral"
                 size="icon"
                 onClick={() => handleIncrement('guests')}
-                disabled={guests >= 10}
+                className="h-8 w-8"
               >
-                +
+                <Plus className="h-3 w-3" />
               </Button>
             </div>
           </div>

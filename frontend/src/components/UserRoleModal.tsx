@@ -23,6 +23,8 @@ interface UserModalProps {
 export function UserRoleModal({ isOpen, onClose, onSubmit, title, initialData, permissions }: UserModalProps) {
   const [userRole, setUserRole] = useState({
     name: '',
+    email: '',
+    mobile: '',
     permissions: [],
     is_active: 'Active',
   })
@@ -55,7 +57,7 @@ export function UserRoleModal({ isOpen, onClose, onSubmit, title, initialData, p
             <Input
               id="name"
               name="name"
-              value={user.name}
+              value={userRole.name}
               onChange={handleChange}
               required
             />
@@ -66,7 +68,7 @@ export function UserRoleModal({ isOpen, onClose, onSubmit, title, initialData, p
               id="email"
               name="email"
               type="email"
-              value={user.email}
+              value={userRole.email}
               onChange={handleChange}
               required
             />
@@ -75,8 +77,8 @@ export function UserRoleModal({ isOpen, onClose, onSubmit, title, initialData, p
             <Label htmlFor="phone">Phone</Label>
             <Input
               id="phone"
-              name="phone"
-              value={user.mobile}
+              name="mobile"
+              value={userRole.mobile}
               onChange={handleChange}
               required
             />
@@ -86,7 +88,7 @@ export function UserRoleModal({ isOpen, onClose, onSubmit, title, initialData, p
             <select
               id="status"
               name="status"
-              value={user.is_active}
+              value={userRole.is_active}
               onChange={handleChange}
               className="w-full border rounded px-3 py-2"
             >

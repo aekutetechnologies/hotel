@@ -30,7 +30,7 @@ export function FavoriteProperties() {
     const loadFavorites = async () => {
       try {
         const data = await fetchFavouriteProperties()
-        setFavorites(data)
+        setFavorites(data as FavoriteProperty[])
       } catch (err) {
         setError("Failed to load favorite properties")
         toast.error("Failed to load favorite properties")

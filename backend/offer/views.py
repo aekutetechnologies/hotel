@@ -9,7 +9,7 @@ from users.decorators import custom_authentication_and_permissions
 
 
 @api_view(['GET', 'POST'])
-@custom_authentication_and_permissions(exempt_get_views=[r"^/offers/offers/$"])
+@custom_authentication_and_permissions(exempt_get_views=[r"^/api/offers/offers/$"])
 def offer_list(request):
     if request.method == 'GET':
         offers = Offer.objects.all()
@@ -24,7 +24,7 @@ def offer_list(request):
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
-@custom_authentication_and_permissions(exempt_get_views=[r"^/offers/offers/\d+/?$"])
+@custom_authentication_and_permissions(exempt_get_views=[r"^/api/offers/offers/\d+/?$"])
 def offer_detail(request, pk):
     try:
         offer = Offer.objects.get(pk=pk)
@@ -48,7 +48,7 @@ def offer_detail(request, pk):
 
 
 @api_view(['GET', 'POST'])
-@custom_authentication_and_permissions(exempt_get_views=[r"^/offers/offer-images/\d+/?$"])
+@custom_authentication_and_permissions(exempt_get_views=[r"^/api/offers/offer-images/\d+/?$"])
 def offer_image_list(request, pk):
     try:
         offer = Offer.objects.get(id=pk)

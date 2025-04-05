@@ -1,21 +1,17 @@
-import type { ActionResponse } from '@/types/actions'
-import { API_URL } from '../config'
+import { apiPost } from './apiClient'
+import { Property } from '@/types/property'
 
-// Accept any property data, not just the full Property type
-export async function createProperty(propertyData: any): Promise<ActionResponse<any>> {
-  const response = await fetch(`${API_URL}property/properties/`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-    },
-    body: JSON.stringify(propertyData)
-  })
-
-  if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.message || 'Failed to create property')
+/**
+ * Creates a new property
+ * 
+ * @param property Property data to create
+ * @returns Promise with created property data
+ */
+export async function createProperty(property: Partial<Property>) {
+  try {
+    return await apiPost('property/properties/', property)
+  } catch (error) {
+    // Error handling is already done in apiClient
+    throw error
   }
-
-  return await response.json()
 } 

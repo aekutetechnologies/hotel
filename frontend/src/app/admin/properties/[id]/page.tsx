@@ -26,13 +26,13 @@ export default function ViewProperty() {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold">Property Details</h1>
         <div className="space-x-4">
-          <Button variant="outline" onClick={() => router.back()}>
+          <Button variant="neutral" onClick={() => router.back()}>
             <ArrowLeft className="mr-2 h-4 w-4" /> Back
           </Button>
-          <Button onClick={() => router.push(`/admin/properties/${propertyId}/edit`)}>
+          <Button variant="neutral" onClick={() => router.push(`/admin/properties/${propertyId}/edit`)}>
             <Edit className="mr-2 h-4 w-4" /> Edit Property
           </Button>
-          <Button onClick={handleBooking} className="bg-[#B11E43] hover:bg-[#8f1836]">
+          <Button variant="neutral" onClick={handleBooking}>
             Book Now
           </Button>
         </div>

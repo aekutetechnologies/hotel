@@ -43,7 +43,7 @@ from django.db.models import Q
 
 
 @api_view(["GET", "POST"])
-@custom_authentication_and_permissions(exempt_get_views=[r"^/property/amenities/$"])
+@custom_authentication_and_permissions(exempt_get_views=[r"^/api/property/amenities/$"])
 def amenity_list(request):
     if request.method == "GET":
         amenities = Amenity.objects.all()
@@ -63,7 +63,7 @@ def amenity_list(request):
 
 @api_view(["GET", "PUT", "DELETE"])
 @custom_authentication_and_permissions(
-    exempt_get_views=[r"^/property/amenities/\d+/?$"]
+    exempt_get_views=[r"^/api/property/amenities/\d+/?$"]
 )
 def amenity_detail(request, pk):
     amenity = get_object_or_404(Amenity, pk=pk)
@@ -82,7 +82,7 @@ def amenity_detail(request, pk):
 
 
 @api_view(["GET", "POST"])
-@custom_authentication_and_permissions(exempt_get_views=[r"^/property/rules/$"])
+@custom_authentication_and_permissions(exempt_get_views=[r"^/api/property/rules/$"])
 def rule_list(request):
     if request.method == "GET":
         rules = Rule.objects.all()
@@ -97,7 +97,7 @@ def rule_list(request):
 
 
 @api_view(["GET", "PUT", "DELETE"])
-@custom_authentication_and_permissions(exempt_get_views=[r"^/property/rules/\d+/?$"])
+@custom_authentication_and_permissions(exempt_get_views=[r"^/api/property/rules/\d+/?$"])
 def rule_detail(request, pk):
     rule = get_object_or_404(Rule, pk=pk)
     if request.method == "GET":
@@ -116,7 +116,7 @@ def rule_detail(request, pk):
 
 @api_view(["GET", "POST"])
 @custom_authentication_and_permissions(
-    exempt_get_views=[r"^/property/documentations/$"]
+    exempt_get_views=[r"^/api/property/documentations/$"]
 )
 def documentation_list(request):
     if request.method == "GET":
@@ -133,7 +133,7 @@ def documentation_list(request):
 
 @api_view(["GET", "PUT", "DELETE"])
 @custom_authentication_and_permissions(
-    exempt_get_views=[r"^/property/documentations/\d+/?$"]
+    exempt_get_views=[r"^/api/property/documentations/\d+/?$"]
 )
 def documentation_detail(request, pk):
     documentation = get_object_or_404(Documentation, pk=pk)
@@ -152,7 +152,7 @@ def documentation_detail(request, pk):
 
 
 @api_view(["GET", "POST"])
-@custom_authentication_and_permissions(exempt_get_views=[r"^/property/rooms/$"])
+@custom_authentication_and_permissions(exempt_get_views=[r"^/api/property/rooms/$"])
 def room_list(request):
     if request.method == "GET":
         rooms = Room.objects.all()
@@ -167,7 +167,7 @@ def room_list(request):
 
 
 @api_view(["GET", "PUT", "DELETE"])
-@custom_authentication_and_permissions(exempt_get_views=[r"^/property/rooms/\d+/?$"])
+@custom_authentication_and_permissions(exempt_get_views=[r"^/api/property/rooms/\d+/?$"])
 def room_detail(request, pk):
     room = get_object_or_404(Room, pk=pk)
     if request.method == "GET":
@@ -185,7 +185,7 @@ def room_detail(request, pk):
 
 
 @api_view(["GET", "POST"])
-@custom_authentication_and_permissions(exempt_get_views=[r"^/property/properties/$"])
+@custom_authentication_and_permissions(exempt_get_views=[r"^/api/property/properties/$"])
 def property_list(request):
     if request.method == "GET":
         properties = Property.objects.all().distinct()
@@ -265,7 +265,7 @@ def property_list(request):
 
 @api_view(["GET", "PUT", "DELETE"])
 @custom_authentication_and_permissions(
-    exempt_get_views=[r"^/property/properties/\d+/?$"]
+    exempt_get_views=[r"^/api/property/properties/\d+/?$"]
 )
 def property_detail(request, pk):
     property = get_object_or_404(Property, pk=pk)
@@ -284,7 +284,7 @@ def property_detail(request, pk):
 
 
 @api_view(["GET", "POST"])
-@custom_authentication_and_permissions(exempt_get_views=[r"^/property/reviews/$"])
+@custom_authentication_and_permissions(exempt_get_views=[r"^/api/property/reviews/$"])
 def review_list(request):
     if request.method == "GET":
         reviews = Review.objects.all()
@@ -299,7 +299,7 @@ def review_list(request):
 
 
 @api_view(["GET", "PUT", "DELETE"])
-@custom_authentication_and_permissions(exempt_get_views=[r"^/property/reviews/\d+/?$"])
+@custom_authentication_and_permissions(exempt_get_views=[r"^/api/property/reviews/\d+/?$"])
 def review_detail(request, pk):
     review = get_object_or_404(Review, pk=pk)
     if request.method == "GET":
@@ -317,7 +317,7 @@ def review_detail(request, pk):
 
 
 @api_view(["GET", "POST"])
-@custom_authentication_and_permissions(exempt_get_views=[r"^/property/replies/$"])
+@custom_authentication_and_permissions(exempt_get_views=[r"^/api/property/replies/$"])
 def reply_list(request):
     if request.method == "GET":
         replies = Reply.objects.all()
@@ -332,7 +332,7 @@ def reply_list(request):
 
 
 @api_view(["GET", "PUT", "DELETE"])
-@custom_authentication_and_permissions(exempt_get_views=[r"^/property/replies/\d+/?$"])
+@custom_authentication_and_permissions(exempt_get_views=[r"^/api/property/replies/\d+/?$"])
 def reply_detail(request, pk):
     reply = get_object_or_404(Reply, pk=pk)
     if request.method == "GET":
@@ -370,7 +370,7 @@ def image_upload(request):
 
 
 @api_view(["GET", "DELETE"])
-@custom_authentication_and_permissions(exempt_get_views=[r"^/property/images/\d+/?$"])
+@custom_authentication_and_permissions(exempt_get_views=[r"^/api/property/images/\d+/?$"])
 def image_detail(request, pk):
     """
     Retrieve or delete a specific property image.
@@ -406,7 +406,7 @@ def room_image_upload(request):
 
 @api_view(["GET"])
 @custom_authentication_and_permissions(
-    exempt_get_views=[r"^/property/search/[a-zA-Z0-9_-]+/?$"]
+    exempt_get_views=[r"^/api/property/search/[a-zA-Z0-9_-]+/?$"]
 )
 def search_properties_by_location(request, location):
     """
@@ -428,7 +428,7 @@ def search_properties_by_location(request, location):
 
 
 @api_view(["GET"])
-@custom_authentication_and_permissions(exempt_get_views=[r"^/property/cities/$"])
+@custom_authentication_and_permissions(exempt_get_views=[r"^/api/property/cities/$"])
 def list_cities(request):
     """
     Search for cities.
@@ -443,7 +443,7 @@ def list_cities(request):
 
 
 @api_view(["GET"])
-@custom_authentication_and_permissions(exempt_get_views=[r"^/property/countries/$"])
+@custom_authentication_and_permissions(exempt_get_views=[r"^/api/property/countries/$"])
 def list_countries(request):
     countries = Country.objects.all().order_by('name')
     serializer = CountrySerializer(countries, many=True)
@@ -451,7 +451,7 @@ def list_countries(request):
 
 
 @api_view(["GET"])
-@custom_authentication_and_permissions(exempt_get_views=[r"^/property/states/$"])
+@custom_authentication_and_permissions(exempt_get_views=[r"^/api/property/states/$"])
 def list_states(request):
     states = State.objects.all().order_by('name')
     serializer = StateSerializer(states, many=True)
@@ -459,7 +459,7 @@ def list_states(request):
 
 
 @api_view(["GET"])
-@custom_authentication_and_permissions(exempt_get_views=[r"^/property/areas/[a-zA-Z0-9_-]+/?$"])
+@custom_authentication_and_permissions(exempt_get_views=[r"^/api/property/areas/[a-zA-Z0-9_-]+/?$"])
 def unique_areas_by_city(request, city_name):
     # Get the city object or return a 404 if it doesn't exist
     city = get_object_or_404(City, name__iexact=city_name)

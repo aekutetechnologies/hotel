@@ -1,18 +1,12 @@
 import { API_URL } from '../config'
+import { apiGet } from './apiClient'
 
-export async function getUserBookings(propertyId: string) {
-    console.log("fetching reviews")
-  const response = await fetch(`${API_URL}property/reviews/user/${propertyId}`, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-    }
-  })
-
-  if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.message || 'Failed to fetch reviews')
-  }
-
-  return await response.json()
+/**
+ * Fetches reviews for a specific property that were written by the current user
+ * @param propertyId - The ID of the property to get reviews for
+ * @returns Promise with the user's reviews for the specified property
+ */
+export async function getUserReviews(propertyId: string) {
+  console.log("fetching reviews")
+  return await apiGet(`property/reviews/user/${propertyId}`)
 } 

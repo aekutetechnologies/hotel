@@ -142,7 +142,7 @@ export function ReviewSection({ reviews }: ReviewSectionProps) {
       <Dialog>
         <DialogTrigger asChild>
           {reviews.length > 1 && (
-            <Button variant="outline" className="w-full">
+            <Button variant="neutral" className="w-full">
               See all reviews
             </Button>
           )}

@@ -5,23 +5,39 @@ export const properties: Property[] = [
     id: 1,
     name: "Luxury Hotel Mumbai",
     type: "hotel",
-    location: "Marine Drive, Mumbai",
-    description: "Experience luxury at its finest with breathtaking sea views.",
-    images: ["/placeholder.svg?height=300&width=400&text=Luxury+Hotel+Mumbai"],
-    amenities: ["Swimming Pool", "Spa", "24/7 Room Service", "Free Wi-Fi", "Gym"],
+    location: "Mumbai, India",
+    description: "A luxurious 5-star hotel in the heart of Mumbai",
+    images: ["/images/hotels/luxury-hotel-1.jpg", "/images/hotels/luxury-hotel-2.jpg"],
+    amenities: ["Swimming Pool", "Spa", "Gym", "Restaurant", "Free WiFi"],
     status: "Active",
     rooms: [
-      { id: 1, name: "Deluxe Room", size: "35 sqm", basePrice: 15000, originalPrice: 18000, maxOccupancy: 2, amenities: ["King Bed", "Sea View", "Mini Bar"] },
-      { id: 2, name: "Suite", size: "55 sqm", basePrice: 25000, originalPrice: 30000, maxOccupancy: 3, amenities: ["Separate Living Area", "Jacuzzi", "Butler Service"] }
+      {
+        id: 1,
+        name: "Deluxe Room",
+        size: "32 sqm",
+        basePrice: 5000,
+        originalPrice: 6000,
+        maxOccupancy: 2,
+        amenities: ["King Size Bed", "TV", "Mini Bar"]
+      },
+      {
+        id: 2,
+        name: "Suite",
+        size: "48 sqm",
+        basePrice: 8000,
+        originalPrice: 10000,
+        maxOccupancy: 3,
+        amenities: ["King Size Bed", "TV", "Mini Bar", "Jacuzzi"]
+      }
     ],
     policies: {
-      checkIn: "14:00",
-      checkOut: "12:00",
+      checkIn: "12:00 PM",
+      checkOut: "10:00 AM",
       couplesWelcome: true,
       petsAllowed: false,
-      idRequired: ["Passport", "Driving License"]
+      idRequired: ["Aadhar Card", "Passport"]
     }
-  } as Hotel,
+  } as unknown as Property,
   {
     id: 2,
     name: "Backpackers Hostel Bandra",
@@ -46,7 +62,7 @@ export const properties: Property[] = [
       idRequired: ["Passport", "Student ID"],
       foodInclusive: true
     }
-  } as Hostel,
+  } as unknown as Property,
   {
     id: 3,
     name: "Business Hotel Andheri",
@@ -67,7 +83,7 @@ export const properties: Property[] = [
       petsAllowed: false,
       idRequired: ["Passport", "Business Card"]
     }
-  } as Hotel,
+  } as unknown as Property,
   {
     id: 4,
     name: "Eco Hostel Colaba",
@@ -92,7 +108,7 @@ export const properties: Property[] = [
       idRequired: ["Passport"],
       foodInclusive: true
     }
-  } as Hostel,
+  } as unknown as Property,
   {
     id: 5,
     name: "Beachfront Resort Juhu",
@@ -113,7 +129,7 @@ export const properties: Property[] = [
       petsAllowed: true,
       idRequired: ["Passport", "Credit Card"]
     }
-  } as Hotel,
+  } as unknown as Property,
   {
     id: 6,
     name: "Digital Nomad Hostel Powai",
@@ -138,7 +154,7 @@ export const properties: Property[] = [
       idRequired: ["Passport", "Proof of Employment/Freelance Work"],
       foodInclusive: false
     }
-  } as Hostel,
+  } as unknown as Property,
   {
     id: 7,
     name: "Heritage Hotel Fort",
@@ -159,7 +175,7 @@ export const properties: Property[] = [
       petsAllowed: false,
       idRequired: ["Passport", "Driving License"]
     }
-  } as Hotel,
+  } as unknown as Property,
   {
     id: 8,
     name: "Wellness Retreat Hostel Lonavala",
@@ -184,7 +200,7 @@ export const properties: Property[] = [
       idRequired: ["Passport", "Health Declaration"],
       foodInclusive: true
     }
-  } as Hostel,
+  } as unknown as Property,
   {
     id: 9,
     name: "Skyline Hotel Worli",
@@ -205,7 +221,7 @@ export const properties: Property[] = [
       petsAllowed: false,
       idRequired: ["Passport", "Credit Card"]
     }
-  } as Hotel,
+  } as unknown as Property,
   {
     id: 10,
     name: "Artisan Hostel Kala Ghoda",
@@ -230,7 +246,7 @@ export const properties: Property[] = [
       idRequired: ["Passport", "Student ID (for discounts)"],
       foodInclusive: false
     }
-  } as Hostel
+  } as unknown as Property
 ]
 
 // Add more properties (total 30)
@@ -255,7 +271,7 @@ for (let i = 11; i <= 30; i++) {
       petsAllowed: false,
       idRequired: ["Passport", "Driving License"]
     }
-  } as Property);
+  } as unknown as Property);
 }
 
 export interface Booking {

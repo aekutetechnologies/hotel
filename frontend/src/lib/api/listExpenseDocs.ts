@@ -1,22 +1,17 @@
-import { API_URL } from '../config'
+import { apiGet } from './apiClient'
+import { type ExpenseDocument } from '@/types/expense'
 
-export interface ExpenseDocument {
-  id: number
-  document: string
-}
-
+/**
+ * Fetches documents for a specific expense
+ * 
+ * @param expenseId ID of the expense to fetch documents for
+ * @returns Promise with array of expense documents
+ */
 export async function listExpenseDoc(expenseId: string): Promise<ExpenseDocument[]> {
-  const response = await fetch(`${API_URL}expenses/expenses/${expenseId}/documents/`, {
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-    }
-  })
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch expense documents')
+  try {
+    return await apiGet<ExpenseDocument[]>(`expenses/expense/${expenseId}/documents/`)
+  } catch (error) {
+    // Error handling is already done in apiClient
+    return []
   }
-
-  const data = await response.json()
-  return data as ExpenseDocument[]
 } 

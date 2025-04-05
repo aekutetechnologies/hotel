@@ -25,9 +25,31 @@ export function UserBookings() {
         const data = await getUserBookings()
         console.log("fetching bookings 3")
         console.log(data)
-        setBookings(data)
+        
+        // Process the data to ensure we have primitive values
+        const processedData = data.map((booking: any) => {
+          // If we get a raw booking object with nested objects
+          return {
+            id: booking.id ?? 0,
+            booking_id: booking.booking_id ?? booking.id?.toString() ?? '',
+            hotel_name: typeof booking.property === 'object' ? booking.property.name : 
+                        (typeof booking.property === 'string' ? booking.property : ''),
+            room_type: typeof booking.room === 'object' ? booking.room.name : 'Standard Room',
+            check_in: booking.checkin_date ?? '',
+            check_out: booking.checkout_date ?? '',
+            amount: booking.price ?? 0,
+            status: booking.status ?? 'Pending',
+            image: typeof booking.property === 'object' && booking.property.images?.length > 0 
+                  ? (booking.property.images[0].image ?? '/placeholder.jpg') 
+                  : '/placeholder.jpg'
+          };
+        });
+        
+        setBookings(processedData)
       } catch (error) {
-        toast.error(error.message)
+        const errorMessage = (error as Error).message || 'An unknown error occurred'
+        console.error("Error updating booking:", errorMessage)
+        toast.error(`Error: ${errorMessage}`)
       } finally {
         setIsLoading(false)
       }
@@ -49,7 +71,7 @@ export function UserBookings() {
 
   return (
     <div className="space-y-6">
-      {bookings.map((booking) => (
+      {bookings.length > 0 ? bookings.map((booking) => (
         <Card key={booking.id}>
           <CardHeader>
             <CardTitle>Booking ID: {booking.booking_id}</CardTitle>
@@ -97,16 +119,16 @@ export function UserBookings() {
                   </div>
                   {booking.status === 'Completed' && (
                     <Button
-                      variant="outline"
+                      variant="neutral"
                       onClick={() => setSelectedBooking(booking.id)}
                     >
                       Write a Review
                     </Button>
                   )}
                   <Link href={`/booking/${booking.id}`}>
-                    <Button variant="outline">View Details</Button>
+                    <Button variant="neutral">View Details</Button>
                   </Link>
-                  <Button variant="outline" className="text-[#B11E43] border-[#B11E43]">
+                  <Button variant="neutral" className="text-[#B11E43] border-[#B11E43]">
                     Download Invoice
                   </Button>
                 </div>
@@ -114,7 +136,18 @@ export function UserBookings() {
             </div>
           </CardContent>
         </Card>
-      ))}
+      )) : (
+        <Card>
+          <CardContent className="py-8 text-center">
+            <p className="text-gray-500">You don't have any bookings yet.</p>
+            <Link href="/" className="block mt-4">
+              <Button variant="default" className="bg-[#B11E43] hover:bg-[#8f1836] text-white">
+                Explore Properties
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      )}
 
       {selectedBooking && (
         <Card>
@@ -157,7 +190,7 @@ export function UserBookings() {
                   id="review-image-upload"
                 />
                 <label htmlFor="review-image-upload">
-                  <Button type="button" variant="outline" className="cursor-pointer">
+                  <Button type="button" variant="neutral" className="cursor-pointer">
                     Upload Photos
                   </Button>
                 </label>
@@ -165,12 +198,12 @@ export function UserBookings() {
               <div className="flex justify-end gap-4">
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="neutral"
                   onClick={() => setSelectedBooking(null)}
                 >
                   Cancel
                 </Button>
-                <Button type="submit" className="bg-[#B11E43] hover:bg-[#8f1836] text-white">
+                <Button type="submit" variant="default" className="bg-[#B11E43] hover:bg-[#8f1836] text-white">
                   Submit Review
                 </Button>
               </div>
@@ -184,13 +217,13 @@ export function UserBookings() {
 
 interface Booking {
   id: number
+  booking_id: string
   hotel_name: string
   room_type: string
   check_in: string
   check_out: string
   amount: number
   status: string
-  booking_id: string
   image: string
 }
 

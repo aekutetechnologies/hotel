@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button } from "@/components/ui/button"
 import { NewButton } from "@/components/ui/new-button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -45,8 +44,8 @@ function AdminLogin() {
       console.log(data)
       localStorage.setItem('accessToken', data.access_token)
       localStorage.setItem('role', data.user_role)
-      localStorage.setItem('userId', data.id)
-      localStorage.setItem('permissions', data.permissions)
+      localStorage.setItem('userId', data.id.toString())
+      localStorage.setItem('permissions', data.permissions.join(','))
       localStorage.setItem('name', data.name)
       router.push('/admin/dashboard')
     } catch (err) {

@@ -16,7 +16,7 @@ import { ExpenseModal } from '@/components/ExpenseModal'
 import { DocumentModal } from '@/components/DocumentModal'
 import { toast } from 'react-toastify'
 import { Spinner } from '@/components/ui/spinner'
-import { type Expense } from '@/types/expense'
+import { type Expense, type ExpenseFormData, type ExpenseCategory } from '@/types/expense'
 import { fetchExpenseCategory } from '@/lib/api/fetchExpenseCategory'
 import { listExpenseDoc } from '@/lib/api/listExpenseDocs'
 import { uploadExpenseDoc } from '@/lib/api/uploadExpenseDoc'
@@ -34,7 +34,7 @@ export default function Expenses() {
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null)
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [isLoadingExpenses, setIsLoadingExpenses] = useState(false)
-  const [expenseCategories, setExpenseCategories] = useState([])
+  const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>([])
   const [properties, setProperties] = useState<Property[]>([])
   const fetchExpensesData = useCallback(async () => {
     setIsLoadingExpenses(true)
@@ -91,7 +91,7 @@ export default function Expenses() {
     }
   }
 
-  const handleEditExpense = async (updatedExpense: Expense) => {
+  const handleEditExpense = async (updatedExpense: ExpenseFormData) => {
     if (!selectedExpense) return; // Ensure selectedExpense is not null
 
     try {
@@ -110,7 +110,7 @@ export default function Expenses() {
     }
   }
 
-  const handleStatusChange = (expenseId: any, newStatus: any) => {
+  const handleStatusChange = (expenseId: number, newStatus: string) => {
     // In a real app, you would update the status in your backend here
     console.log(`Changing status of expense ${expenseId} to ${newStatus}`)
   }

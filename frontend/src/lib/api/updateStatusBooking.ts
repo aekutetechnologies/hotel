@@ -1,24 +1,21 @@
-import { API_URL } from '../config'
+import { apiPut } from './apiClient'
 
 interface Booking {
   id: string;
   status: string;
 }
 
+/**
+ * Updates the status of a booking
+ * 
+ * @param booking Booking data with id and status
+ * @returns Promise with updated booking data
+ */
 export async function updateStatusBooking(booking: Booking) {
-  const response = await fetch(`${API_URL}booking/bookings/${booking.id}/status/`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-    },
-    body: JSON.stringify(booking)
-  })
-
-  if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.message || 'Failed to update booking')
+  try {
+    return await apiPut(`booking/bookings/${booking.id}/status/`, booking)
+  } catch (error) {
+    // Error handling is already done in apiClient
+    throw error
   }
-
-  return await response.json()
 } 

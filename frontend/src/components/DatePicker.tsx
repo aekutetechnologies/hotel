@@ -46,7 +46,7 @@ export function DatePicker({ onChange, defaultDate }: DatePickerProps) {
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button
-          variant={"outline"}
+          variant="neutral"
           className={cn("w-full justify-start text-left font-normal h-10 px-3 py-2", !date && "text-muted-foreground")}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />

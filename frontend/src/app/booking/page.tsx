@@ -11,37 +11,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import { getUserBookings } from '@/lib/api/fetchUserBookings'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-
-// Define the Booking interface before using it
-interface Booking {
-  id: number
-  name: string
-  room_type: string
-  room: number
-  checkin_date: string
-  checkout_date: string
-  price: number
-  status: string
-  booking_id: string
-  number_of_guests: number
-  discount: number
-  payment_type: string
-  property: {
-    images: Array<{
-      image: string
-    }>
-    name: string
-    rooms: Array<{
-        id: number
-        name: string
-    }>
-  }
-  user: {
-    name: string
-    email: string
-    mobile: string
-  }
-}
+import { Booking } from '@/types/booking'
 
 export default function BookingPage() {
   console.log("BookingPage component is rendering")

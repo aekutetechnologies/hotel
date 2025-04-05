@@ -218,7 +218,7 @@ export default function PropertyDetails() {
   const nextRoomImage = (roomId: string) => {
     setCurrentRoomImageIndices((prev) => ({
       ...prev,
-      [roomId]: (prev[roomId] || 0) + 1 % (property.rooms.find(room => room.id.toString() === roomId)?.images.length || 1),
+      [roomId]: (prev[roomId] || 0) + 1 % (property?.rooms?.find(room => room.id.toString() === roomId)?.images?.length || 1),
     }));
   };
 
@@ -226,7 +226,9 @@ export default function PropertyDetails() {
   const prevRoomImage = (roomId: string) => {
     setCurrentRoomImageIndices((prev) => ({
       ...prev,
-      [roomId]: (prev[roomId] || 0) - 1 < 0 ? (property.rooms.find(room => room.id.toString() === roomId)?.images.length || 1) - 1 : prev[roomId] - 1,
+      [roomId]: (prev[roomId] || 0) - 1 < 0 
+        ? (property?.rooms?.find(room => room.id.toString() === roomId)?.images?.length || 1) - 1 
+        : prev[roomId] - 1,
     }));
   };
 
@@ -316,7 +318,7 @@ export default function PropertyDetails() {
                     onClick={() => setCurrentImageIndex(index)}
                   >
                     <Image
-                      src={image.image}
+                      src={image.image || image.image_url || '/placeholder.jpg'}
                       alt={`${property.name} - image ${index + 1}`}
                       fill
                       className="object-cover"
@@ -374,7 +376,7 @@ export default function PropertyDetails() {
             <section>
               <h2 className="text-2xl font-semibold mb-4">Available Rooms</h2>
               <div className="space-y-4">
-                {property.rooms.map((room) => (
+                {property?.rooms?.map((room) => (
                   <div key={room.id} className="border rounded-lg p-4">
                     <div className="flex space-x-4">
                       {/* Image Slider (Left Side) */}
@@ -382,10 +384,11 @@ export default function PropertyDetails() {
                         {room.images && room.images.length > 0 ? (
                           <div className="relative w-full h-48 overflow-hidden rounded-lg mb-2">
                             <Image
-                              src={room.images[currentRoomImageIndices[room.id] || 0]?.image}
-                              alt={`Room Image ${currentRoomImageIndices[room.id] + 1}`}
-                              fill={true}
+                              src={room.images[currentRoomImageIndices[room.id.toString()] || 0]?.image || room.images[currentRoomImageIndices[room.id.toString()] || 0]?.image_url || '/placeholder.jpg'}
+                              alt={`Room ${room.name || room.occupancyType} - Image ${(currentRoomImageIndices[room.id.toString()] || 0) + 1}`}
+                              fill
                               className="object-cover"
+                              priority
                             />
                             {/* Navigation Arrows */}
                             <div className="absolute inset-0 flex items-center justify-between p-2">
@@ -587,7 +590,7 @@ export default function PropertyDetails() {
         <GalleryModal
           images={property.images.map(img => ({
             id: img.id,
-            image: img.image
+            image: img.image || img.image_url || '/placeholder.jpg'
           }))}
           initialIndex={currentImageIndex}
           onClose={closeGalleryModal}

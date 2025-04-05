@@ -6,11 +6,12 @@ import { PropertyForm } from "@/components/admin/PropertyForm"
 import { fetchProperty } from '@/lib/api/fetchProperty'
 import { toast } from 'react-toastify'
 import { LoadingIndicator } from '@/components/ui/LoadingIndicator'
+import type { Property } from '@/types/property'
 
 export default function EditProperty() {
   const params = useParams()
   const propertyId = Number(params.id)
-  const [propertyData, setPropertyData] = useState(null)
+  const [propertyData, setPropertyData] = useState<any | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {

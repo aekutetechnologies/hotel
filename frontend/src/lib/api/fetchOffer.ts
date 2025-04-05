@@ -1,18 +1,16 @@
+import { apiGet } from './apiClient'
 
-import { API_URL } from '../config'
-
-export async function fetchOffer(offerId: string) {
-  const response = await fetch(`${API_URL}offers/offers/${offerId}/`, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-    }
-  })
-
-  if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.message || 'Failed to fetch offer')
+/**
+ * Fetches offer by ID
+ * 
+ * @param id Offer ID to fetch
+ * @returns Promise with offer data
+ */
+export async function fetchOffer(id: string) {
+  try {
+    return await apiGet(`offers/offers/${id}/`)
+  } catch (error) {
+    // Error handling is already done in apiClient
+    throw error
   }
-
-  return await response.json()
 } 

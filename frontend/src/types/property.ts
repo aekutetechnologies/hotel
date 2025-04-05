@@ -3,8 +3,25 @@ export interface Property {
   amenities: any[]; // Replace 'any' with specific type if available
   rules: any[];   // Replace 'any' with specific type if available
   documentation: any[]; // Replace 'any' with specific type if available
-  images: { id: number; image: string }[];
-  rooms: any[];     // Replace 'any' with specific type (HotelRoom[] | HostelRoom[])
+  images: { 
+    id: number; 
+    image?: string;
+    image_url?: string; 
+  }[];
+  rooms?: {
+    id: number;
+    images?: { 
+      id: number;
+      image?: string;
+      image_url?: string; 
+    }[];
+    roomImages?: { 
+      id: number;
+      image_url: string; 
+    }[];
+    amenities?: any[];
+    [key: string]: any;
+  }[];
   name: string;
   property_type: string;
   description: string;
@@ -48,18 +65,18 @@ export interface Property {
   _documentationIds?: number[];
 }
 
-export interface Hotel extends Property {
+export interface Hotel extends Omit<Property, 'rooms'> {
   hotelChain: string;
   starRating: 1 | 2 | 3 | 4 | 5;
   rooms: HotelRoom[];
 }
 
-export interface Hostel extends Property {
+export interface Hostel extends Omit<Property, 'rooms'> {
   rooms: HostelRoom[];
 }
 
 export interface HotelRoom {
-  id: string;
+  id: number;
   name: string;
   description: string;
   size: string;
@@ -70,7 +87,7 @@ export interface HotelRoom {
 }
 
 export interface HostelRoom {
-  id: string;
+  id: number;
   name: string;
   description: string;
   beds: number;
@@ -94,7 +111,15 @@ export interface Amenity {
 
 export interface Room {
     id: number;
-    images: { id: number; image: string }[];
+    images: { 
+        id: number; 
+        image?: string;
+        image_url?: string;
+    }[];
+    roomImages?: { 
+        id: number;
+        image_url: string;
+    }[];
     amenities: Amenity[];
     name: string;
     daily_rate: string;

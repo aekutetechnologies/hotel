@@ -1,22 +1,16 @@
-import { API_URL } from '../config'
+import { apiDelete } from './apiClient'
 
-export async function deleteBookingDoc(documentId: string): Promise<string> {
-  const response = await fetch(`${API_URL}booking/bookings/documents/${documentId}/`, {
-    method: 'DELETE',
-    headers: {
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-    }
-  })
-
-  console.log(response)
-
-  if (response.ok) {
-    if (response.status === 204) {
-      return "Document deleted successfully"
-    } else {
-      return "Failed to delete booking document"
-    }
-  } else {
-    throw new Error('Failed to delete booking document');
+/**
+ * Deletes a booking document
+ * 
+ * @param documentId Document ID to delete
+ * @returns Promise with deletion result
+ */
+export async function deleteBookingDoc(documentId: string) {
+  try {
+    return await apiDelete(`booking/documents/${documentId}/`)
+  } catch (error) {
+    // Error handling is already done in apiClient
+    throw error
   }
 }

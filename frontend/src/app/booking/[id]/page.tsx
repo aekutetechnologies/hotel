@@ -3,10 +3,9 @@
 import { useState } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { Header } from '@/components/Header'
-import { Footer } from '@/components/Footer'
+import Footer from '@/components/Footer'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { MobileLogin } from '@/components/MobileLogin'
 import { properties } from '@/lib/dummy-data'
@@ -25,7 +24,7 @@ export default function Booking() {
   const [showPaymentButton, setShowPaymentButton] = useState(false)
 
   const property = properties.find(p => p.id === propertyId) as Property
-  const selectedRoom = property?.rooms.find(r => 
+  const selectedRoom = property?.rooms?.find(r => 
     ('name' in r && r.name === roomType) || ('occupancyType' in r && r.occupancyType === roomType)
   )
 
@@ -160,7 +159,7 @@ export default function Booking() {
           )}
         </div>
       </main>
-      <Footer />
+      <Footer sectionType="hotels" />
     </div>
   )
 }

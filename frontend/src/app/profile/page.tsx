@@ -12,9 +12,10 @@ import { updateProfile } from '@/lib/api/updateProfile'
 import { toast, ToastContainer } from 'react-toastify'
 import { getProfile } from '@/lib/api/getProfile'
 import 'react-toastify/dist/ReactToastify.css'
+import { UserProfile } from '@/types/profile'
 
 export default function Profile() {
-  const [profile, setProfile] = useState({
+  const [profile, setProfile] = useState<UserProfile>({
     name: '',
     email: '',
     mobile: ''
@@ -45,18 +46,11 @@ export default function Profile() {
       })
 
       console.log("Update Profile Response:", response)
-
-      if (response) {
-        toast.success('Profile updated successfully!')
-        if (response) {
-          setProfile(response)
-          localStorage.setItem('name', response.name)
-        }
-      } else {
-        toast.error(`Profile update failed: ${response.error?.message || 'Unknown error'}`)
-      }
+      toast.success('Profile updated successfully!')
+      setProfile(response)
+      localStorage.setItem('name', response.name)
     } catch (error: any) {
-      toast.error(`Profile update error: ${error.message}`)
+      toast.error(`Profile update error: ${error.message || 'Unknown error'}`)
     }
   }
 

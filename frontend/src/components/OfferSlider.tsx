@@ -92,7 +92,7 @@ export function OffersSlider() {
                 }`}
               >
                 <img
-                  src={offer.images[0].image_url || "/placeholder.svg"}
+                  src={offer.images && offer.images.length > 0 ? offer.images[0].image || "/placeholder.svg" : "/placeholder.svg"}
                   alt={offer.title}
                   style={{ objectFit: 'cover', width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}
                   className="rounded-lg"
@@ -117,7 +117,7 @@ export function OffersSlider() {
             ))}
           </div>
           <Button
-            variant="outline"
+            variant="neutral"
             size="icon"
             className="absolute top-1/2 left-4 transform -translate-y-1/2 bg-white/80 hover:bg-white"
             onClick={prevSlide}
@@ -125,7 +125,7 @@ export function OffersSlider() {
             <ChevronLeft className="h-6 w-6" />
           </Button>
           <Button
-            variant="outline"
+            variant="neutral"
             size="icon"
             className="absolute top-1/2 right-4 transform -translate-y-1/2 bg-white/80 hover:bg-white"
             onClick={nextSlide}

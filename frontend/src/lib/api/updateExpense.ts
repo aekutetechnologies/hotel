@@ -1,21 +1,22 @@
-import { API_URL } from '../config'
-import { Expense } from '@/types/expense'
+import { apiPut } from './apiClient'
+import { type Expense, type ExpenseFormData } from '@/types/expense'
 
-
-export async function updateExpense(id: string, expense: Expense) {
-  const response = await fetch(`${API_URL}expenses/expense/${id}/`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-    },
-    body: JSON.stringify(expense)
-  })
-
-  if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.message || 'Failed to update expense')
+/**
+ * Updates an expense
+ * 
+ * @param id ID of the expense to update
+ * @param updateData Expense data to update
+ * @returns Promise with success status and updated expense data
+ */
+export async function updateExpense(
+  id: string | number, 
+  updateData: ExpenseFormData
+): Promise<{success: boolean, data?: Expense}> {
+  try {
+    const response = await apiPut<Expense>(`expenses/expense/${id}/`, updateData)
+    return { success: true, data: response }
+  } catch (error) {
+    // Error handling is already done in apiClient
+    return { success: false }
   }
-
-  return await response.json()
 } 

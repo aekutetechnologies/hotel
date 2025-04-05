@@ -42,8 +42,15 @@ const typingAnimation = `
 type AccommodationType = "hotel" | "hostel"
 type BookingType = "hourly" | "daily"
 
+interface LocationPrediction {
+  id: number
+  name: string
+  city?: string
+  country?: string
+}
+
 export function HeroSection() {
-  const [locationPredictions, setLocationPredictions] = useState<string[]>([])
+  const [locationPredictions, setLocationPredictions] = useState<LocationPrediction[]>([])
   const [location, setLocation] = useState('')
   const [accommodationType, setAccommodationType] = useState<AccommodationType>("hotel")
   const [bookingType, setBookingType] = useState<BookingType>("daily")

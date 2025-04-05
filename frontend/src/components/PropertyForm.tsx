@@ -142,7 +142,7 @@ export function PropertyForm({ initialData, isEditing = false }: PropertyFormPro
                 />
                 <Button
                   type="button"
-                  variant="destructive"
+                  variant="neutral"
                   size="icon"
                   className="absolute top-2 right-2"
                   onClick={() => removeImage(index)}
@@ -230,7 +230,7 @@ export function PropertyForm({ initialData, isEditing = false }: PropertyFormPro
       <div className="flex justify-end gap-4">
         <Button
           type="button"
-          variant="outline"
+          variant="neutral"
           onClick={() => router.back()}
         >
           Cancel

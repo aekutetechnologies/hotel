@@ -1,18 +1,16 @@
-import { API_URL } from '@/lib/config'
+import { apiGet } from './apiClient'
 import { User } from '@/types/user'
 
+/**
+ * Fetches all users
+ * 
+ * @returns Promise with array of users
+ */
 export async function fetchUsers(): Promise<User[]> {
-  const response = await fetch(`${API_URL}users/users/`, {
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-    }
-  })
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch users')
+  try {
+    return await apiGet<User[]>('users/users/')
+  } catch (error) {
+    // Error handling is already done in apiClient
+    return []
   }
-
-  const data = await response.json()
-  return data as User[]
 } 

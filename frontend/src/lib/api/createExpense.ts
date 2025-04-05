@@ -1,21 +1,18 @@
-import type { ActionResponse } from '@/types/actions'
-import { Expense } from '@/types/expense'
-import { API_URL } from '../config'
+import { apiPost } from './apiClient'
+import { type ExpenseFormData, type Expense } from '@/types/expense'
 
-export async function createExpense(expense: Expense): Promise<ActionResponse> {
-  const response = await fetch(`${API_URL}expenses/expense/`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-    },
-    body: JSON.stringify(expense)
-  })
-
-  if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.message || 'Failed to create expense')
+/**
+ * Creates a new expense
+ * 
+ * @param expense Expense data to create
+ * @returns Promise with created expense data
+ */
+export async function createExpense(expense: ExpenseFormData): Promise<{success: boolean, data?: Expense}> {
+  try {
+    const response = await apiPost<Expense>('expenses/expense/', expense)
+    return { success: true, data: response }
+  } catch (error) {
+    // Error handling is already done in apiClient
+    return { success: false }
   }
-
-  return await response.json()
 } 

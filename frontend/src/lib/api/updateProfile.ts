@@ -1,25 +1,17 @@
-import { API_URL } from '../config'
+import { apiPut } from './apiClient'
+import { UserProfile } from '@/types/profile'
 
-interface Profile {
-  name: string;
-  mobile: string;
-  email: string;
-}
-
-export async function updateProfile(profile: Profile) {
-  const response = await fetch(`${API_URL}users/profile/`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-    },
-    body: JSON.stringify(profile)
-  })
-
-  if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.message || 'Failed to update profile')
+/**
+ * Updates the user's profile
+ * 
+ * @param profileData Profile data to update
+ * @returns Promise with updated profile data
+ */
+export async function updateProfile(profileData: Partial<UserProfile>): Promise<UserProfile> {
+  try {
+    return await apiPut<UserProfile>('users/profile/', profileData)
+  } catch (error) {
+    // Error handling is already done in apiClient
+    throw error
   }
-
-  return await response.json()
 } 

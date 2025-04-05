@@ -1,16 +1,15 @@
-import { API_URL } from '../config'
-import type { ActionResponse } from '@/types/actions'
+import { apiGet } from './apiClient'
+import { UserProfile } from '@/types/profile'
 
-export async function getProfile(): Promise<ActionResponse> {
-  const response = await fetch(`${API_URL}users/profile/`, {
-    headers: {
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-    },
-  })
-
-  if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.message || 'Failed to fetch profile')
+/**
+ * Fetches the current user's profile
+ * 
+ * @returns Promise with user profile data
+ */
+export async function getProfile(): Promise<UserProfile> {
+  try {
+    return await apiGet<UserProfile>('users/profile/')
+  } catch (error) {
+    throw error
   }
-  return await response.json()
 } 

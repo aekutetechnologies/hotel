@@ -1,5 +1,6 @@
 import { API_URL } from '../../lib/config'
 import { Property } from '@/types/property'
+import { apiGet } from './apiClient'
 
 /**
  * Fetch properties using public search API (no authentication required)
@@ -16,26 +17,15 @@ export async function searchProperties(
     }
     
     // Construct the search URL with query parameters
-    const url = new URL(`${API_URL}property/public/search/`)
-    if (params) {
-      // Append all parameters to the URL
-      params.forEach((value, key) => {
-        if (value) url.searchParams.append(key, value)
-      })
+    let endpoint = 'property/public/search/'
+    if (params && params.toString()) {
+      endpoint += `?${params.toString()}`
     }
     
-    console.log(`Fetching properties from: ${url.toString()}`)
+    console.log(`Fetching properties from: ${API_URL}${endpoint}`)
     
-    // Make the API request
-    const response = await fetch(url.toString())
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null)
-      console.error('Error fetching properties:', response.status, errorData)
-      throw new Error(`Failed to fetch properties: ${response.status}`)
-    }
-    
-    const properties = await response.json()
+    // Make the API request using apiGet
+    const properties = await apiGet<Property[]>(endpoint, { includeAuth: false });
     console.log(`Successfully fetched ${properties.length} properties`)
     
     return properties

@@ -28,10 +28,12 @@ export default function NewBooking() {
     if (propertyId) {
       const property = properties.find(p => p.id === Number(propertyId))
       setSelectedProperty(property)
-      setBooking(prev => ({
-        ...prev,
-        amount: property ? property.basePrice.toString() : '',
-      }))
+      if (property) {
+        setBooking(prev => ({
+          ...prev,
+          amount: property?.rooms?.[0]?.daily_rate?.toString() || '0',
+        }))
+      }
     }
   }, [propertyId])
 

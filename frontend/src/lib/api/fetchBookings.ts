@@ -1,18 +1,18 @@
-import { API_URL } from '../config'
+import { apiGet } from './apiClient'
+import { Booking } from '@/app/admin/bookings/page'
 
-export async function fetchBookings() {
-    console.log("fetching bookings")
-  const response = await fetch(`${API_URL}booking/bookings/`, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-    }
-  })
-
-  if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.message || 'Failed to fetch amenities')
+/**
+ * Fetches all bookings
+ * 
+ * @returns Promise with bookings data
+ */
+export async function fetchBookings(): Promise<Booking[]> {
+  console.log("Fetching bookings")
+  
+  try {
+    return await apiGet<Booking[]>('booking/bookings/')
+  } catch (error) {
+    // Error handling is already done in apiClient
+    return []
   }
-
-  return await response.json()
 } 

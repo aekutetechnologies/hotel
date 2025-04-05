@@ -1,19 +1,16 @@
-import { API_URL } from '../config';
+import { apiGet } from './apiClient'
 
-export async function fetchCity() {
-  console.log("fetching city");
-  const response = await fetch(`${API_URL}property/city/`, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      'Content-Type': 'application/json' // Set Content-Type header
-    }
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || 'Failed to fetch location');
+/**
+ * Fetches cities by state id
+ * 
+ * @param stateId State ID to filter cities by
+ * @returns Promise with array of cities
+ */
+export async function fetchCity(stateId: string) {
+  try {
+    return await apiGet(`property/city/?state=${stateId}`)
+  } catch (error) {
+    // Error handling is already done in apiClient
+    return []
   }
-
-  return await response.json();
 }

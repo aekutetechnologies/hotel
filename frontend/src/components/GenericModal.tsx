@@ -42,7 +42,7 @@ export function GenericModal({
           {children}
         </div>
         <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
-          <Button type="button" variant="secondary" onClick={onClose}>
+          <Button type="button" variant="neutral" onClick={onClose}>
             {cancelText}
           </Button>
           {onConfirm && (

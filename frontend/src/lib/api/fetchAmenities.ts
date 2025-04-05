@@ -1,18 +1,16 @@
-import type { ActionResponse } from '@/types/actions'
-import { API_URL } from '../config'
+import { apiGet } from './apiClient'
+import { Amenity } from '@/types/property'
 
-export async function fetchAmenities() {
-  const response = await fetch(`${API_URL}property/amenities/`, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-    }
-  })
-
-  if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.message || 'Failed to fetch amenities')
+/**
+ * Fetches all amenities
+ * 
+ * @returns Promise with list of amenities
+ */
+export async function fetchAmenities(): Promise<Amenity[]> {
+  try {
+    return await apiGet<Amenity[]>('property/amenities/')
+  } catch (error) {
+    // Error handling is already done in apiClient
+    return []
   }
-
-  return await response.json()
 } 

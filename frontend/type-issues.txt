@@ -1,0 +1,4 @@
+Summary of remaining type issues
+1. PropertyForm component has an issue with property images being passed as number[] when images in the Property type are expected to be objects with id, image and image_url properties.
+2. Several button variants ('outline', 'destructive') used in PropertyForm are not valid variants - these should be updated to supported variants like 'neutral' or 'ghost'.
+3. CheckedState to boolean conversion issues with checkboxes in PropertyForm need to be addressed.

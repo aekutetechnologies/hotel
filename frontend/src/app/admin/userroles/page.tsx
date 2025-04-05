@@ -16,8 +16,8 @@ import { toast } from 'react-toastify'
 import { Spinner } from '@/components/ui/spinner'
 import { fetchGroupRoles } from '@/lib/api/fetchGroupRoles'
 import { fetchPermissions } from '@/lib/api/fetchPermissions'
-import { GroupRole } from '@/types/groupRole'
-import { Permission } from '@/types/permission'
+import { GroupRole, GroupRoleFormData } from '@/types/groupRole'
+import { Permission, PermissionData } from '@/types/permission'
 import { GroupRoleModal } from '@/components/GroupRoleModal'
 import { createGroupRole } from '@/lib/api/createGroupRole'
 import { updateGroupRole } from '@/lib/api/updateGroupRole'
@@ -29,7 +29,7 @@ export default function UserRoles() {
   const [selectedGroupRole, setSelectedGroupRole] = useState<GroupRole | null>(null)
   const [groupRoles, setGroupRoles] = useState<GroupRole[]>([])
   const [isLoadingGroupRoles, setIsLoadingGroupRoles] = useState(false)
-  const [permissions, setPermissions] = useState<Permission[]>([])
+  const [permissions, setPermissions] = useState<PermissionData[]>([])
 
   const fetchUserRoles = useCallback(async () => {
     setIsLoadingGroupRoles(true)
@@ -55,23 +55,29 @@ export default function UserRoles() {
     groupRole.name.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const handleAddUserRole = async (newUserRole: any) => {
-    console.log('Adding new user:', newUserRole )
-    const addGroupRole = await createGroupRole(newUserRole)
-    if (addGroupRole.success) {
+  const handleAddUserRole = async (newUserRole: GroupRoleFormData) => {
+    console.log('Adding new user role:', newUserRole)
+    const result = await createGroupRole(newUserRole)
+    
+    if (result.success) {
       toast.success('User role added successfully')
       setIsAddModalOpen(false)
+      fetchUserRoles() // Refresh the data
     } else {
       toast.error('Failed to add user role')
     }
   }
 
-  const handleEditGroupRole = async (updatedGroupRole: any) => {
-    console.log('Updating user:', updatedGroupRole)
-    const response = await updateGroupRole(updatedGroupRole)
-    if (response.success) {
+  const handleEditGroupRole = async (updatedGroupRole: GroupRoleFormData) => {
+    if (!selectedGroupRole) return;
+    
+    console.log('Updating user role:', updatedGroupRole)
+    const result = await updateGroupRole(selectedGroupRole.id, updatedGroupRole)
+    
+    if (result.success) {
       toast.success('User role updated successfully')
       setIsEditModalOpen(false)
+      fetchUserRoles() // Refresh the data
     } else {
       toast.error('Failed to update user role')
     }

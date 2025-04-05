@@ -1,16 +1,16 @@
-import { API_URL } from '../config'
+import { apiGet } from './apiClient'
+import { type ExpenseCategory } from '@/types/expense'
 
-export async function fetchExpenseCategory() {
-  const response = await fetch(`${API_URL}expenses/expense-category/`, {
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-    }
-  })
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch expense category`)
+/**
+ * Fetches expense categories
+ * 
+ * @returns Promise with expense categories
+ */
+export async function fetchExpenseCategory(): Promise<ExpenseCategory[]> {
+  try {
+    return await apiGet<ExpenseCategory[]>('expenses/expense-category/')
+  } catch (error) {
+    // Error handling is already done in apiClient
+    return []
   }
-
-  return await response.json()
 } 

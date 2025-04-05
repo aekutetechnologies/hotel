@@ -1,16 +1,16 @@
-import { API_URL } from '../config'
+import { apiGet } from './apiClient'
 
+/**
+ * Fetches expense details by ID
+ * 
+ * @param id Expense ID to fetch details for
+ * @returns Promise with expense details
+ */
 export async function fetchExpenseDetails(id: string) {
-  const response = await fetch(`${API_URL}expenses/expenses/${id}/`, {
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-    }
-  })
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch expense details with id ${id}`)
+  try {
+    return await apiGet(`expenses/expense/${id}/`)
+  } catch (error) {
+    // Error handling is already done in apiClient
+    throw error
   }
-
-  return await response.json()
 } 

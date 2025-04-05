@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Search, Plus, Edit, FileText, User } from 'lucide-react'
+import { Search, Plus, Edit, FileText, User as UserIcon } from 'lucide-react'
 import { UserModal } from '@/components/UserModal'
 import { DocumentModal } from '@/components/DocumentModal'
 import {
@@ -30,6 +30,7 @@ import { type User } from '@/types/user'
 import { fetchGroupRoles } from '@/lib/api/fetchGroupRoles'
 import { updateUserRole } from '@/lib/api/updateUserRole'
 import { UserGroupModal } from '@/components/UserGroupModal'
+import { GroupRole } from '@/types/groupRole'
 
 export default function Users() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -42,17 +43,41 @@ export default function Users() {
   const [isLoadingUsers, setIsLoadingUsers] = useState(false)
   const [isUserRoleModalOpen, setIsUserRoleModalOpen] = useState(false)
   const [groups, setGroups] = useState<GroupRole[]>([])
+
   const fetchUsersData = useCallback(async () => {
     setIsLoadingUsers(true)
     try {
-      const usersData = await fetchUsers()
-      setUsers(usersData)
-      const groupsData = await fetchGroupRoles()
-      setGroups(groupsData)
+      console.log('Fetching users data...')
+      const usersResponse = await fetchUsers()
+      console.log('Users data fetched:', usersResponse, typeof usersResponse)
+      
+      // Check if the response is an object with results property (pagination format)
+      const usersData = Array.isArray(usersResponse) 
+        ? usersResponse 
+        : usersResponse && typeof usersResponse === 'object' && 'results' in (usersResponse as any) 
+          ? (usersResponse as any).results 
+          : [];
+          
+      console.log('Processed users data:', usersData)
+      setUsers(Array.isArray(usersData) ? usersData : [])
+      
+      const groupsResponse = await fetchGroupRoles()
+      console.log('Groups data fetched:', groupsResponse)
+      
+      // Check if the response is an object with results property
+      const groupsData = Array.isArray(groupsResponse) 
+        ? groupsResponse 
+        : groupsResponse && typeof groupsResponse === 'object' && 'results' in (groupsResponse as any) 
+          ? (groupsResponse as any).results 
+          : [];
+          
+      console.log('Processed groups data:', groupsData)
+      setGroups(Array.isArray(groupsData) ? groupsData : [])
     } catch (error: any) {
       console.error('Error fetching users:', error)
       toast.error(`Failed to fetch users: ${error.message}`)
       setUsers([])
+      setGroups([])
     } finally {
       setIsLoadingUsers(false)
     }
@@ -132,11 +157,12 @@ export default function Users() {
   const handleUserRoleSubmit = async (userId: any, groupId: any) => {
     console.log(`Assigning group ${groupId} to user ${userId}`)
     console.log(userId)
-    const response = await updateUserRole(userId)
-    if (response.success) {
+    try {
+      const response = await updateUserRole({ userId, groupId })
       toast.success('User role assigned successfully')
-    } else {
-      toast.error('Failed to assign user role')
+      fetchUsersData()
+    } catch (error: any) {
+      toast.error(`Failed to assign user role: ${error.message || 'Unknown error'}`)
     }
     setIsUserRoleModalOpen(false)
   }
@@ -171,7 +197,7 @@ export default function Users() {
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Phone</TableHead>
-              <TableHead>Bookings</TableHead>
+              {/* <TableHead>Bookings</TableHead> */}
               <TableHead>Joined Date</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -196,7 +222,7 @@ export default function Users() {
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>{user.mobile}</TableCell>
-                  <TableCell>{user.bookings.length}</TableCell>
+                  {/* <TableCell>{user.bookings}</TableCell> */}
                   <TableCell>{new Date(user.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</TableCell>
                   <TableCell>
                     <select
@@ -210,23 +236,23 @@ export default function Users() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => {
+                      <Button variant="neutral" size="icon" onClick={() => {
                         setSelectedUser(user)
                         setIsEditModalOpen(true)
                       }}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => {
+                      <Button variant="neutral" size="icon" onClick={() => {
                         setSelectedUser(user)
                         setIsDocumentModalOpen(true)
                       }}>
                         <FileText className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => {
+                      <Button variant="neutral" size="icon" onClick={() => {
                         setSelectedUser(user)
                         setIsUserRoleModalOpen(true)
                       }}>
-                        <User className="h-4 w-4" />
+                        <UserIcon className="h-4 w-4" />
                       </Button>
                     </div>
                   </TableCell>
@@ -239,8 +265,13 @@ export default function Users() {
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setCurrentPage((prev) => Math.max(prev - 1, 1));
+                }}
+                aria-disabled={currentPage === 1}
+                size="default"
               />
             </PaginationItem>
             {generatePageNumbers().map((pageNumber, index) => (
@@ -249,8 +280,13 @@ export default function Users() {
                   <PaginationEllipsis />
                 ) : (
                   <PaginationLink
-                    onClick={() => setCurrentPage(pageNumber as number)}
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setCurrentPage(pageNumber as number);
+                    }}
                     isActive={currentPage === pageNumber}
+                    size="default"
                   >
                     {pageNumber}
                   </PaginationLink>
@@ -259,8 +295,13 @@ export default function Users() {
             ))}
             <PaginationItem>
               <PaginationNext
-                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+                }}
+                aria-disabled={currentPage === totalPages}
+                size="default"
               />
             </PaginationItem>
           </PaginationContent>
@@ -297,7 +338,7 @@ export default function Users() {
         <UserGroupModal
           isOpen={isUserRoleModalOpen}
           onClose={() => setIsUserRoleModalOpen(false)}
-          onSubmit={handleUserRoleSubmit}
+          onSubmit={(data) => handleUserRoleSubmit(data.user_id, data.group_id)}
           title="Assign User Role"
           initialData={selectedUser}
           groups={groups}

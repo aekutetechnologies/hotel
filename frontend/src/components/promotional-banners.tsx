@@ -11,13 +11,13 @@ export function PromotionalBanners() {
           <div className="p-8 w-1/3">
             <div className="text-lg font-semibold mb-4">Get ready for a ultimate staycation!</div>
             <Image
-              src="/placeholder.svg"
-              alt="QR Code"
-              width={150}
-              height={150}
+              src="/images/promotion/banner1.jpg"
+              alt="Special offer for new customers"
+              width={400}
+              height={250}
               className="border border-gray-200 rounded-lg"
             />
-            <Button variant="outline" className="mt-4">
+            <Button variant="neutral" className="mt-4">
               Book now
             </Button>
           </div>

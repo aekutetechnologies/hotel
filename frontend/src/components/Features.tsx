@@ -17,10 +17,10 @@ interface FeaturesSectionProps {
   sectionType: "hotels" | "hostels";
 }
 
-const Features = ({type}:FeaturesSectionProps) => {
+const Features = ({sectionType}:FeaturesSectionProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
-  const image = type === "hotels" ? images : hostelImages;
+  const image = sectionType === "hotels" ? images : hostelImages;
 
   useEffect(() => {
     if (isHovered) return; // Pause auto-scroll when hovered

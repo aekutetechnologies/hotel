@@ -1,20 +1,21 @@
-import { API_URL } from '../config'
+import { apiPut } from './apiClient'
+import { type Offer } from '@/types/offer'
 
-
-export async function updateOffer(offer: Offer, offerId: number) {
-  const response = await fetch(`${API_URL}offers/offers/${offerId}/`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-    },
-    body: JSON.stringify(offer)
-  })
-
-  if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.message || 'Failed to update offer')
+/**
+ * Updates an offer
+ * 
+ * @param id ID of the offer to update
+ * @param updateData Data fields to update
+ * @returns Promise with updated offer data
+ */
+export async function updateOffer(
+  id: number | string, 
+  updateData: Partial<Offer>
+): Promise<Offer> {
+  try {
+    return await apiPut<Offer>(`offers/offers/${id}/`, updateData)
+  } catch (error) {
+    // Error handling is already done in apiClient
+    throw error
   }
-
-  return await response.json()
 } 

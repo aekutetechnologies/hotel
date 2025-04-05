@@ -2,8 +2,8 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  phone: string;
+  mobile: string;
   bookings: number;
-  joined_at: string;
+  created_at: string;
   is_active: boolean;
 } 

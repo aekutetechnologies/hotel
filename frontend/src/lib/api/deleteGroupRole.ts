@@ -1,22 +1,16 @@
-import { API_URL } from '../config'
+import { apiDelete } from './apiClient'
 
-export async function deleteGroupRole(groupId: number): Promise<string> {
-  const response = await fetch(`${API_URL}users/permissions/group/${groupId}/`, {
-    method: 'DELETE',
-    headers: {
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-    }
-  })
-
-  console.log(response)
-
-  if (response.ok) {
-    if (response.status === 204) {
-      return "Group role deleted successfully"
-    } else {
-      return "Failed to delete group role"
-    }
-  } else {
-    throw new Error('Failed to delete group role');
+/**
+ * Deletes a group role
+ * 
+ * @param id Group role ID to delete
+ * @returns Promise with deletion result
+ */
+export async function deleteGroupRole(id: string | number) {
+  try {
+    return await apiDelete(`users/permissions/group/${id}/`)
+  } catch (error) {
+    // Error handling is already done in apiClient
+    throw error
   }
 }

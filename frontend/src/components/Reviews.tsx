@@ -51,7 +51,7 @@ export function Reviews(property_type: string) {
         </div>
 
         <div className="text-center">
-          <Button variant="outline" className="text-red-600 border-red-600 hover:bg-red-50">
+          <Button variant="neutral" className="text-red-600 border-red-600 hover:bg-red-50">
             View More Reviews
           </Button>
         </div>

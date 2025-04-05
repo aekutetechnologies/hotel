@@ -35,6 +35,7 @@ def verify_otp(request):
     otp = request.data.get('otp')
 
     cached_otp = cache.get(mobile)
+    logger.info(f"Cached OTP: {cached_otp}, OTP: {otp}")
     if not cached_otp or cached_otp != otp:
         logger.error(f"Invalid OTP for mobile: {mobile}")
         return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)

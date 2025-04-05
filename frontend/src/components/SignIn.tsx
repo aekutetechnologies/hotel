@@ -15,6 +15,8 @@ export function SignIn({ onClose, setIsLoggedIn }: { onClose: () => void, setIsL
   const handleSendOTP = async () => {
     try {
       const response = await sendOtp({ mobileNumber })
+      const otp = response.otp
+      setOTP(otp)
       setShowOTP(true)
     } catch (err) {
       alert('Failed to send OTP')

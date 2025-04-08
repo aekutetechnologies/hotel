@@ -19,7 +19,9 @@ export async function uploadOfferImage(offerId: number, imageFile: File): Promis
     {
       method: 'POST',
       body: formData,
-      headers: {}, // Empty headers so Content-Type is not set to application/json
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+      },
     }
   )
 } 

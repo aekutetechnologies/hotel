@@ -1,6 +1,6 @@
 'use client'
 
-import { PropertyForm } from "@/components/admin/PropertyForm"
+import { AddPropertyForm } from "@/components/admin/AddPropertyForm"
 import { PermissionGuard } from "@/components/PermissionGuard"
 
 export default function NewProperty() {
@@ -10,7 +10,7 @@ export default function NewProperty() {
     <PermissionGuard permission="property:create">
       <div className="container mx-auto px-4 py-6 max-w-5xl">
         <h1 className="text-2xl font-bold mb-8">Add New Property</h1>
-        <PropertyForm />
+        <AddPropertyForm />
       </div>
     </PermissionGuard>
   )

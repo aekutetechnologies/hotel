@@ -253,27 +253,27 @@ export default function Home() {
                 <div className="py-3">
                   <Logo />
                 </div>
-                {isLoggedIn ? (
-                  <ProfileDropdown
-                    userName={userName}
-                    onLogout={handleLogout}
-                  />
-                ) : (
+                  {isLoggedIn ? (
+                    <ProfileDropdown 
+                      userName={userName} 
+                      onLogout={handleLogout} 
+                    />
+                  ) : (
                   <NewButton
                     variant="default"
                     onClick={handleLoginClick}
                     size="sm"
                   >
                     <LogIn className="w-5 h-5 mr-2" />
-                    <span>Login</span>
+                      <span>Login</span>
                   </NewButton>
-                )}
+                  )}
               </nav>
             </motion.div>
           )}
 
           {/* Home Hero Section */}
-          <motion.div
+                <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
@@ -284,8 +284,8 @@ export default function Home() {
               expandedSection={expandedSection}
               setExpandedSection={setExpandedSection}
               handleDiscover={handleDiscover}
-            />
-          </motion.div>
+                              />
+                            </motion.div>
 
           {/* Detail Section */}
           <AnimatePresence>
@@ -299,7 +299,7 @@ export default function Home() {
                 <DetailSection
                   sectionType={showDetailSection || "hotels"}
                   isLoggedIn={isLoggedIn}
-                  userName={userName} 
+                              userName={userName} 
                   onClose={handleCloseDetail}
                   hotelTestimonials={hotelTestimonials}
                   hostelTestimonials={hostelTestimonials}

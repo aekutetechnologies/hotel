@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import { PropertyForm } from "@/components/admin/PropertyForm"
+import { EditPropertyForm } from "@/components/admin/EditPropertyForm"
 import { fetchProperty } from '@/lib/api/fetchProperty'
 import { toast } from 'react-toastify'
 import { LoadingIndicator } from '@/components/ui/LoadingIndicator'
@@ -48,7 +48,7 @@ export default function EditProperty() {
   return (
     <div>
       <h1 className="text-2xl font-bold mb-8">Edit Property</h1>
-      <PropertyForm initialData={propertyData} isEditing />
+      <EditPropertyForm initialData={propertyData}/>
     </div>
   )
 }

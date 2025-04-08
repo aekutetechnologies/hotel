@@ -16,6 +16,7 @@ interface HomeHeroProps {
     React.SetStateAction<"hotels" | "hostels" | null>
   >;
   handleDiscover: (section: "hotels" | "hostels") => void;
+  handleExpandedSectionClick?: (section: "hotels" | "hostels") => void;
 }
 
 export function HomeHero({
@@ -24,6 +25,7 @@ export function HomeHero({
   expandedSection,
   setExpandedSection,
   handleDiscover,
+  handleExpandedSectionClick,
 }: HomeHeroProps) {
   const [currentHotelImage, setCurrentHotelImage] = useState(0);
   const [currentHostelImage, setCurrentHostelImage] = useState(0);
@@ -89,7 +91,13 @@ export function HomeHero({
   }, [nextHostelImage]);
 
   const handleSectionClick = (section: "hotels" | "hostels") => {
-    setExpandedSection((prev) => (prev === section ? null : section));
+    if (expandedSection === section && handleExpandedSectionClick) {
+      // If section is already expanded and we click on it, go to detail view
+      handleExpandedSectionClick(section);
+    } else {
+      // Otherwise toggle expansion
+      setExpandedSection((prev) => (prev === section ? null : section));
+    }
   };
 
   const handleBack = () => {

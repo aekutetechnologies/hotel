@@ -31,6 +31,10 @@ import {
   FaWind,
   FaKey,
   FaTimes,
+  FaMapPin,
+  FaWallet,
+  FaGlassCheers,
+  FaCompass,
 } from "react-icons/fa";
 import Image from "next/image";
 // import img1 from "/public/images/social/img1.jpeg";
@@ -209,57 +213,230 @@ const SocialSection = ({ type = "hotel" }: socialSectionProps) => {
 
         {/* Subscribe & Social Media Section */}
         <div className="w-full md:w-1/3 flex flex-col mt-0 items-center gap-5 justify-evenly">
-          {/* Subscribe Button */}
-          {/* <button
-            className={`px-6 py-3 ] text-white font-bold rounded-lg hover:bg-y[#A31C44] transition ${
-              type === "hotel" ? "bg-[#2A2B2E]" : "bg-[#A31C44]"
-            }`}
+          {/* Replace the images with animated "Why Love Hsquare" section */}
+          <motion.div 
+            className="w-full p-6 rounded-xl flex flex-col items-center relative overflow-hidden"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
           >
-            Subscribe
-          </button> */}
-
-          {/* Social Media Icons */}
-          {/* <div className="flex gap-4 text-3xl">
-            <FaInstagram
-              className={` transition cursor-pointer ${
-                type == "hotel" ? "hover:text-black" : "hover:text-[#A31C44] "
-              }`}
+            {/* Floating Background Elements */}
+            <motion.div
+              className="absolute w-32 h-32 rounded-full"
+              style={{ background: `radial-gradient(circle, ${accentColor}22 0%, transparent 70%)`, left: '-10%', top: '10%' }}
+              animate={{
+                x: [0, 10, 0],
+                y: [0, -10, 0],
+                scale: [1, 1.05, 1],
+              }}
+              transition={{
+                duration: 5,
+                repeat: Infinity,
+                repeatType: "reverse",
+              }}
             />
-            <FaTiktok
-              className={` transition cursor-pointer ${
-                type == "hotel" ? "hover:text-black" : "hover:[#A31C44] "
-              }`}
+            
+            <motion.div
+              className="absolute w-24 h-24 rounded-full"
+              style={{ background: `radial-gradient(circle, ${accentColor}22 0%, transparent 70%)`, right: '-5%', bottom: '15%' }}
+              animate={{
+                x: [0, -15, 0],
+                y: [0, 15, 0],
+                scale: [1, 1.1, 1],
+              }}
+              transition={{
+                duration: 6,
+                repeat: Infinity,
+                repeatType: "reverse",
+                delay: 0.5,
+              }}
             />
-            <FaYoutube
-              className={` transition cursor-pointer ${
-                type == "hotel" ? "hover:text-black" : "hover:[#A31C44] "
-              }`}
-            />
-            <FaFacebook
-              className={` transition cursor-pointer ${
-                type == "hotel" ? "hover:text-black" : "hover:text-[#A31C44] "
-              }`}
-            />
-            <FaLinkedin
-              className={` transition cursor-pointer ${
-                type == "hotel" ? "hover:text-black" : "hover:text-[#A31C44] "
-              }`}
-            />
-          </div> */}
-
-          {type === "hostel" ? (
-            <Image
-              src={hosteldayss}
-              alt="hostel image"
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <Image
-              src={hoteldayss}
-              alt="hostel image"
-              className="w-full h-full object-cover"
-            />
-          )}
+            
+            {/* Heading with character animation */}
+            <motion.div 
+              className="overflow-hidden relative mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <div className="flex items-center justify-center gap-2 mb-2">
+                {/* "Why" Text */}
+                <motion.div className="text-5xl font-bold">
+                  {"Why".split("").map((char, index) => (
+                    <motion.span
+                      key={index}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ 
+                        duration: 0.3, 
+                        delay: index * 0.05,
+                        ease: "easeOut"
+                      }}
+                      className="inline-block"
+                    >
+                      {char}
+                    </motion.span>
+                  ))}
+                </motion.div>
+                
+                {/* Heart Animation (smaller size) */}
+                <motion.div 
+                  className="relative w-16 h-16 mx-1"
+                  initial={{ y: 0 }}
+                  animate={{ y: [0, -5, 0] }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    repeatType: "reverse",
+                    ease: "easeInOut"
+                  }}
+                >
+                  <motion.div
+                    className="absolute w-full h-full"
+                    style={{ 
+                      filter: `drop-shadow(0 0 8px ${accentColor}66)`,
+                      zIndex: 0,
+                    }}
+                    animate={{
+                      scale: [1, 1.2, 1],
+                      opacity: [0.4, 0.8, 0.4]
+                    }}
+                    transition={{
+                      duration: 2.5,
+                      repeat: Infinity,
+                      repeatType: "reverse"
+                    }}
+                  >
+                    <svg viewBox="0 0 100 100" className="w-full h-full">
+                      <motion.path
+                        d="M50 30C35 10 10 20 10 40C10 75 50 90 50 90C50 90 90 75 90 40C90 20 65 10 50 30Z"
+                        fill={`${accentColor}44`}
+                      />
+                    </svg>
+                  </motion.div>
+                  
+                  <svg viewBox="0 0 100 100" className="w-full h-full absolute inset-0">
+                    <motion.path
+                      d="M50 30C35 10 10 20 10 40C10 75 50 90 50 90C50 90 90 75 90 40C90 20 65 10 50 30Z"
+                      fill="none"
+                      stroke={accentColor}
+                      strokeWidth="3"
+                      initial={{ pathLength: 0 }}
+                      animate={{ pathLength: 1 }}
+                      transition={{ 
+                        duration: 1.5, 
+                        ease: "easeInOut", 
+                        repeat: Infinity,
+                        repeatType: "reverse",
+                        repeatDelay: 0.5
+                      }}
+                    />
+                  </svg>
+                </motion.div>
+                
+                {/* "Hsquare" Text */}
+                <motion.div className="text-5xl font-bold">
+                  {"Hsquare".split("").map((char, index) => (
+                    <motion.span
+                      key={index}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ 
+                        duration: 0.3, 
+                        delay: 0.5 + (index * 0.05),
+                        ease: "easeOut"
+                      }}
+                      className="inline-block"
+                    >
+                      {char}
+                    </motion.span>
+                  ))}
+                </motion.div>
+              </div>
+              
+              {/* <motion.div
+                className="text-4xl font-bold text-center"
+                style={{ color: accentColor }}
+              >
+                {(type === "hotel" ? "Hotels" : "Hostels").split("").map((char, index) => (
+                  <motion.span
+                    key={index}
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ 
+                      duration: 0.3, 
+                      delay: 0.8 + (index * 0.05),
+                      type: "spring",
+                      stiffness: 200,
+                      damping: 10
+                    }}
+                    className="inline-block"
+                  >
+                    {char}
+                  </motion.span>
+                ))}
+              </motion.div> */}
+            </motion.div>
+            
+            {/* Animated Feature Cards */}
+            <motion.div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+              {type === "hotel" ? (
+                <>
+                  <FeatureCard 
+                    icon={FaBed}
+                    title="Luxury Comfort" 
+                    index={0} 
+                    accentColor={accentColor}
+                  />
+                  <FeatureCard 
+                    icon={FaConciergeBell}
+                    title="Premium Service" 
+                    index={1} 
+                    accentColor={accentColor}
+                  />
+                  <FeatureCard 
+                    icon={FaUtensils}
+                    title="Fine Dining" 
+                    index={2} 
+                    accentColor={accentColor}
+                  />
+                  <FeatureCard 
+                    icon={FaMapPin}
+                    title="Prime Locations" 
+                    index={3} 
+                    accentColor={accentColor}
+                  />
+                </>
+              ) : (
+                <>
+                  <FeatureCard 
+                    icon={FaUsers}
+                    title="Community" 
+                    index={0} 
+                    accentColor={accentColor}
+                  />
+                  <FeatureCard 
+                    icon={FaWallet}
+                    title="Affordable" 
+                    index={1} 
+                    accentColor={accentColor}
+                  />
+                  <FeatureCard 
+                    icon={FaGlassCheers}
+                    title="Social Events" 
+                    index={2} 
+                    accentColor={accentColor}
+                  />
+                  <FeatureCard 
+                    icon={FaCompass}
+                    title="Local Insights" 
+                    index={3} 
+                    accentColor={accentColor}
+                  />
+                </>
+              )}
+            </motion.div>
+          </motion.div>
 
           <p className="text-xl text-center max-w-md leading-relaxed">
             Discover the exceptional amenities and services available at our {type === "hotel" ? "luxury hotels" : "vibrant hostels"}. We provide everything you need for a comfortable and memorable stay.
@@ -344,5 +521,46 @@ const SocialSection = ({ type = "hotel" }: socialSectionProps) => {
     </div>
   );
 };
+
+interface FeatureCardProps {
+  title: string
+  index: number
+  accentColor: string
+  icon: React.ComponentType<any>
+}
+
+const FeatureCard = ({ title, index, accentColor, icon: Icon }: FeatureCardProps) => {
+  return (
+    <motion.div
+      className="bg-black bg-opacity-20 rounded-lg p-3 flex items-center gap-3"
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{
+        duration: 0.4,
+        delay: 0.8 + (index * 0.1),
+        type: "spring",
+        stiffness: 100
+      }}
+      whileHover={{
+        scale: 1.03,
+        backgroundColor: `rgba(0,0,0,0.3)`,
+        transition: { duration: 0.2 }
+      }}
+      whileTap={{ scale: 0.98 }}
+    >
+      <motion.div
+        className="w-10 h-10 rounded-full flex items-center justify-center"
+        style={{ backgroundColor: `${accentColor}33` }}
+        whileHover={{
+          rotate: [0, -10, 10, -5, 0],
+          transition: { duration: 0.5 }
+        }}
+      >
+        <Icon size={20} color={accentColor} />
+      </motion.div>
+      <h3 className="font-bold">{title}</h3>
+    </motion.div>
+  )
+}
 
 export default SocialSection;

@@ -239,7 +239,21 @@ export function PropertyCard({ property, searchParams }: PropertyCardProps) {
                 )
               })}
               {property.amenities.length > 5 && (
-                <Badge variant="outline" className="text-xs">+{property.amenities.length - 5} more</Badge>
+                <Link 
+                  href={{
+                    pathname: `/property/${property.id}`,
+                    query: searchParams ? Object.fromEntries(searchParams.entries()) : {}
+                  }}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Badge 
+                    variant="outline" 
+                    className="text-xs cursor-pointer hover:bg-gray-100 hover:border-[#B11E43] transition-colors"
+                  >
+                    +{property.amenities.length - 5} more
+                  </Badge>
+                </Link>
               )}
             </div>
 

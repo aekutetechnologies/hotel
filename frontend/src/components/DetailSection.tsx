@@ -286,6 +286,10 @@ export function DetailSection({
         exit="exit"
         transition={{ type: "spring", damping: 30, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
+        style={{
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none'
+        }}
       >
         {/* Fixed position navbars */}
         <div className="fixed top-0 left-0 right-0 z-50 flex flex-col w-full">
@@ -317,7 +321,14 @@ export function DetailSection({
         </div>
 
         {/* Content with appropriate top margin */}
-        <div className="overflow-y-auto h-full scrollbar-hide" style={{ marginTop: isClosed ? '110px' : '70px' }}>
+        <div 
+          className="overflow-y-auto h-full scrollbar-hide" 
+          style={{ 
+            marginTop: isClosed ? '110px' : '70px',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none'
+          }}
+        >
           {/* Hero Section with Search */}
           <HeroSection sectionType={sectionType} />
 

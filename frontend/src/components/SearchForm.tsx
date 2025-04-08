@@ -35,6 +35,10 @@ export function SearchForm({ sectionType }: SearchFormProps) {
   const [minCheckInTime, setMinCheckInTime] = useState("")
   const [minCheckOutTime, setMinCheckOutTime] = useState("")
   const locationInputRef = useRef<HTMLInputElement>(null)
+  const checkInRef = useRef<HTMLInputElement>(null)
+  const checkOutRef = useRef<HTMLInputElement>(null)
+  const checkInTimeRef = useRef<HTMLInputElement>(null)
+  const checkOutTimeRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -134,11 +138,11 @@ export function SearchForm({ sectionType }: SearchFormProps) {
     }
   }, [checkInTime, checkOutTime, checkIn, checkOut])
 
-  const incrementRooms = () => setRooms((prev) => prev + 1)
+  const incrementRooms = () => setRooms((prev) => prev < 5 ? prev + 1 : 5)
   const decrementRooms = () => setRooms((prev) => (prev > 1 ? prev - 1 : 1))
   
   const incrementMonths = () => {
-    const newMonths = months + 1
+    const newMonths = months < 12 ? months + 1 : 12
     setMonths(newMonths)
     
     // Update checkout date when months change for monthly booking
@@ -175,7 +179,7 @@ export function SearchForm({ sectionType }: SearchFormProps) {
     }
   }
   
-  const incrementGuests = () => setGuests((prev) => prev + 1)
+  const incrementGuests = () => setGuests((prev) => prev < 10 ? prev + 1 : 10)
   const decrementGuests = () => setGuests((prev) => (prev > 1 ? prev - 1 : 1))
 
   const handleSearch = (e: React.FormEvent) => {
@@ -408,19 +412,20 @@ export function SearchForm({ sectionType }: SearchFormProps) {
         </div>
 
         {/* Check In */}
-        <div className="flex items-center flex-1 min-w-full md:min-w-[150px] p-2 border-b md:border-b-0 md:border-r border-gray-200">
+        <div className="flex items-center flex-1 min-w-full md:min-w-[180px] p-2 border-b md:border-b-0 md:border-r border-gray-200">
           <div className="flex flex-col flex-grow">
             <label htmlFor="check-in" className="text-xs text-gray-500 font-medium">
               Check In Date
             </label>
-            <div className="relative">
+            <div className="relative cursor-pointer" onClick={() => checkInRef.current?.focus()}>
             <input
               id="check-in"
-                type="date"
-                className="outline-none text-sm w-full cursor-pointer"
+              ref={checkInRef}
+              type="date"
+              className="outline-none text-sm w-full cursor-pointer"
               value={checkIn}
-                min={minCheckInDate}
-                onChange={handleCheckInChange}
+              min={minCheckInDate}
+              onChange={handleCheckInChange}
               />
             </div>
           </div>
@@ -429,19 +434,20 @@ export function SearchForm({ sectionType }: SearchFormProps) {
         {/* Conditional fields based on property type and booking type */}
         {sectionType === "hotels" && bookingType === "hour" && (
           // Show check-in time for hourly booking
-              <div className="flex items-center flex-1 min-w-full md:min-w-[150px] p-2 border-b md:border-b-0 md:border-r border-gray-200">
+              <div className="flex items-center flex-1 min-w-full md:min-w-[90px] p-2 border-b md:border-b-0 md:border-r border-gray-200">
                 <div className="flex flex-col flex-grow">
                   <label htmlFor="check-in-time" className="text-xs text-gray-500 font-medium">
                     Check In Time
                   </label>
-              <div className="relative">
+              <div className="relative cursor-pointer" onClick={() => checkInTimeRef.current?.focus()}>
                   <input
                     id="check-in-time"
+                    ref={checkInTimeRef}
                     type="time"
-                  className="outline-none text-sm w-full cursor-pointer"
+                    className="outline-none text-sm w-full cursor-pointer"
                     value={checkInTime}
-                  min={checkIn === minCheckInDate ? minCheckInTime : undefined}
-                  onChange={handleCheckInTimeChange}
+                    min={checkIn === minCheckInDate ? minCheckInTime : undefined}
+                    onChange={handleCheckInTimeChange}
                   />
                 </div>
               </div>
@@ -450,18 +456,19 @@ export function SearchForm({ sectionType }: SearchFormProps) {
 
         {sectionType === "hotels" && bookingType === "day" && (
           // Show check-out date only for daily booking
-              <div className="flex items-center flex-1 min-w-full md:min-w-[150px] p-2 border-b md:border-b-0 md:border-r border-gray-200">
+              <div className="flex items-center flex-1 min-w-full md:min-w-[180px] p-2 border-b md:border-b-0 md:border-r border-gray-200">
                 <div className="flex flex-col flex-grow">
                   <label htmlFor="check-out" className="text-xs text-gray-500 font-medium">
                 Check Out Date
                   </label>
-              <div className="relative">
+              <div className="relative cursor-pointer" onClick={() => checkOutRef.current?.focus()}>
                   <input
                     id="check-out"
-                  type="date"
-                  className="outline-none text-sm w-full cursor-pointer"
+                    ref={checkOutRef}
+                    type="date"
+                    className="outline-none text-sm w-full cursor-pointer"
                     value={checkOut}
-                  min={minCheckOutDate}
+                    min={minCheckOutDate}
                     onChange={(e) => setCheckOut(e.target.value)}
                 />
               </div>
@@ -471,18 +478,19 @@ export function SearchForm({ sectionType }: SearchFormProps) {
 
         {sectionType === "hotels" && bookingType === "hour" && (
           // Show check-out time only for hourly booking
-              <div className="flex items-center flex-1 min-w-full md:min-w-[150px] p-2 border-b md:border-b-0 md:border-r border-gray-200">
+              <div className="flex items-center flex-1 min-w-full md:min-w-[90px] p-2 border-b md:border-b-0 md:border-r border-gray-200">
                 <div className="flex flex-col flex-grow">
                   <label htmlFor="check-out-time" className="text-xs text-gray-500 font-medium">
                     Check Out Time
                   </label>
-              <div className="relative">
+              <div className="relative cursor-pointer" onClick={() => checkOutTimeRef.current?.focus()}>
                   <input
                     id="check-out-time"
+                    ref={checkOutTimeRef}
                     type="time"
-                  className="outline-none text-sm w-full cursor-pointer"
+                    className="outline-none text-sm w-full cursor-pointer"
                     value={checkOutTime}
-                  min={checkIn === checkOut ? minCheckOutTime : undefined}
+                    min={checkIn === checkOut ? minCheckOutTime : undefined}
                     onChange={(e) => setCheckOutTime(e.target.value)}
                   />
               </div>
@@ -492,7 +500,7 @@ export function SearchForm({ sectionType }: SearchFormProps) {
 
         {/* Show Months field for hostels */}
         {sectionType === "hostels" && (
-          <div className="flex items-center flex-1 min-w-full md:min-w-[150px] p-2 border-b md:border-b-0 md:border-r border-gray-200">
+          <div className="flex items-center flex-1 min-w-full md:min-w-[90px] p-2 border-b md:border-b-0 md:border-r border-gray-200">
             <div className="flex flex-col flex-grow">
               <label className="text-xs text-gray-500 font-medium">Duration (Months)</label>
               <div className="flex items-center relative">
@@ -523,15 +531,17 @@ export function SearchForm({ sectionType }: SearchFormProps) {
 
         {/* Show Rooms field for hotels */}
         {sectionType === "hotels" && (
-            <div className="flex items-center flex-1 min-w-full md:min-w-[120px] p-2 border-b md:border-b-0 md:border-r border-gray-200">
+            <div className="flex items-center flex-1 min-w-full md:min-w-[80px] p-2 border-b md:border-b-0 md:border-r border-gray-200">
               <div className="flex flex-col flex-grow">
-                <label className="text-xs text-gray-500 font-medium">Room</label>
+                <label className="text-xs text-gray-500 font-medium">Room <span className="text-xs text-gray-400">(max 5)</span></label>
               <div className="flex items-center relative">
                 <div className="flex items-center flex-grow">
                   <button
                     type="button"
                     className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center"
                     onClick={decrementRooms}
+                    disabled={rooms <= 1}
+                    aria-label="Decrease rooms"
                   >
                     <Minus size={14} />
                   </button>
@@ -540,28 +550,32 @@ export function SearchForm({ sectionType }: SearchFormProps) {
                     type="button"
                     className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center"
                     onClick={incrementRooms}
+                    disabled={rooms >= 5}
+                    aria-label="Increase rooms"
                   >
                     <Plus size={14} />
                   </button>
                 </div>
-                <div className="absolute right-0 top-1/2 transform -translate-y-1/2 pr-2 pointer-events-none">
+                {/* <div className="absolute right-0 top-1/2 transform -translate-y-1/2 pr-2 pointer-events-none">
                   <Bed className="h-4 w-4 text-black" />
-            </div>
+            </div> */}
               </div>
             </div>
           </div>
         )}
 
         {/* Guests */}
-        <div className="flex items-center flex-1 min-w-full md:min-w-[120px] p-2 border-b md:border-b-0 md:border-r border-gray-200">
+        <div className="flex items-center flex-1 min-w-full md:min-w-[80px] p-2 border-b md:border-b-0 md:border-r border-gray-200">
           <div className="flex flex-col flex-grow">
-            <label className="text-xs text-gray-500 font-medium">Guests</label>
+            <label className="text-xs text-gray-500 font-medium">Guests <span className="text-xs text-gray-400">(max 10)</span></label>
             <div className="flex items-center relative">
               <div className="flex items-center flex-grow">
               <button
                 type="button"
                 className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center"
                 onClick={decrementGuests}
+                disabled={guests <= 1}
+                aria-label="Decrease guests"
               >
                 <Minus size={14} />
               </button>
@@ -570,13 +584,15 @@ export function SearchForm({ sectionType }: SearchFormProps) {
                 type="button"
                 className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center"
                 onClick={incrementGuests}
+                disabled={guests >= 10}
+                aria-label="Increase guests"
               >
                 <Plus size={14} />
               </button>
               </div>
-              <div className="absolute right-0 top-1/2 transform -translate-y-1/2 pr-2 pointer-events-none">
+              {/* <div className="absolute right-0 top-1/2 transform -translate-y-1/2 pr-2 pointer-events-none">
                 <Users className="h-4 w-4 text-black" />
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

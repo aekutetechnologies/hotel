@@ -55,21 +55,24 @@ export const Timeline = ({ data, theme = "hotel" }: TimelineProps) => {
 
   // Define theme colors for the background line
   const bgLineColor = theme === "hotel" ? "bg-[#A31C44]/10" : "bg-[#2A2B2E]/10"
+  
+  // Text color based on theme
+  const textColor = theme === "hotel" ? "text-[#A31C44]" : "text-[#2A2B2E]"
 
   return (
-    <div className="w-full bg-white dark:bg-neutral-950 md:px-10" ref={containerRef}>
+    <div className="w-full bg-white dark:bg-neutral-950 px-4 md:px-10" ref={containerRef}>
       <div ref={ref} className="relative max-w-7xl mx-auto pb-20">
         {data.map((item, index) => (
-          <div key={index} className="flex justify-start pt-10 md:pt-40 md:gap-10">
-            <div className="sticky flex flex-col md:flex-row z-40 items-center top-40 self-start max-w-xs lg:max-w-sm md:w-full">
-              <div className="h-10 absolute left-3 md:left-3 w-10 rounded-full bg-white dark:bg-black flex items-center justify-center">
+          <div key={index} className="flex justify-start pt-20 md:pt-40 gap-4 md:gap-10">
+            <div className="sticky flex flex-row z-40 items-start top-20 md:top-40 self-start">
+              <div className="h-10 w-10 relative rounded-full bg-white dark:bg-black flex items-center justify-center">
                 <div
                   className={`h-4 w-4 rounded-full ${theme === "hotel" ? "bg-[#A31C44]/20 border-[#A31C44]" : "bg-[#2A2B2E]/20 border-[#2A2B2E]"} border p-2`}
                 />
               </div>
-              <div className="hidden md:block md:pl-20">
+              <div className="pl-4 md:pl-6">
                 <h3
-                  className={`text-xl md:text-4xl font-bold  ${theme === "hotel" ? "text-[#A31C44]" : "text-[#2A2B2E]"}`}
+                  className={`text-2xl md:text-4xl font-bold ${textColor}`}
                 >
                   {item.year}
                 </h3>
@@ -77,14 +80,8 @@ export const Timeline = ({ data, theme = "hotel" }: TimelineProps) => {
               </div>
             </div>
 
-            <div className="relative pl-20 pr-4 md:pl-4 w-full">
-              <div className="md:hidden block mb-4 text-left">
-                <h3 className={`text-2xl font-bold font-rock-salt ${theme === "hotel" ? "text-[#A31C44]" : "text-[#2A2B2E]"}`}>
-                  {item.year}
-                </h3>
-                <p className="text-sm text-neutral-400 dark:text-neutral-600 mt-1">{item.title}</p>
-              </div>
-              <p className="text-neutral-800 dark:text-neutral-200 text-xs md:text-sm font-normal mb-8">
+            <div className="relative pl-4 w-full">
+              <p className="text-neutral-800 dark:text-neutral-200 text-sm mb-8">
                 {item.description}
               </p>
               {item.content}
@@ -98,7 +95,7 @@ export const Timeline = ({ data, theme = "hotel" }: TimelineProps) => {
             height: height + "px",
             maxHeight: `calc(100% - 80px)`,
           }}
-          className={`absolute md:left-8 left-8 top-0 overflow-hidden w-[4px] ${bgLineColor}`}
+          className={`absolute left-5 md:left-8 top-0 overflow-hidden w-[4px] ${bgLineColor}`}
         />
 
         {/* Animated progress line */}
@@ -107,7 +104,7 @@ export const Timeline = ({ data, theme = "hotel" }: TimelineProps) => {
             height: height + "px",
             maxHeight: `calc(100% - 80px)`,
           }}
-          className="absolute md:left-8 left-8 top-0 overflow-hidden w-[4px]"
+          className="absolute left-5 md:left-8 top-0 overflow-hidden w-[4px]"
         >
           <motion.div
             style={{
@@ -125,7 +122,7 @@ export const Timeline = ({ data, theme = "hotel" }: TimelineProps) => {
             top: heightTransform,
             opacity: opacityTransform,
           }}
-          className={`absolute md:left-8 left-8 w-[12px] h-[12px] -ml-[4px] rounded-full ${theme === "hotel" ? "bg-[#A31C44]" : "bg-[#2A2B2E]"}`}
+          className={`absolute left-5 md:left-8 w-[12px] h-[12px] -ml-[4px] rounded-full ${theme === "hotel" ? "bg-[#A31C44]" : "bg-[#2A2B2E]"}`}
         >
           <span
             className={`absolute inset-0 rounded-full ${theme === "hotel" ? "bg-[#A31C44]" : "bg-[#2A2B2E]"} animate-ping opacity-75`}

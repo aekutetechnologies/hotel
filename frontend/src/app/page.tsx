@@ -187,6 +187,12 @@ export default function Home() {
   const handleDiscover = (section: "hotels" | "hostels") => {
     window.scrollTo({ top: 0, behavior: "smooth" });
     setShowDetailSection(section);
+    setExpandedSection(null); // Reset expanded section when navigating to detail
+  };
+
+  // Add a handler for expanded section click
+  const handleExpandedSectionClick = (section: "hotels" | "hostels") => {
+    handleDiscover(section);
   };
 
   const handleCloseDetail = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -244,7 +250,7 @@ export default function Home() {
               transition={{ duration: 0.5 }}
             >
               <nav
-                className="mx-auto px-6 flex justify-between items-center bg-gradient-to-r from-slate-300 via-transparent to-slate-300 backdrop-blur-md rounded-xl shadow-lg max-w-[95rem] w-[170%]"
+                className="mx-auto px-6 flex justify-between items-center bg-gradient-to-r from-slate-300 via-transparent to-slate-300 backdrop-blur-md shadow-lg max-w-full w-full"
                 style={{
                   boxShadow:
                     "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
@@ -284,6 +290,7 @@ export default function Home() {
               expandedSection={expandedSection}
               setExpandedSection={setExpandedSection}
               handleDiscover={handleDiscover}
+              handleExpandedSectionClick={handleExpandedSectionClick}
             />
           </motion.div>
 

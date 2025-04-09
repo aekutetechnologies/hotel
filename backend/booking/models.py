@@ -42,6 +42,8 @@ class Booking(models.Model):
     property = models.ForeignKey(Property, on_delete=models.CASCADE, null=True, blank=True)
     checkin_date = models.DateField(null=True, blank=True)
     checkout_date = models.DateField(null=True, blank=True)
+    checkin_time = models.TimeField(null=True, blank=True)
+    checkout_time = models.TimeField(null=True, blank=True)
     booking_type = models.CharField(max_length=20, choices=BOOKING_TYPE_CHOICES, default='walkin')
     booking_time = models.CharField(max_length=20, choices=BOOKING_TIME_CHOICES, default='daily')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
@@ -55,6 +57,7 @@ class Booking(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
+    booking_room_types = models.JSONField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
         calculated_price = Decimal('0.00')

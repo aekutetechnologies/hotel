@@ -22,6 +22,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { Property } from '@/types/property'
 import { User } from '@/types/user'
 import { toast } from 'react-toastify'
+import { CalendarDays } from "lucide-react"
 
 interface BookingModalProps {
   isOpen: boolean
@@ -335,25 +336,39 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="checkIn">Check-in Date</Label>
-                <Input
-                  id="checkIn"
-                  name="checkIn"
-                  type="date"
-                  value={booking.checkIn}
-                  onChange={handleChange}
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    id="checkIn"
+                    name="checkIn"
+                    type="date"
+                    className="opacity-0 absolute inset-0 w-full h-full cursor-pointer z-10"
+                    value={booking.checkIn}
+                    onChange={handleChange}
+                    required
+                  />
+                  <div className="flex items-center justify-between w-full pr-2 border rounded-md px-3 py-2">
+                    <span className="text-sm">{booking.checkIn ? new Date(booking.checkIn).toLocaleDateString() : 'Select date'}</span>
+                    <CalendarDays className="h-4 w-4 text-gray-500" />
+                  </div>
+                </div>
               </div>
               <div>
                 <Label htmlFor="checkOut">Check-out Date</Label>
-                <Input
-                  id="checkOut"
-                  name="checkOut"
-                  type="date"
-                  value={booking.checkOut}
-                  onChange={handleChange}
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    id="checkOut"
+                    name="checkOut"
+                    type="date"
+                    className="opacity-0 absolute inset-0 w-full h-full cursor-pointer z-10"
+                    value={booking.checkOut}
+                    onChange={handleChange}
+                    required
+                  />
+                  <div className="flex items-center justify-between w-full pr-2 border rounded-md px-3 py-2">
+                    <span className="text-sm">{booking.checkOut ? new Date(booking.checkOut).toLocaleDateString() : 'Select date'}</span>
+                    <CalendarDays className="h-4 w-4 text-gray-500" />
+                  </div>
+                </div>
               </div>
             </div>
             

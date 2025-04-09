@@ -5,6 +5,7 @@ import { useEffect, useState, Suspense } from "react"
 import { useRouter } from "next/navigation"
 import Navbar from "@/components/Navbar"
 import Footer from "@/components/Footer"
+import { Header } from "@/components/Header"
 import { ChevronLeft } from "lucide-react"
 import Link from "next/link"
 
@@ -42,21 +43,7 @@ export default function FavoritesPage() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Navbar */}
-      <div className="w-full relative">
-        <div className="flex justify-between items-center px-4 md:px-6 py-3 bg-white shadow-sm max-w-[100vw] overflow-x-hidden">
-          <div className="flex-1">
-            <Navbar
-              isLoggedIn={isLoggedIn}
-              userName={userName}
-              handleLogout={handleLogout}
-              handleLoginClick={() => {}}
-              setShowDetailSection={() => {}}
-              isClosed={false}
-              currentSection="hotel"
-            />
-          </div>
-        </div>
-      </div>
+      <Header />
       
       {/* Main content */}
       <main className="flex-1 bg-gray-50">

@@ -1,6 +1,6 @@
 "use client"
 
-import { LogOut, User, Calendar, ChevronDown, Heart } from 'lucide-react'
+import { LogOut, User, CalendarDays, ChevronDown, Heart } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -102,7 +102,7 @@ export function ProfileDropdown({ onLogout, userName }: ProfileDropdownProps) {
         </Link>
         <Link href="/booking" passHref>
           <DropdownMenuItem className="cursor-pointer text-base rounded-md my-1 hover:bg-gray-50">
-            <Calendar className="mr-2 h-4 w-4" />
+            <CalendarDays className="mr-2 h-4 w-4" />
             <span>My Bookings</span>
           </DropdownMenuItem>
         </Link>

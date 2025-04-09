@@ -6,7 +6,7 @@ import { Header } from '@/components/Header'
 import Footer from '@/components/Footer'
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Star, MapPin, ChevronLeft, ChevronRight, Wifi, Coffee, Tv, Car, Utensils, Building2, BatteryCharging, Dumbbell, BellRing, ShieldCheck, UserRoundCheck, Beer, Soup, Building, Heater, ChefHat, AirVent, ClipboardList, FileCheck } from 'lucide-react'
+import { Star, MapPin, ChevronLeft, ChevronRight, Wifi, Coffee, Tv, Car, Utensils, Building2, BatteryCharging, Dumbbell, BellRing, ShieldCheck, UserRoundCheck, Beer, Soup, Building, Heater, ChefHat, AirVent, ClipboardList, FileCheck, CheckCircle2 } from 'lucide-react'
 import Image from 'next/image'
 import { Property, Room } from '@/types/property'
 import { fetchProperty } from '@/lib/api/fetchProperty'
@@ -63,6 +63,9 @@ interface ExtendedProperty extends Property {
   reviews: Review[];
   rules: Rule[];
   documentation: Documentation[];
+  check_in_time?: string;
+  check_out_time?: string;
+  security_deposit?: number | string;
 }
 
 // Extend Room to include all necessary properties
@@ -71,25 +74,51 @@ interface ExtendedRoom extends Room {
   availableBeds?: number;
   totalBeds?: number;
   security?: boolean;
+  quantity?: number; // Add quantity field for tracking selected count
 }
 
 export default function PropertyDetails() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [selectedRoom, setSelectedRoom] = useState<ExtendedRoom | null>(null)
+  const [selectedRooms, setSelectedRooms] = useState<Map<string, ExtendedRoom>>(new Map())
   const [currentRoomImageIndex, setCurrentRoomImageIndex] = useState(0)
   const [currentRoomImageIndices, setCurrentRoomImageIndices] = useState<{ [key: string]: number }>({});
+  const [error, setError] = useState<string | null>(null);
 
   const params = useParams()
   const router = useRouter()
   const searchParams = useSearchParams()
+  
+  // Use try-catch block to handle any errors in parsing params
+  let propertyId = 0;
+  try {
+    propertyId = Number(params.id);
+    if (isNaN(propertyId)) {
+      console.error("Invalid property ID:", params.id);
+      propertyId = 0;
+    }
+  } catch (err) {
+    console.error("Error parsing property ID:", err);
+  }
+  
   const bookingType = searchParams.get('bookingType') || 'daily'
-  const propertyId = Number(params.id)
   const checkInDateParam = searchParams.get('checkInDate')
   const checkOutDateParam = searchParams.get('checkOutDate')
   const checkInTimeParam = searchParams.get('checkInTime')
   const checkOutTimeParam = searchParams.get('checkOutTime')
-  const selectedGuests = searchParams.get('guests') ? Number(searchParams.get('guests')) : null
-  const selectedRooms = searchParams.get('rooms') ? Number(searchParams.get('rooms')) : null
+  const monthsParam = searchParams.get('months')
+  
+  let selectedGuests = null;
+  let selectedRoomsCount = null;
+  let months = 1;
+  
+  try {
+    selectedGuests = searchParams.get('guests') ? Number(searchParams.get('guests')) : null;
+    selectedRoomsCount = searchParams.get('rooms') ? Number(searchParams.get('rooms')) : null;
+    months = monthsParam ? Number(monthsParam) : 1;
+  } catch (err) {
+    console.error("Error parsing search params:", err);
+  }
 
   const [property, setProperty] = useState<ExtendedProperty | null>(null)
   const [isGalleryOpen, setIsGalleryOpen] = useState(false)
@@ -145,30 +174,125 @@ export default function PropertyDetails() {
     }
   }, [bookingType, checkInTimeParam, checkOutTimeParam]);
 
+  // Handle URL query parameters for room selection
+  useEffect(() => {
+    if (property && property.rooms && selectedRoomsCount) {
+      // If rooms count is specified in URL but no specific rooms are selected yet
+      const totalSelected = Array.from(selectedRooms.values())
+        .reduce((sum, room) => sum + (room.quantity || 0), 0);
+        
+      if (totalSelected === 0 && selectedRoomsCount > 0) {
+        // Auto-select the first room with the count from URL
+        setSelectedRooms(prevSelected => {
+          const updatedRooms = new Map(prevSelected);
+          // Find the first available room
+          const firstRoom = property.rooms?.[0];
+          if (firstRoom) {
+            const roomId = firstRoom.id.toString();
+            const currentRoom = updatedRooms.get(roomId);
+            if (currentRoom) {
+              updatedRooms.set(roomId, { 
+                ...currentRoom, 
+                quantity: selectedRoomsCount 
+              });
+            }
+          }
+          return updatedRooms;
+        });
+      }
+    }
+  }, [property, selectedRoomsCount, selectedRooms]);
+
+  // Add global error handling for the component
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="p-8 bg-red-50 border border-red-200 rounded-lg max-w-md text-center">
+          <h2 className="text-xl font-semibold text-red-600 mb-4">Something went wrong</h2>
+          <p className="text-gray-700 mb-4">{error}</p>
+          <Button
+            onClick={() => window.location.reload()}
+            className="bg-[#B11E43] hover:bg-[#8f1836] text-white"
+          >
+            Reload Page
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Wrap fetchProperty call in a try-catch block
   useEffect(() => {
     console.log("Fetching property with ID:", propertyId.toString());
     
-    fetchProperty(propertyId.toString())
-      .then((data) => {
-        console.log("Property data loaded:", data);
-        setProperty(data as ExtendedProperty);
-        
-        // Initialize room image indices
-        if (data && data.rooms && data.rooms.length > 0) {
-          // Create an initial state for the room image indices
-          const initialIndices: { [key: string]: number } = {};
-          data.rooms.forEach((room: any) => {
-            initialIndices[room.id.toString()] = 0;
-          });
-          setCurrentRoomImageIndices(initialIndices);
+    try {
+      fetchProperty(propertyId.toString())
+        .then((data) => {
+          console.log("Property data loaded:", data);
+          setProperty(data as ExtendedProperty);
           
-          // Select the first room
-          setSelectedRoom(data.rooms[0] as ExtendedRoom);
-        }
-      })
-      .catch(error => {
-        console.error("Error fetching property:", error);
-      });
+          // Initialize room image indices
+          if (data && data.rooms && data.rooms.length > 0) {
+            // Create an initial state for the room image indices
+            const initialIndices: { [key: string]: number } = {};
+            let initialRoomSelections = new Map<string, ExtendedRoom>();
+            
+            // Try to restore saved room selections from session storage
+            try {
+              const savedSelectionsString = sessionStorage.getItem(`roomSelections_${propertyId}`);
+              if (savedSelectionsString) {
+                const savedSelections = JSON.parse(savedSelectionsString);
+                
+                // Convert the saved object back to a Map
+                initialRoomSelections = new Map();
+                data.rooms.forEach((room: any) => {
+                  const roomId = room.id.toString();
+                  initialIndices[roomId] = 0;
+                  
+                  // Create extended room with saved quantity if available
+                  const savedQuantity = savedSelections[roomId] || 0;
+                  initialRoomSelections.set(roomId, {
+                    ...room,
+                    quantity: savedQuantity
+                  } as ExtendedRoom);
+                });
+              } else {
+                // If no saved selections, initialize with zero quantities
+                data.rooms.forEach((room: any) => {
+                  initialIndices[room.id.toString()] = 0;
+                  // Initialize each room with quantity 0
+                  const extendedRoom = {...room, quantity: 0} as ExtendedRoom;
+                  initialRoomSelections.set(room.id.toString(), extendedRoom);
+                });
+              }
+            } catch (err) {
+              console.error("Error restoring room selections:", err);
+              // Fallback to zero quantities if error
+              data.rooms.forEach((room: any) => {
+                initialIndices[room.id.toString()] = 0;
+                // Initialize each room with quantity 0
+                const extendedRoom = {...room, quantity: 0} as ExtendedRoom;
+                initialRoomSelections.set(room.id.toString(), extendedRoom);
+              });
+            }
+            
+            setCurrentRoomImageIndices(initialIndices);
+            setSelectedRooms(initialRoomSelections);
+            
+            // Select the first room
+            if (data.rooms.length > 0) {
+              setSelectedRoom(data.rooms[0] as ExtendedRoom);
+            }
+          }
+        })
+        .catch(error => {
+          console.error("Error fetching property:", error);
+          setError("Failed to load property data. Please try again later.");
+        });
+    } catch (err) {
+      console.error("Unexpected error in fetchProperty effect:", err);
+      setError("An unexpected error occurred. Please try again later.");
+    }
   }, [propertyId]);
 
   if (!property) {
@@ -215,22 +339,92 @@ export default function PropertyDetails() {
   })
 
   // Function to handle next room image
-  const nextRoomImage = (roomId: string) => {
-    setCurrentRoomImageIndices((prev) => ({
-      ...prev,
-      [roomId]: (prev[roomId] || 0) + 1 % (property?.rooms?.find(room => room.id.toString() === roomId)?.images?.length || 1),
-    }));
+  const nextRoomImage = (roomId: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    setCurrentRoomImageIndices((prev) => {
+      const currentIndex = prev[roomId] || 0;
+      const roomImages = property?.rooms?.find(room => room.id.toString() === roomId)?.images || [];
+      const maxIndex = roomImages.length - 1;
+      
+      // Calculate next index with boundary check
+      const nextIndex = currentIndex >= maxIndex ? 0 : currentIndex + 1;
+      
+      return {
+        ...prev,
+        [roomId]: nextIndex
+      };
+    });
   };
 
   // Function to handle previous room image
-  const prevRoomImage = (roomId: string) => {
-    setCurrentRoomImageIndices((prev) => ({
-      ...prev,
-      [roomId]: (prev[roomId] || 0) - 1 < 0 
-        ? (property?.rooms?.find(room => room.id.toString() === roomId)?.images?.length || 1) - 1 
-        : prev[roomId] - 1,
-    }));
+  const prevRoomImage = (roomId: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    setCurrentRoomImageIndices((prev) => {
+      const currentIndex = prev[roomId] || 0;
+      const roomImages = property?.rooms?.find(room => room.id.toString() === roomId)?.images || [];
+      const maxIndex = roomImages.length - 1;
+      
+      // Calculate previous index with boundary check
+      const prevIndex = currentIndex <= 0 ? maxIndex : currentIndex - 1;
+      
+      return {
+        ...prev,
+        [roomId]: prevIndex
+      };
+    });
   };
+
+  // Function to handle room quantity changes
+  const handleRoomQuantityChange = (roomId: string, increment: number, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    setSelectedRooms(prevSelected => {
+      const updatedRooms = new Map(prevSelected);
+      const currentRoom = updatedRooms.get(roomId);
+      
+      if (currentRoom) {
+        const newQuantity = Math.max(0, (currentRoom.quantity || 0) + increment);
+        updatedRooms.set(roomId, { ...currentRoom, quantity: newQuantity });
+      }
+      
+      // Save updated selections to session storage
+      const roomSelectionsObject: Record<string, number> = {};
+      updatedRooms.forEach((room, id) => {
+        roomSelectionsObject[id] = room.quantity || 0;
+      });
+      sessionStorage.setItem(`roomSelections_${propertyId}`, JSON.stringify(roomSelectionsObject));
+      
+      return updatedRooms;
+    });
+
+    // Update the search params with the total selected rooms
+    const updatedTotalRooms = Array.from(selectedRooms.values())
+      .reduce((sum, room) => sum + (room.quantity || 0), 0) + increment;
+    
+    // Create new URLSearchParams object with current params
+    const newSearchParams = new URLSearchParams(searchParams.toString());
+    newSearchParams.set('rooms', Math.max(1, updatedTotalRooms).toString());
+    
+    // Update the URL without reloading the page
+    const url = new URL(window.location.href);
+    url.search = newSearchParams.toString();
+    window.history.pushState({}, '', url);
+  };
+
+  // Calculate total selected rooms
+  const totalSelectedRooms = Array.from(selectedRooms.values())
+    .reduce((sum, room) => sum + (room.quantity || 0), 0);
 
   const isHostel = property.property_type === 'hostel'
 
@@ -271,12 +465,63 @@ export default function PropertyDetails() {
           </div>
         </div>
 
+        {/* Tab Navigation */}
+        <div className="mb-8 border-b border-gray-200 overflow-x-auto">
+          <div className="flex min-w-max">
+            <button 
+              onClick={(e) => {
+                e.preventDefault();
+                document.getElementById('overview')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="px-6 py-3 text-gray-800 font-medium border-b-2 border-[#B11E43] hover:bg-gray-50"
+            >
+              Overview
+            </button>
+            <button 
+              onClick={(e) => {
+                e.preventDefault();
+                document.getElementById('facilities')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="px-6 py-3 text-gray-600 hover:text-gray-800 font-medium border-b-2 border-transparent hover:border-gray-300 hover:bg-gray-50"
+            >
+              Amenities
+            </button>
+            <button 
+              onClick={(e) => {
+                e.preventDefault();
+                document.getElementById('prices')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="px-6 py-3 text-gray-600 hover:text-gray-800 font-medium border-b-2 border-transparent hover:border-gray-300 hover:bg-gray-50"
+            >
+              Info & prices
+            </button>
+            <button 
+              onClick={(e) => {
+                e.preventDefault();
+                document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="px-6 py-3 text-gray-600 hover:text-gray-800 font-medium border-b-2 border-transparent hover:border-gray-300 hover:bg-gray-50"
+            >
+              Guest reviews ({property.reviews?.length || 0})
+            </button>
+            <button 
+              onClick={(e) => {
+                e.preventDefault();
+                document.getElementById('rules')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="px-6 py-3 text-gray-600 hover:text-gray-800 font-medium border-b-2 border-transparent hover:border-gray-300 hover:bg-gray-50"
+            >
+              House rules
+            </button>
+          </div>
+        </div>
+
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Property Details */}
           <div className="lg:col-span-2 space-y-8">
             {/* Image Gallery */}
-            <div className="relative">
+            <div className="relative" id="overview">
               {/* Main image */}
               <div className="relative w-full h-64 sm:h-80 md:h-96 rounded-t-xl overflow-hidden">
                 <Image
@@ -329,7 +574,7 @@ export default function PropertyDetails() {
             </div>
 
             {/* Amenities */}
-            <section>
+            <section id="facilities">
               <h2 className="text-2xl font-semibold mb-4">Amenities</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-8">
                 {property.amenities.map((amenity, index) => {
@@ -373,143 +618,172 @@ export default function PropertyDetails() {
             </section>
 
             {/* Room Types */}
-            <section>
+            <section id="prices">
               <h2 className="text-2xl font-semibold mb-4">Available Rooms</h2>
               <div className="space-y-4">
-                {property?.rooms?.map((room) => (
-                  <div key={room.id} className="border rounded-lg p-4">
-                    <div className="flex space-x-4">
-                      {/* Image Slider (Left Side) */}
-                      <div className="w-1/3 relative">
-                        {room.images && room.images.length > 0 ? (
-                          <div className="relative w-full h-48 overflow-hidden rounded-lg mb-2">
-                            <Image
-                              src={room.images[currentRoomImageIndices[room.id.toString()] || 0]?.image || room.images[currentRoomImageIndices[room.id.toString()] || 0]?.image_url || '/placeholder.jpg'}
-                              alt={`Room ${room.name || room.occupancyType} - Image ${(currentRoomImageIndices[room.id.toString()] || 0) + 1}`}
-                              fill
-                              className="object-cover"
-                              priority
-                            />
-                            {/* Navigation Arrows */}
-                            <div className="absolute inset-0 flex items-center justify-between p-2">
-                              <Button
-                                variant="default"
-                                size="icon"
-                                className="h-8 w-8 rounded-full bg-white/80 hover:bg-white text-[#B11E43] hover:text-[#8f1836]"
-                                onClick={() => prevRoomImage(room.id.toString())}
-                                disabled={(currentRoomImageIndices[room.id] || 0) === 0}
-                              >
-                                <ChevronLeft className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="default"
-                                size="icon"
-                                className="h-8 w-8 rounded-full bg-white/80 hover:bg-white text-[#B11E43] hover:text-[#8f1836]"
-                                onClick={() => nextRoomImage(room.id.toString())}
-                                disabled={(currentRoomImageIndices[room.id] || 0) === room.images.length - 1}
-                              >
-                                <ChevronRight className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="relative w-full h-48 overflow-hidden rounded-lg mb-2 bg-gray-100 flex justify-center items-center">
-                            <p className="text-gray-500">No images</p>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Room Details (Right Side) */}
-                      <div className="w-2/3">
-                        <div className="flex justify-between h-full flex-col">
-                          <div className="flex justify-between">
-                            <div>
-                              <h3 className="text-xl font-semibold mb-2">{'name' in room ? room.name : (room as ExtendedRoom).occupancyType}</h3>
-                              <p className="text-gray-600 mb-2">{'size' in room ? `Room size: ${room.size} sq. ft` : `Available beds: ${(room as ExtendedRoom).availableBeds}/${(room as ExtendedRoom).totalBeds} sq. ft`}</p>
-                            </div>
-                            <div className="flex flex-col items-end gap-1 text-sm text-gray-700">
-                              {room.bed_type && <div><span className="text-black-900 font-semibold">Bed Type:</span> <span className="text-gray-700">{room.bed_type}</span></div>}
-                              {room.private_bathroom !== undefined && <div><span className="text-black-900 font-semibold">Private Bathroom:</span> <span className="text-gray-700">{room.private_bathroom ? 'Yes' : 'No'}</span></div>}
-                              {room.smoking !== undefined && <div><span className="text-black-900 font-semibold">Smoking:</span> <span className="text-gray-700">{room.smoking ? 'Yes' : 'No'}</span></div>}
-                            </div>
-                          </div>
-                          <div className="flex gap-2 mb-2">
-                            {room.amenities && room.amenities.map((amenity: CustomAmenity, index: number) => {
-                              const amenityIcons: { [key: string]: React.ReactNode } = {
-                                "Security": <ShieldCheck className="h-5 w-5 text-[#B11E43]" />,
-                                "Caretaker": <UserRoundCheck className="h-5 w-5 text-[#B11E43]" />,
-                                "Reception": <BellRing className="h-5 w-5 text-[#B11E43]" />,
-                                "Bar": <Beer className="h-5 w-5 text-[#B11E43]" />,
-                                "Gym": <Dumbbell className="h-5 w-5 text-[#B11E43]" />,
-                                "In-house Restaurant": <Soup className="h-5 w-5 text-[#B11E43]" />,
-                                "Elevator": <Building className="h-5 w-5 text-[#B11E43]" />,
-                                "Power backup": <BatteryCharging className="h-5 w-5 text-[#B11E43]" />,
-                                "Geyser": <Heater className="h-5 w-5 text-[#B11E43]" />,
-                                "Kitchen": <ChefHat className="h-5 w-5 text-[#B11E43]" />,
-                                "Free Wifi": <Wifi className="h-5 w-5 text-[#B11E43]" />,
-                                "AC": <AirVent className="h-5 w-5 text-[#B11E43]" />,
-                                "TV": <Tv className="h-5 w-5 text-[#B11E43]" />,
-                                "Coffee": <Coffee className="h-5 w-5 text-[#B11E43]" />,
-                                "Utensils": <Utensils className="h-5 w-5 text-[#B11E43]" />,
-                              }
-                              const IconComponent = amenityIcons[amenity.name] || null
-
-                              // Create a guaranteed unique key
-                              const roomAmenityKey = amenity.id 
-                                ? `room-${room.id}-amenity-id-${amenity.id}` 
-                                : amenity.name 
-                                  ? `room-${room.id}-amenity-name-${amenity.name}` 
-                                  : `room-${room.id}-amenity-index-${index}`;
-
-                              return (
-                                <Badge 
-                                  key={roomAmenityKey}
-                                  variant="outline" 
-                                  className="flex items-center gap-1"
+                {property?.rooms?.map((room) => {
+                  const roomId = room.id.toString();
+                  const selectedRoom = selectedRooms.get(roomId);
+                  const quantity = selectedRoom?.quantity || 0;
+                  
+                  return (
+                    <div key={roomId} className="border rounded-lg p-4">
+                      <div className="flex space-x-4">
+                        {/* Image Slider (Left Side) */}
+                        <div className="w-1/3 relative">
+                          {room.images && room.images.length > 0 ? (
+                            <div className="relative w-full h-48 overflow-hidden rounded-lg mb-2">
+                              <Image
+                                src={room.images[currentRoomImageIndices[roomId] || 0]?.image || room.images[currentRoomImageIndices[roomId] || 0]?.image_url || '/placeholder.jpg'}
+                                alt={`Room ${room.name || room.occupancyType} - Image ${(currentRoomImageIndices[roomId] || 0) + 1}`}
+                                fill
+                                className="object-cover"
+                                priority
+                              />
+                              {/* Navigation Arrows */}
+                              <div className="absolute inset-0 flex items-center justify-between p-2">
+                                <Button
+                                  variant="default"
+                                  size="icon"
+                                  className="h-8 w-8 rounded-full bg-white/80 hover:bg-white text-[#B11E43] hover:text-[#8f1836]"
+                                  onClick={(e) => prevRoomImage(roomId, e)}
+                                  disabled={(currentRoomImageIndices[roomId] || 0) === 0}
                                 >
-                                  {IconComponent}
-                                  {amenity.name || 'Unknown amenity'}
-                                </Badge>
-                              )
-                            })}
-                          </div>
-                          <div className="mt-4">
-                            <div className="flex flex-col items-end gap-1 text-sm text-gray-700">
-                              {room.security_deposit !== undefined && <div>Security Deposit: {(room as ExtendedRoom).security ? 'Yes' : 'No'}</div>}
+                                  <ChevronLeft className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="default"
+                                  size="icon"
+                                  className="h-8 w-8 rounded-full bg-white/80 hover:bg-white text-[#B11E43] hover:text-[#8f1836]"
+                                  onClick={(e) => nextRoomImage(roomId, e)}
+                                  disabled={(currentRoomImageIndices[roomId] || 0) === room.images.length - 1}
+                                >
+                                  <ChevronRight className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </div>
-                          </div>
-                          <div className="text-right mb-4">
-                            <div className="text-2xl font-bold text-[#B11E43]">
-                              ₹{isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0 
-                                ? parseFloat(room.monthly_rate) * (1 - (parseFloat(String(room.discount || '0')) / 100))
-                                : (bookingType === 'hourly' ? parseFloat(room.hourly_rate) : parseFloat(room.daily_rate)) * (1 - (parseFloat(String(room.discount || '0')) / 100)) 
-                              }
+                          ) : (
+                            <div className="relative w-full h-48 overflow-hidden rounded-lg mb-2 bg-gray-100 flex justify-center items-center">
+                              <p className="text-gray-500">No images</p>
                             </div>
-                            <div className="text-gray-500 line-through">
-                              ₹{isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0 
-                                ? room.monthly_rate 
-                                : bookingType === 'hourly' ? room.hourly_rate : room.daily_rate
-                              }
+                          )}
+                        </div>
+
+                        {/* Room Details (Right Side) */}
+                        <div className="w-2/3">
+                          <div className="flex justify-between h-full flex-col">
+                            <div className="flex justify-between">
+                              <div>
+                                <h3 className="text-xl font-semibold mb-2">{'name' in room ? room.name : (room as ExtendedRoom).occupancyType}</h3>
+                                <p className="text-gray-600 mb-2">{'size' in room ? `Room size: ${room.size} sq. ft` : `Available beds: ${(room as ExtendedRoom).availableBeds}/${(room as ExtendedRoom).totalBeds} sq. ft`}</p>
+                                
+                                {/* Room Amenities and Features */}
+                                <div className="text-sm text-gray-700 mb-3">
+                                  <div className="flex flex-wrap gap-x-4 gap-y-2">
+                                    {room.bed_type && (
+                                      <div className="flex items-center gap-2">
+                                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                        {room.bed_type}
+                                      </div>
+                                    )}
+                                    {room.private_bathroom !== undefined && (
+                                      <div className="flex items-center gap-2">
+                                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                        {room.private_bathroom ? 'Private bathroom' : 'Shared bathroom'}
+                                      </div>
+                                    )}
+                                    {room.smoking !== undefined && (
+                                      <div className="flex items-center gap-2">
+                                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                        {room.smoking ? 'Smoking allowed' : 'Non-smoking'}
+                                      </div>
+                                    )}
+                                    {room.amenities && room.amenities.length > 0 && room.amenities.slice(0, 6).map((amenity: CustomAmenity, index: number) => (
+                                      <div key={`room-amenity-item-${amenity.id || index}`} className="flex items-center gap-2">
+                                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                        {amenity.name}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex flex-col items-end gap-1 text-sm text-gray-700">
+                                {room.security_deposit !== undefined && <div><span className="text-black-900 font-semibold">Security Deposit:</span> <span className="text-gray-700">{(room as ExtendedRoom).security ? 'Yes' : 'No'}</span></div>}
+                              </div>
                             </div>
-                            <div className="text-xs text-gray-500">
-                              {isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0 
-                                ? 'per month' 
-                                : bookingType === 'hourly' ? 'per hour' : 'per night'
-                              }
+                            <div className="text-right mb-4">
+                              <div className="text-2xl font-bold text-[#B11E43]">
+                                ₹{(() => {
+                                  try {
+                                    // Safely handle price calculations
+                                    if (isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
+                                      const basePrice = parseFloat(room.monthly_rate);
+                                      const discount = parseFloat(String(room.discount || '0'));
+                                      if (isNaN(basePrice) || isNaN(discount)) return 0;
+                                      return (basePrice * (1 - discount / 100)).toFixed(0);
+                                    } else {
+                                      const basePrice = bookingType === 'hourly' 
+                                        ? parseFloat(room.hourly_rate || '0') 
+                                        : parseFloat(room.daily_rate || '0');
+                                      const discount = parseFloat(String(room.discount || '0'));
+                                      if (isNaN(basePrice) || isNaN(discount)) return 0;
+                                      return (basePrice * (1 - discount / 100)).toFixed(0);
+                                    }
+                                  } catch (err) {
+                                    console.error("Price calculation error:", err);
+                                    return 0;
+                                  }
+                                })()}
+                              </div>
+                              <div className="text-gray-500 line-through">
+                                ₹{(() => {
+                                  try {
+                                    if (isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
+                                      return parseFloat(room.monthly_rate).toFixed(0);
+                                    } else {
+                                      return bookingType === 'hourly' 
+                                        ? parseFloat(room.hourly_rate || '0').toFixed(0) 
+                                        : parseFloat(room.daily_rate || '0').toFixed(0);
+                                    }
+                                  } catch (err) {
+                                    console.error("Original price calculation error:", err);
+                                    return 0;
+                                  }
+                                })()}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0 
+                                  ? 'per month' 
+                                  : bookingType === 'hourly' ? 'per hour' : 'per night'
+                                }
+                              </div>
+                              <div className="flex items-center justify-end mt-2">
+                                <Button
+                                  onClick={(e) => handleRoomQuantityChange(roomId, -1, e)}
+                                  variant="neutral" 
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  disabled={quantity <= 0}
+                                >
+                                  -
+                                </Button>
+                                <span className="mx-3 font-medium">{quantity}</span>
+                                <Button
+                                  onClick={(e) => handleRoomQuantityChange(roomId, 1, e)}
+                                  variant="neutral"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                >
+                                  +
+                                </Button>
+                              </div>
                             </div>
-                            <Button
-                              onClick={() => setSelectedRoom(room as ExtendedRoom)}
-                              variant={selectedRoom?.id === room.id ? "default" : "neutral"}
-                              className={selectedRoom?.id === room.id ? "bg-[#B11E43] hover:bg-[#8f1836]" : ""}
-                            >
-                              {selectedRoom?.id === room.id ? "Selected" : "Select"}
-                            </Button>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
 
@@ -531,13 +805,13 @@ export default function PropertyDetails() {
             </section>
 
             {/* Reviews */}
-            <section>
+            <section id="reviews">
               <h2 className="text-2xl font-semibold mb-4">Ratings and reviews</h2>
               <ReviewSection reviews={property.reviews || []} />
             </section>
 
             {/* Policies */}
-            <section>
+            <section id="rules">
               <h2 className="text-2xl font-semibold mb-4">House Rules & Policies</h2>
               <div className="space-y-4">
                 <div className="p-6 bg-white shadow-lg rounded-xl">
@@ -548,7 +822,7 @@ export default function PropertyDetails() {
                         <ClipboardList className="h-5 w-5 mr-2 text-[#B11E43]" />
                         <span>{rule.name}</span>
                       </li>
-                      ))}
+                    ))}
                   </ul>
                 </div>
                 
@@ -560,27 +834,68 @@ export default function PropertyDetails() {
                         <FileCheck className="h-5 w-5 mr-2 text-[#B11E43]" />
                         <span>{doc.name}</span>
                       </li>
-                      ))}
+                    ))}
                   </ul>
                 </div>
+              </div>
+            </section>
+
+            {/* Fine Print Section */}
+            <section id="fine-print">
+              <h2 className="text-2xl font-semibold mb-4">The fine print</h2>
+              <div className="p-6 bg-white shadow-lg rounded-xl">
+                <p className="text-gray-700 mb-4">Important information about your booking:</p>
+                <ul className="space-y-2 text-gray-600">
+                  <li className="flex items-start">
+                    <ClipboardList className="h-5 w-5 mr-2 text-[#B11E43] flex-shrink-0 mt-0.5" />
+                    <span>Check-in time starts at {property.check_in_time || '2:00 PM'}</span>
+                  </li>
+                  <li className="flex items-start">
+                    <ClipboardList className="h-5 w-5 mr-2 text-[#B11E43] flex-shrink-0 mt-0.5" />
+                    <span>Check-out time is {property.check_out_time || '12:00 PM'}</span>
+                  </li>
+                  <li className="flex items-start">
+                    <ClipboardList className="h-5 w-5 mr-2 text-[#B11E43] flex-shrink-0 mt-0.5" />
+                    <span>Front desk staff will greet guests on arrival</span>
+                  </li>
+                  {property.property_type === 'hotel' && (
+                    <li className="flex items-start">
+                      <ClipboardList className="h-5 w-5 mr-2 text-[#B11E43] flex-shrink-0 mt-0.5" />
+                      <span>24-hour front desk service available</span>
+                    </li>
+                  )}
+                  {property.security_deposit && (
+                    <li className="flex items-start">
+                      <ClipboardList className="h-5 w-5 mr-2 text-[#B11E43] flex-shrink-0 mt-0.5" />
+                      <span>Security deposit of ₹{property.security_deposit} required at check-in</span>
+                    </li>
+                  )}
+                  <li className="flex items-start">
+                    <ClipboardList className="h-5 w-5 mr-2 text-[#B11E43] flex-shrink-0 mt-0.5" />
+                    <span>Pets are not allowed on the property</span>
+                  </li>
+                </ul>
               </div>
             </section>
           </div>
 
           {/* Right Column - Booking Card */}
           <div className="lg:col-span-1">
-            <BookingCard
-              bookingType={bookingType}
-              property={property}
-              checkInDate={checkInDate}
-              checkOutDate={checkOutDate}
-              checkInTime={checkInTime}
-              checkOutTime={checkOutTime}
-              selectedRoom={selectedRoom as any}
-              selectedGuests={selectedGuests}
-              selectedRooms={selectedRooms}
-              searchParams={searchParams}
-            />
+            <div className="sticky top-4">
+              <BookingCard
+                bookingType={bookingType}
+                property={property}
+                checkInDate={checkInDate}
+                checkOutDate={checkOutDate}
+                checkInTime={checkInTime}
+                checkOutTime={checkOutTime}
+                months={months}
+                selectedRoomMap={selectedRooms}
+                selectedGuests={selectedGuests}
+                selectedRoomsCount={totalSelectedRooms}
+                searchParams={searchParams}
+              />
+            </div>
           </div>
         </div>
       </main>
@@ -597,5 +912,5 @@ export default function PropertyDetails() {
         />
       )}
     </div>
-  )
+  );
 }

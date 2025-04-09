@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useCallback, ChangeEvent, useEffect } from "react"
-import { MapPin, Calendar, Clock, Bed, Users, Minus, Plus, Search } from "lucide-react"
+import { MapPin, CalendarDays, Clock, Bed, Users, Minus, Plus, Search, Calendar } from "lucide-react"
 import { useRouter, useSearchParams } from 'next/navigation'
 import { format, addDays, startOfTomorrow, addMonths, isValid, isBefore, parse, parseISO } from 'date-fns'
 import { fetchLocation } from '@/lib/api/fetchLocation'
@@ -417,16 +417,20 @@ export function SearchForm({ sectionType }: SearchFormProps) {
             <label htmlFor="check-in" className="text-xs text-gray-500 font-medium">
               Check In Date
             </label>
-            <div className="relative cursor-pointer" onClick={() => checkInRef.current?.focus()}>
+            <div className="relative cursor-pointer">
             <input
               id="check-in"
               ref={checkInRef}
               type="date"
-              className="outline-none text-sm w-full cursor-pointer"
+              className="opacity-0 absolute inset-0 w-full h-full cursor-pointer z-10"
               value={checkIn}
               min={minCheckInDate}
               onChange={handleCheckInChange}
               />
+              <div className="flex items-center justify-between w-full pr-2">
+                <span className="text-sm">{checkIn ? format(parseISO(checkIn), 'dd MMM yyyy') : ''}</span>
+                <CalendarDays className="h-4 w-4 text-black" />
+              </div>
             </div>
           </div>
         </div>
@@ -461,16 +465,20 @@ export function SearchForm({ sectionType }: SearchFormProps) {
                   <label htmlFor="check-out" className="text-xs text-gray-500 font-medium">
                 Check Out Date
                   </label>
-              <div className="relative cursor-pointer" onClick={() => checkOutRef.current?.focus()}>
+              <div className="relative cursor-pointer">
                   <input
                     id="check-out"
                     ref={checkOutRef}
                     type="date"
-                    className="outline-none text-sm w-full cursor-pointer"
+                    className="opacity-0 absolute inset-0 w-full h-full cursor-pointer z-10"
                     value={checkOut}
                     min={minCheckOutDate}
                     onChange={(e) => setCheckOut(e.target.value)}
                 />
+                <div className="flex items-center justify-between w-full pr-2">
+                  <span className="text-sm">{checkOut ? format(parseISO(checkOut), 'dd MMM yyyy') : ''}</span>
+                  <CalendarDays className="h-4 w-4 text-black" />
+                </div>
               </div>
                 </div>
               </div>
@@ -522,7 +530,7 @@ export function SearchForm({ sectionType }: SearchFormProps) {
                   </button>
                 </div>
                 <div className="absolute right-0 top-1/2 transform -translate-y-1/2 pr-2 pointer-events-none">
-                  <Calendar className="h-4 w-4 text-black" />
+                  <CalendarDays className="h-6 w-6 text-black" />
                 </div>
               </div>
                 </div>

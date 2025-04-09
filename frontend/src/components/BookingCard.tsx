@@ -2,21 +2,22 @@
 
 import { useState, useEffect } from "react"
 import Link from 'next/link'
-import { Button } from "@/components/ui/button"
+import { Button } from "./ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
+import { Label } from "./ui/label"
+import { Input } from "./ui/input"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
-import { CalendarIcon, Info, AlertCircle, CheckCircle2 } from "lucide-react"
+import { CalendarIcon, Info, AlertCircle, CheckCircle2, CalendarDays } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Room } from '@/types/property'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
 import { Princess_Sofia } from "next/font/google"
+import { Separator } from "./ui/separator"
 
 interface Offer {
   id: number
@@ -39,9 +40,10 @@ interface BookingCardProps {
   checkOutDate: Date | undefined
   checkInTime: string | null
   checkOutTime: string | null
-  selectedRoom: Room | null
+  selectedRoomMap: Map<string, any>
   selectedGuests: number | null
-  selectedRooms: number | null
+  selectedRoomsCount: number | null
+  months?: number
   searchParams: ReturnType<typeof useSearchParams>
 }
 
@@ -52,9 +54,10 @@ export function BookingCard({
   checkOutDate: initialCheckOutDate,
   checkInTime: initialCheckInTime,
   checkOutTime: initialCheckOutTime,
-  selectedRoom: initialSelectedRoom,
+  selectedRoomMap,
+  months: initialMonths = 1,
   selectedGuests: initialSelectedGuests,
-  selectedRooms: initialSelectedRooms,
+  selectedRoomsCount: initialSelectedRoomsCount,
   searchParams
 }: BookingCardProps) {
   const [date, setDate] = useState<Date | undefined>(initialCheckInDate)
@@ -63,8 +66,13 @@ export function BookingCard({
   // Extract hour from time strings (HH:MM format) or use defaults
   const extractHourFromTimeString = (timeString: string | null): string => {
     if (!timeString) return "12";
-    const match = timeString.match(/^(\d{1,2}):/);
-    return match ? match[1] : "12";
+    try {
+      const match = timeString.match(/^(\d{1,2}):/);
+      return match ? match[1] : "12";
+    } catch (error) {
+      console.error("Time parsing error:", error);
+      return "12";
+    }
   };
   
   const [checkInTime, setCheckInTime] = useState<string>(
@@ -77,17 +85,74 @@ export function BookingCard({
   );
   
   const [guests, setGuests] = useState(initialSelectedGuests|| 1)
-  const [rooms, setRooms] = useState(initialSelectedRooms|| 1)
-  const [months, setMonths] = useState(1)
+  const [rooms, setRooms] = useState(initialSelectedRoomsCount || 1)
+  const [months, setMonths] = useState(initialMonths)
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null)
   
+  // When selectedRoomMap changes, update the URL to match
+  useEffect(() => {
+    if (property && property.id) {
+      // Save the current room selections to session storage
+      const roomSelectionsObject: Record<string, number> = {};
+      selectedRoomMap.forEach((room, id) => {
+        if (room.quantity > 0) {
+          roomSelectionsObject[id] = room.quantity || 0;
+        }
+      });
+      
+      // Only update if there are selections
+      if (Object.keys(roomSelectionsObject).length > 0) {
+        sessionStorage.setItem(`roomSelections_${property.id}`, JSON.stringify(roomSelectionsObject));
+      }
+    }
+  }, [selectedRoomMap, property]);
+  
+  // Sync rooms state with props when selectedRoomsCount changes
+  useEffect(() => {
+    if (initialSelectedRoomsCount && initialSelectedRoomsCount !== rooms) {
+      setRooms(initialSelectedRoomsCount);
+    }
+  }, [initialSelectedRoomsCount]);
+
+  // Update URL search parameters when rooms or guests change
+  useEffect(() => {
+    const updateSearchParams = () => {
+      const newSearchParams = new URLSearchParams(searchParams.toString());
+      newSearchParams.set('rooms', rooms.toString());
+      newSearchParams.set('guests', guests.toString());
+      
+      // Only update URL if we're in the browser
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        url.search = newSearchParams.toString();
+        window.history.pushState({}, '', url);
+      }
+    };
+
+    // Only update when the values actually change (not on initial render)
+    if (rooms !== initialSelectedRoomsCount || guests !== initialSelectedGuests) {
+      updateSearchParams();
+    }
+  }, [rooms, guests, searchParams]);
+
   // Check if this is a hostel property
   const isHostel = property?.property_type === 'hostel'
 
   const hours = Array.from({ length: 24 }, (_, i) => i)
 
-  const formatTime = (hour: number) => {
-    return hour === 0 ? "12:00 AM" : hour < 12 ? `${hour}:00 AM` : hour === 12 ? "12:00 PM" : `${hour - 12}:00 PM`
+  const formatTime = (hour: number | string) => {
+    try {
+      const hourNum = typeof hour === 'string' ? parseInt(hour, 10) : hour;
+      if (isNaN(hourNum)) return "12:00 PM"; // Default if parsing fails
+      
+      return hourNum === 0 ? "12:00 AM" : 
+             hourNum < 12 ? `${hourNum}:00 AM` : 
+             hourNum === 12 ? "12:00 PM" : 
+             `${hourNum - 12}:00 PM`;
+    } catch (error) {
+      console.error("Time formatting error:", error);
+      return "12:00 PM"; // Fallback
+    }
   }
 
   // Debug logs to help troubleshoot time values
@@ -111,69 +176,83 @@ export function BookingCard({
   }, [date, months, bookingType]);
 
   const calculatePrice = () => {
-    if (!initialSelectedRoom) return 0
-
-    const room = initialSelectedRoom
+    // If no rooms are selected, return 0
+    if (!selectedRoomMap || selectedRoomMap.size === 0) return 0;
     
-    // Check if we should use monthly rate
-    let basePrice = 0
+    // Get only rooms with quantity > 0
+    const selectedRooms = Array.from(selectedRoomMap.values()).filter(room => room.quantity > 0);
+    if (selectedRooms.length === 0) return 0;
     
-    if (bookingType === 'monthly' || (isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0)) {
-      // Use monthly rate for monthly bookings or hostels
-      basePrice = parseFloat(room.monthly_rate || '0')
+    // Calculate price for each selected room type
+    let totalPrice = 0;
+    
+    for (const room of selectedRooms) {
+      const quantity = room.quantity || 0;
+      if (quantity <= 0) continue;
       
-      // For monthly booking, use the months state variable
-      let numberOfMonths = months;
+      let roomPrice = 0;
       
-      // If using monthly booking type but months is not set, calculate from dates as fallback
-      if (bookingType === 'monthly' && (!numberOfMonths || numberOfMonths < 1)) {
-        numberOfMonths = 1;
-        
-        // If we have dates, calculate the difference in months
-        if (date && checkOut) {
-          const diffTime = checkOut.getTime() - date.getTime();
-          const diffDays = diffTime / (1000 * 3600 * 24);
-          numberOfMonths = Math.ceil(diffDays / 30); // Approximate month calculation
-        }
-      }
-      
-      return basePrice * rooms * numberOfMonths;
-    } else {
-      // Use hourly or daily rate based on bookingType
-      basePrice = bookingType === 'hourly'
-        ? parseFloat(room.hourly_rate || '0')
-        : parseFloat(room.daily_rate || '0')
-      
-      let duration = 0
-
-      if (bookingType === 'hourly' && checkInTime && checkOutTime && date) {
-        const startTime = new Date(date)
-        const endTime = new Date(date)
-        startTime.setHours(parseInt(checkInTime, 10), 0, 0, 0)
-        endTime.setHours(parseInt(checkOutTime, 10), 0, 0, 0)
-        duration = (endTime.getTime() - startTime.getTime()) / (1000 * 3600)
-        
-        // If end time is earlier than start time, assume it's the next day
-        if (duration <= 0) {
-          duration += 24;
-        }
-      } else if (date && checkOut) {
-        duration = Math.max(1, (checkOut.getTime() - date.getTime()) / (1000 * 3600 * 24))
+      // Check if we should use monthly rate
+      if (bookingType === 'monthly' || (isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0)) {
+        // Use monthly rate for monthly bookings or hostels
+        const basePrice = parseFloat(room.monthly_rate || '0');
+        roomPrice = basePrice * quantity;
       } else {
-        // Default to 1 day/hour if we don't have complete date information
-        duration = 1;
-      }
+        // Use hourly or daily rate based on bookingType
+        const basePrice = bookingType === 'hourly'
+          ? parseFloat(room.hourly_rate || '0')
+          : parseFloat(room.daily_rate || '0');
+        
+        let duration = 0;
 
-      return basePrice * duration * rooms
+        if (bookingType === 'hourly' && checkInTime && checkOutTime && date) {
+          const startTime = new Date(date);
+          const endTime = new Date(date);
+          startTime.setHours(parseInt(checkInTime, 10), 0, 0, 0);
+          endTime.setHours(parseInt(checkOutTime, 10), 0, 0, 0);
+          duration = (endTime.getTime() - startTime.getTime()) / (1000 * 3600);
+          
+          // If end time is earlier than start time, assume it's the next day
+          if (duration <= 0) {
+            duration += 24;
+          }
+        } else if (date && checkOut) {
+          duration = Math.max(1, (checkOut.getTime() - date.getTime()) / (1000 * 3600 * 24));
+        } else {
+          // Default to 1 day/hour if we don't have complete date information
+          duration = 1;
+        }
+
+        roomPrice = basePrice * duration * quantity;
+      }
+      
+      totalPrice += roomPrice;
     }
+
+    return totalPrice;
   }
 
   const totalPrice = calculatePrice()
   const taxes = totalPrice * 0.18 // 18% GST
   
-  // Safely handle discount as string or number
-  const discountValue = initialSelectedRoom?.discount ? parseFloat(String(initialSelectedRoom.discount)) : 0
-  const discountedPrice = totalPrice - (totalPrice * discountValue / 100)
+  // Calculate average discount from all selected rooms
+  const calculateAverageDiscount = () => {
+    const selectedRooms = Array.from(selectedRoomMap.values()).filter(room => room.quantity > 0);
+    if (selectedRooms.length === 0) return 0;
+    
+    const totalQuantity = selectedRooms.reduce((sum, room) => sum + (room.quantity || 0), 0);
+    if (totalQuantity === 0) return 0;
+    
+    const weightedDiscount = selectedRooms.reduce((sum, room) => {
+      const discount = room.discount ? parseFloat(String(room.discount)) : 0;
+      return sum + (discount * (room.quantity || 0));
+    }, 0);
+    
+    return weightedDiscount / totalQuantity;
+  };
+  
+  const averageDiscount = calculateAverageDiscount();
+  const discountedPrice = totalPrice - (totalPrice * averageDiscount / 100)
   
   // Safely handle offer discount
   const offerDiscount = selectedOffer ? (totalPrice * parseFloat(selectedOffer.offer.discount_percentage)) / 100 : 0
@@ -181,7 +260,9 @@ export function BookingCard({
   
   // Determine the price label based on property type and room
   const getPriceLabel = () => {
-    if (bookingType === 'monthly' || (isHostel && initialSelectedRoom?.monthly_rate && parseFloat(initialSelectedRoom.monthly_rate || '0') > 0)) {
+    const selectedRoomsArray = Array.from(selectedRoomMap.values()).filter(room => room.quantity > 0);
+    
+    if (bookingType === 'monthly' || (isHostel && selectedRoomsArray.length > 0 && selectedRoomsArray[0].monthly_rate && parseFloat(selectedRoomsArray[0].monthly_rate || '0') > 0)) {
       return "/month";
     } else {
       return bookingType === 'hourly' ? "/hour" : "/night";
@@ -190,10 +271,12 @@ export function BookingCard({
   
   // Debug booking information
   useEffect(() => {
+    const selectedRoomsArray = Array.from(selectedRoomMap.values()).filter(room => room.quantity > 0);
+    
     console.log("BookingCard info:", {
       bookingType,
       isHostel,
-      hasMonthlyRate: initialSelectedRoom?.monthly_rate && parseFloat(initialSelectedRoom.monthly_rate || '0') > 0,
+      hasMonthlyRate: selectedRoomsArray.length > 0 && selectedRoomsArray[0].monthly_rate && parseFloat(selectedRoomsArray[0].monthly_rate || '0') > 0,
       checkIn: date,
       checkOut,
       months,
@@ -201,7 +284,7 @@ export function BookingCard({
       priceLabel: getPriceLabel(),
       calculatedPrice: totalPrice
     });
-  }, [bookingType, isHostel, initialSelectedRoom, date, checkOut, months, rooms, totalPrice]);
+  }, [bookingType, isHostel, selectedRoomMap, date, checkOut, months, rooms, totalPrice]);
 
   return (
     <Card className="w-[380px] bg-white shadow-lg">
@@ -211,13 +294,13 @@ export function BookingCard({
             <div className="flex items-baseline gap-2">
               <span className="text-2xl font-bold">₹{Math.round(discountedPrice)}</span>
               <span className="text-sm text-gray-500">{getPriceLabel()}</span>
-              {initialSelectedRoom && initialSelectedRoom.discount && parseFloat(String(initialSelectedRoom.discount)) > 0 && (
+              {averageDiscount > 0 && (
                 <>
                   <span className="text-gray-500 line-through">
                     ₹{Math.round(totalPrice)}
                   </span>
-                  <Badge variant="secondary" className="bg-red-50 text-red-600">
-                    {initialSelectedRoom.discount}% off
+                  <Badge variant="secondary" className="bg-green-50 text-green-600 hover:bg-green-50 hover:text-green-600">
+                    {averageDiscount.toFixed(0)}% off
                   </Badge>
                 </>
               )}
@@ -241,7 +324,7 @@ export function BookingCard({
                     !date && "text-muted-foreground"
                   )}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  <CalendarDays className="mr-2 h-4 w-4" />
                   {date ? format(date, "PPP") : <span>Pick a date</span>}
                 </Button>
               </PopoverTrigger>
@@ -305,7 +388,7 @@ export function BookingCard({
                       !checkOut && "text-muted-foreground"
                     )}
                   >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    <CalendarDays className="mr-2 h-4 w-4" />
                     {checkOut ? format(checkOut, "PPP") : <span>Pick a date</span>}
                   </Button>
                 </PopoverTrigger>
@@ -331,7 +414,7 @@ export function BookingCard({
                       !checkOut && "text-muted-foreground"
                     )}
                   >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    <CalendarDays className="mr-2 h-4 w-4" />
                     {checkOut ? format(checkOut, "PPP") : <span>Pick a date</span>}
                   </Button>
                 </PopoverTrigger>
@@ -373,24 +456,51 @@ export function BookingCard({
                 </div>
               </>
           </div>
+
+          {bookingType === 'monthly' && (
+            <div>
+              <Label>Number of Months</Label>
+              <Input 
+                type="number" 
+                value={months}
+                onChange={(e) => setMonths(parseInt(e.target.value) || 1)}
+                min={1}
+                max={12}
+                className="mt-1"
+              />
+            </div>
+          )}
         </div>
 
         {/* Room Selection */}
-        {initialSelectedRoom && (
-          <div className="border rounded-lg p-4 flex justify-between items-center">
-            <div>
-              <span className="font-medium">
-                {initialSelectedRoom.name}
-              </span>
-              <p className="text-sm text-gray-500">
-                {bookingType === 'monthly' 
-                  ? `₹${initialSelectedRoom.monthly_rate || 'N/A'}/month`
-                  : bookingType === 'hourly' 
-                    ? `₹${initialSelectedRoom.hourly_rate || 'N/A'}/hour`
-                    : `₹${initialSelectedRoom.daily_rate || 'N/A'}/night`
-                }
-              </p>
-            </div>
+        {Array.from(selectedRoomMap.values()).filter(room => room.quantity > 0).length > 0 ? (
+          <div className="space-y-2">
+            <Label>Selected Rooms</Label>
+            {Array.from(selectedRoomMap.values())
+              .filter(room => room.quantity > 0)
+              .map(room => (
+                <div key={room.id} className="border rounded-lg p-3 flex justify-between items-center">
+                  <div>
+                    <span className="font-medium">{room.name}</span>
+                    <p className="text-sm text-gray-500">
+                      {bookingType === 'monthly' 
+                        ? `₹${room.monthly_rate || 'N/A'}/month`
+                        : bookingType === 'hourly' 
+                          ? `₹${room.hourly_rate || 'N/A'}/hour`
+                          : `₹${room.daily_rate || 'N/A'}/night`
+                      }
+                    </p>
+                  </div>
+                  <Badge variant="outline">
+                    Qty: {room.quantity}
+                  </Badge>
+                </div>
+              ))
+            }
+          </div>
+        ) : (
+          <div className="border rounded-lg p-4 text-center text-gray-500">
+            No rooms selected
           </div>
         )}
 
@@ -441,26 +551,28 @@ export function BookingCard({
 
         {/* Price Breakdown */}
         <div className="space-y-2 pt-4 border-t">
-          <div className="flex justify-between text-sm">
-            <span>Room charges</span>
-            <span>₹{Math.round(totalPrice)}</span>
-          </div>
-          {selectedOffer && (
-            <div className="flex justify-between text-sm text-green-600">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4" />
-                <span>{selectedOffer.offer.code} applied</span>
-              </div>
-              <span>-₹{Math.round(offerDiscount)}</span>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span>Room Charges</span>
+              <span>₹{bookingType === 'monthly' 
+                ? (totalPrice * months).toFixed(2)
+                : totalPrice.toFixed(2)}</span>
             </div>
-          )}
-          <div className="flex justify-between text-sm">
-            <span>Taxes & fees</span>
-            <span>₹{Math.round(taxes)}</span>
-          </div>
-          <div className="flex justify-between font-medium pt-2 border-t">
-            <span>Total</span>
-            <span>₹{Math.round(finalPrice)}</span>
+            {averageDiscount > 0 && (
+              <div className="flex justify-between text-green-600">
+                <span>Discount</span>
+                <span>-₹{(totalPrice * averageDiscount / 100 * months).toFixed(2)}</span>
+              </div>
+            )}
+            <div className="flex justify-between">
+              <span>Taxes</span>
+              <span>₹{(taxes * months).toFixed(2)}</span>
+            </div>
+            <Separator />
+            <div className="flex justify-between font-semibold">
+              <span>Total Price</span>
+              <span>₹{(finalPrice * months).toFixed(2)}</span>
+            </div>
           </div>
         </div>
       </CardContent>
@@ -468,18 +580,36 @@ export function BookingCard({
       <CardFooter className="flex flex-col gap-4">
         <Link href={{
           pathname: `/property/${property.id}/book`,
-          query: searchParams? Object.fromEntries(searchParams.entries()) : {}
+          query: {
+            ...(searchParams ? Object.fromEntries(searchParams.entries()) : {}),
+            selectedRooms: JSON.stringify(
+              Array.from(selectedRoomMap.entries())
+                .filter(([_, room]) => room.quantity > 0)
+                .map(([id, room]) => ({
+                  id,
+                  name: room.name || room.occupancyType || 'Room',
+                  quantity: room.quantity,
+                  price: bookingType === 'monthly' 
+                    ? room.monthly_rate 
+                    : bookingType === 'hourly' 
+                      ? room.hourly_rate 
+                      : room.daily_rate
+                }))
+            )
+          }
         }}
-        // target="_blank"
         rel="noopener noreferrer">
-          <Button className="w-full bg-[#B11E43] hover:bg-[#8f1836]">
-          Book Now
-        </Button>
+          <Button 
+            className="w-full bg-[#B11E43] hover:bg-[#8f1836]"
+            disabled={Array.from(selectedRoomMap.values()).filter(room => room.quantity > 0).length === 0}
+          >
+            Book Now
+          </Button>
         </Link>
         
         <div className="w-full space-y-2">
-          <p className="text-sm text-red-500 flex items-center gap-1">
-            <AlertCircle className="h-4 w-4" />
+          <p className="text-sm text-green-600 flex items-center gap-1">
+            <CheckCircle2 className="h-4 w-4" />
             10 people booked this property today
           </p>
           <button className="text-sm text-[#B11E43] flex items-center gap-1">

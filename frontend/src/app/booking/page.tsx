@@ -5,13 +5,14 @@ import { Header } from '@/components/Header'
 import Footer from '@/components/Footer'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Star, CalendarIcon, PackageSearch } from 'lucide-react'
+import { Star, CalendarIcon, PackageSearch, Clock, Bed } from 'lucide-react'
 import { toast, ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { getUserBookings } from '@/lib/api/fetchUserBookings'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { Booking } from '@/types/booking'
+import { format, parseISO } from 'date-fns'
 
 export default function BookingPage() {
   console.log("BookingPage component is rendering")
@@ -60,7 +61,46 @@ export default function BookingPage() {
     )
   }
 
-  // Function to generate invoice HTML (already defined in previous turns, ensure it's here)
+  // Function to format date for display
+  const formatDate = (dateString: string) => {
+    try {
+      return format(parseISO(dateString), 'dd MMM yyyy')
+    } catch (error) {
+      return dateString
+    }
+  }
+
+  // Helper function to render booked rooms with counts
+  const renderBookedRooms = (booking: Booking) => {
+    if (!booking.booking_room_types || booking.booking_room_types.length === 0) {
+      return (
+        <div>
+          <p className="font-medium">{booking.property.rooms.find(room => room.id === booking.room)?.name || 'Standard Room'}</p>
+        </div>
+      )
+    }
+
+    return (
+      <div className="space-y-1">
+        {booking.booking_room_types.map((roomTypeObj, index) => {
+          const roomId = Object.keys(roomTypeObj)[0]
+          const count = roomTypeObj[roomId]
+          const roomDetails = booking.property.rooms.find(room => room.id === parseInt(roomId))
+          
+          return (
+            <div key={`${roomId}-${index}`} className="flex items-center gap-2">
+              <Bed className="h-4 w-4 text-gray-500" />
+              <p className="font-medium">
+                {roomDetails?.name || `Room #${roomId}`} × {count}
+              </p>
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
+  // Function to generate invoice HTML
   const generateInvoiceHTML = (booking: Booking): string => { 
     return `
     <html>
@@ -154,8 +194,11 @@ export default function BookingPage() {
           <div>
             <h3>Booking Details:</h3>
             <p>Booking ID: ${booking.id}</p>
-            <p>Check-in: ${new Date(booking.checkin_date).toLocaleDateString()}</p>
-            <p>Check-out: ${new Date(booking.checkout_date).toLocaleDateString()}</p>
+            <p>Check-in: ${formatDate(booking.checkin_date)}</p>
+            <p>Check-out: ${formatDate(booking.checkout_date)}</p>
+            ${booking.booking_time === 'hourly' ? 
+              `<p>Check-in Time: ${booking.checkin_time || 'N/A'}</p>
+               <p>Check-out Time: ${booking.checkout_time || 'N/A'}</p>` : ''}
           </div>
         </div>
   
@@ -165,9 +208,28 @@ export default function BookingPage() {
             <td>${booking.property.name}</td>
           </tr>
           <tr>
-            <td>Room Type</td>
-            <td>${booking.property.rooms.find(room => room.id === booking.room)?.name}</td>
+            <td>Booking Type</td>
+            <td>${booking.booking_time === 'daily' ? 'Daily' : 
+                 booking.booking_time === 'hourly' ? 'Hourly' : 
+                 booking.booking_time === 'monthly' ? 'Monthly' : booking.booking_time}</td>
           </tr>
+          ${booking.booking_room_types ? 
+            booking.booking_room_types.map((roomTypeObj) => {
+              const roomId = Object.keys(roomTypeObj)[0]
+              const count = roomTypeObj[roomId]
+              const roomDetails = booking.property.rooms.find(room => room.id === parseInt(roomId))
+              return `
+                <tr>
+                  <td>Room Type</td>
+                  <td>${roomDetails?.name || `Room #${roomId}`} × ${count}</td>
+                </tr>
+              `
+            }).join('') : 
+            `<tr>
+              <td>Room Type</td>
+              <td>${booking.property.rooms.find(room => room.id === booking.room)?.name}</td>
+            </tr>`
+          }
           <tr>
             <td>Number of Guests</td>
             <td>${booking.number_of_guests}</td>
@@ -205,7 +267,7 @@ export default function BookingPage() {
     `;
   };
 
-  // Function to trigger download (ensure this is defined inside BookingPage)
+  // Function to trigger download
   const downloadInvoice = (booking: Booking) => {
     const invoiceHTML = generateInvoiceHTML(booking)
     const blob = new Blob([invoiceHTML], { type: 'text/html' })
@@ -231,13 +293,24 @@ export default function BookingPage() {
               {bookings.map((booking) => (
                 <Card key={booking.id}>
                   <CardHeader>
-                    <CardTitle>Booking ID: {booking.id}</CardTitle>
+                    <CardTitle className="flex justify-between">
+                      <span>Booking ID: {booking.id}</span>
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                        booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                        booking.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                        booking.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                        booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {booking.status}
+                      </span>
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-col md:flex-row gap-6">
                       <div className="w-full md:w-1/3">
                         <img
-                          src={booking.property.images[0].image || '/images/default-image.jpg'}
+                          src={booking.property.images[0]?.image || '/images/default-image.jpg'}
                           alt={booking.property.name}
                           width={300}
                           height={200}
@@ -246,36 +319,67 @@ export default function BookingPage() {
                       </div>
                       <div className="flex-1">
                         <h3 className="text-xl font-semibold mb-2">{booking.property.name}</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                          {/* Booking Type */}
                           <div>
-                            <p className="text-sm text-gray-500">Room Type</p>
-                            <p className="font-medium">{booking.property.rooms.find(room => room.id === booking.room)?.name}</p>
+                            <p className="text-sm text-gray-500">Booking Type</p>
+                            <p className="font-medium capitalize">
+                              {booking.booking_time === 'daily' ? 'Daily' : 
+                               booking.booking_time === 'hourly' ? 'Hourly' : 
+                               booking.booking_time === 'monthly' ? 'Monthly' : booking.booking_time}
+                            </p>
                           </div>
+                          
+                          {/* Amount */}
                           <div>
                             <p className="text-sm text-gray-500">Amount Paid</p>
                             <p className="font-medium">₹{booking.price}</p>
                           </div>
+                          
+                          {/* Check-in Date (for all booking types) */}
                           <div>
-                            <p className="text-sm text-gray-500">Check-in</p>
-                            <p className="font-medium">{booking.checkin_date}</p>
+                            <p className="text-sm text-gray-500">Check-in Date</p>
+                            <p className="font-medium">{formatDate(booking.checkin_date)}</p>
                           </div>
-                          <div>
-                            <p className="text-sm text-gray-500">Check-out</p>
-                            <p className="font-medium">{booking.checkout_date}</p>
+                          
+                          {/* Check-out Date (for daily and monthly) */}
+                          {booking.booking_time !== 'hourly' && (
+                            <div>
+                              <p className="text-sm text-gray-500">Check-out Date</p>
+                              <p className="font-medium">{formatDate(booking.checkout_date)}</p>
+                            </div>
+                          )}
+                          
+                          {/* Check-in Time (for hourly) */}
+                          {booking.booking_time === 'hourly' && booking.checkin_time && (
+                            <div>
+                              <p className="text-sm text-gray-500">Check-in Time</p>
+                              <div className="font-medium flex items-center">
+                                <Clock className="h-4 w-4 mr-1 text-gray-500" />
+                                {booking.checkin_time}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Check-out Time (for hourly) */}
+                          {booking.booking_time === 'hourly' && booking.checkout_time && (
+                            <div>
+                              <p className="text-sm text-gray-500">Check-out Time</p>
+                              <div className="font-medium flex items-center">
+                                <Clock className="h-4 w-4 mr-1 text-gray-500" />
+                                {booking.checkout_time}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Room Details */}
+                          <div className="md:col-span-2">
+                            <p className="text-sm text-gray-500 mb-1">Room Details</p>
+                            {renderBookedRooms(booking)}
                           </div>
                         </div>
+                        
                         <div className="flex flex-wrap gap-4">
-                          <div className="flex items-center">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                              booking.status === 'completed' ? 'bg-blue-100 text-blue-800' :
-                              booking.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                              booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-gray-100 text-gray-800'
-                            }`}>
-                              {booking.status}
-                            </span>
-                          </div>
                           {booking.status === 'completed' && (
                             <Button
                               variant="neutral"

@@ -50,7 +50,6 @@
     --bg: #dfe5f2;
     --bw: #fff;
     --blank: #000;
-    --border: #000;
     --text: #000;
     --mtext: #fff;
     --ring: #000;
@@ -148,4 +147,37 @@
 
 .testimonial-scroll::-webkit-scrollbar-thumb:hover {
   background: #8c1c36;
+}
+
+.ribbon {
+  --r: 1.8em; /* increased cutout size by 50% */
+  --color: #FF6B6B; /* default color */
+  --text-color: #fff; /* default text color */
+  
+  font-size: 24px; /* increased font size */
+  font-weight: bold;
+  color: var(--text-color);
+  border-block: 0.8em solid #0000; /* increased border size */
+  padding-inline: calc(var(--r) + 0.8em) 1.2em; /* increased padding */
+  line-height: 2.2; /* increased line height */
+  width: fit-content;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  z-index: 20; /* ensure ribbon is on top */
+}
+
+.ribbon-right {
+  clip-path: polygon(var(--r) 0, 100% 0, 100% 100%, var(--r) 100%, 0 50%);
+  background:
+   radial-gradient(0.4em 50% at right,#000a,#0000) border-box,
+   var(--color) padding-box;
+  right: -1.5em; /* moved more to the left */
+}
+
+.ribbon-left {
+  clip-path: polygon(0 0, calc(100% - var(--r)) 0, 100% 50%, calc(100% - var(--r)) 100%, 0 100%);
+  background:
+   radial-gradient(0.4em 50% at left,#000a,#0000) border-box,
+   var(--color) padding-box;
+  left: -3em; /* adjusted position */
 }

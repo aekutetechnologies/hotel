@@ -164,15 +164,13 @@ export function HomeHero({
     }),
   };
 
-  // Colors for hotel sticker
-  const hotelPrimaryColor = "#A31C44";
-  const hotelAccentColor = "#FF3A5E";
-  const hotelBorderColor = "#FF9BAC";
-  
-  // Colors for hostel sticker
-  const hostelPrimaryColor = "#343F52";
-  const hostelAccentColor = "#A8B3C1";
-  const hostelBorderColor = "#A8B3C1";
+  // Colors for hotel ribbon
+  const hotelRibbonColor = "#a31c44";
+  const hotelRibbonTextColor = "#fff";
+
+  // Colors for hostel ribbon
+  const hostelRibbonColor = "#454F61";
+  const hostelRibbonTextColor = "#fff";
 
   return (
     <div className="hidden md:flex flex-1 flex-col md:flex-row relative h-screen">
@@ -356,100 +354,41 @@ export function HomeHero({
             )}
             {expandedSection === "hostels" && (
               <motion.div
-                className="h-full flex items-center justify-center cursor-pointer absolute inset-0 z-[-1] overflow-hidden"
+                className="h-full flex items-center justify-center cursor-pointer absolute inset-0 z-[-1] overflow-visible"
                 initial={{ opacity: 0, scale: 0.8, x: "100%" }}
-                animate={{ opacity: 1, scale: 1, x: "0", zIndex: 10 }}
+                animate={{ 
+                  opacity: 1, 
+                  scale: 1, 
+                  x: "0",
+                  zIndex: 10,
+                  transition: {
+                    duration: 1.2,
+                    ease: [0.16, 1, 0.3, 1],
+                    x: {
+                      duration: 1.2,
+                      ease: [0.16, 1, 0.3, 1],
+                      times: [0, 0.1, 0.2, 0.3, 0.4, 1],
+                      values: ["100%", "130%", "90%", "120%", "80%", "0"]
+                    }
+                  }
+                }}
                 exit={{ opacity: 0, scale: 0.8, x: "100%", zIndex: -1 }}
-                transition={{ duration: 0.8, ease: "easeInOut" }}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleSectionClick("hotels");
                 }}
               >
-                <div className="w-[160px] h-[160px] relative">
-                  <motion.div 
-                    className="absolute inset-0 rounded-full flex items-center justify-center overflow-hidden"
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 z-20 pr-8">
+                  <div 
+                    className="ribbon ribbon-right"
                     style={{
-                      background: "white",
-                      boxShadow: `0 0 20px rgba(0,0,0,0.3)`,
-                      border: `4px solid ${hotelBorderColor}`
-                    }}
+                      '--r': '1.8em',
+                      '--color': hotelRibbonColor,
+                      '--text-color': hotelRibbonTextColor,
+                    } as React.CSSProperties}
                   >
-                    <div className="sticker relative text-center flex flex-col items-center" style={{
-                      fontFamily: "'Arial', sans-serif",
-                      fontStyle: "italic",
-                      fontWeight: 900,
-                      lineHeight: "0.9",
-                      textTransform: "uppercase",
-                      padding: "8px",
-                    }}>
-                      <span style={{
-                        fontSize: "14px",
-                        fontWeight: 700,
-                        marginBottom: "2px",
-                        color: hotelPrimaryColor,
-                        opacity: 0.9,
-                        transform: "rotate(-5deg)",
-                      }}>
-                        switch to
-                      </span>
-                      <motion.div style={{
-                        backgroundImage: `
-                          linear-gradient(
-                            ${hotelShineAngle}deg, 
-                            rgba(255,255,255,0) 0%, 
-                            rgba(255,255,255,0) 40%, 
-                            rgba(255,255,255,0.98) 49.5%, 
-                            rgba(255,255,255,0.98) 50.5%, 
-                            rgba(255,255,255,0) 60%, 
-                            rgba(255,255,255,0)
-                          ),
-                          linear-gradient(
-                            to right, 
-                            ${hotelPrimaryColor}, 
-                            ${hotelAccentColor}, 
-                            ${hotelPrimaryColor}
-                          )
-                        `,
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        textShadow: "0.05em 0.05em 0.02em rgba(0,0,0,0.5)",
-                        position: "relative",
-                        zIndex: 2,
-                        display: "inline-block",
-                        transform: "rotate(-5deg)",
-                        fontSize: "32px",
-                      }}>
-                        HOTELS
-                      </motion.div>
-                      
-                      <div style={{
-                        position: "absolute",
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        WebkitTextStroke: `0.15em ${hotelBorderColor}`,
-                        color: "transparent",
-                        fontFamily: "inherit",
-                        fontStyle: "inherit",
-                        fontWeight: "inherit",
-                        fontSize: "32px",
-                        lineHeight: "inherit",
-                        textTransform: "inherit",
-                        zIndex: 1,
-                        transform: "rotate(-5deg)",
-                        marginTop: "6px", // Adjust to compensate for "switch to" text
-                      }}>
-                        HOTELS
-                      </div>
-                    </div>
-                  </motion.div>
+                    <span className="text-xl font-bold">Switch to Hotels</span>
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -606,100 +545,41 @@ export function HomeHero({
             )}
             {expandedSection === "hotels" && (
               <motion.div
-                className="h-full flex items-center justify-center cursor-pointer absolute inset-0 z-[-1] overflow-hidden"
+                className="h-full flex items-center justify-center cursor-pointer absolute inset-0 z-[-1] overflow-visible"
                 initial={{ opacity: 0, scale: 0.8, x: "-100%" }}
-                animate={{ opacity: 1, scale: 1, x: "0%", zIndex: 10 }}
+                animate={{ 
+                  opacity: 1, 
+                  scale: 1, 
+                  x: "0%",
+                  zIndex: 10,
+                  transition: {
+                    duration: 1.2,
+                    ease: [0.16, 1, 0.3, 1],
+                    x: {
+                      duration: 1.2,
+                      ease: [0.16, 1, 0.3, 1],
+                      times: [0, 0.1, 0.2, 0.3, 0.4, 1],
+                      values: ["-100%", "-130%", "-90%", "-120%", "-80%", "0%"]
+                    }
+                  }
+                }}
                 exit={{ opacity: 0, scale: 0.8, x: "-100%", zIndex: -1 }}
-                transition={{ duration: 0.8, ease: "easeInOut" }}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleSectionClick("hostels");
                 }}
               >
-                <div className="w-[160px] h-[160px] relative">
-                  <motion.div 
-                    className="absolute inset-0 rounded-full flex items-center justify-center overflow-hidden"
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 z-20 pl-4">
+                  <div 
+                    className="ribbon ribbon-left"
                     style={{
-                      background: "white",
-                      boxShadow: `0 0 20px rgba(0,0,0,0.3)`,
-                      border: `4px solid ${hostelBorderColor}`
-                    }}
+                      '--r': '1.8em',
+                      '--color': hostelRibbonColor,
+                      '--text-color': hostelRibbonTextColor,
+                    } as React.CSSProperties}
                   >
-                    <div className="sticker relative text-center flex flex-col items-center" style={{
-                      fontFamily: "'Arial', sans-serif",
-                      fontStyle: "italic",
-                      fontWeight: 900,
-                      lineHeight: "0.9",
-                      textTransform: "uppercase",
-                      padding: "8px",
-                    }}>
-                      <span style={{
-                        fontSize: "14px",
-                        fontWeight: 700,
-                        marginBottom: "2px",
-                        color: hostelPrimaryColor,
-                        opacity: 0.9,
-                        transform: "rotate(-5deg)",
-                      }}>
-                        switch to
-                      </span>
-                      <motion.div style={{
-                        backgroundImage: `
-                          linear-gradient(
-                            ${hostelShineAngle}deg, 
-                            rgba(255,255,255,0) 0%, 
-                            rgba(255,255,255,0) 40%, 
-                            rgba(255,255,255,0.98) 49.5%, 
-                            rgba(255,255,255,0.98) 50.5%, 
-                            rgba(255,255,255,0) 60%, 
-                            rgba(255,255,255,0)
-                          ),
-                          linear-gradient(
-                            to right, 
-                            ${hostelPrimaryColor}, 
-                            ${hostelAccentColor}, 
-                            ${hostelPrimaryColor}
-                          )
-                        `,
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        textShadow: "0.05em 0.05em 0.02em rgba(0,0,0,0.5)",
-                        position: "relative",
-                        zIndex: 2,
-                        display: "inline-block",
-                        transform: "rotate(-5deg)",
-                        fontSize: "30px",
-                      }}>
-                        HOSTELS
-                      </motion.div>
-                      
-                      <div style={{
-                        position: "absolute",
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        WebkitTextStroke: `0.15em ${hostelBorderColor}`,
-                        color: "transparent",
-                        fontFamily: "inherit",
-                        fontStyle: "inherit",
-                        fontWeight: "inherit",
-                        fontSize: "30px",
-                        lineHeight: "inherit",
-                        textTransform: "inherit",
-                        zIndex: 1,
-                        transform: "rotate(-5deg)",
-                        marginTop: "6px", // Adjust to compensate for "switch to" text
-                      }}>
-                        HOSTELS
-                      </div>
-                    </div>
-                  </motion.div>
+                    <span className="text-xl font-bold">Switch to Hostels</span>
+                  </div>
                 </div>
               </motion.div>
             )}

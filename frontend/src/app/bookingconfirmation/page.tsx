@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { CheckCircle, Calendar, Home, ArrowRight } from 'lucide-react'
+import { CheckCircle, CalendarDays, Home, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import { Card, CardContent } from "@/components/ui/card"
 
@@ -75,7 +75,7 @@ export default function BookingConfirmationPage() {
               <CardContent className="p-6">
                 <div className="space-y-4">
                   <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
-                    <Calendar className="h-5 w-5 text-[#B11E43]" />
+                    <CalendarDays className="h-5 w-5 text-[#B11E43]" />
                     <p className="text-gray-700">Your booking details have been sent to your email address.</p>
                   </div>
                   

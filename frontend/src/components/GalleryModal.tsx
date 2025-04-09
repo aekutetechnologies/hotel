@@ -18,6 +18,7 @@ interface GalleryModalProps {
 
 export function GalleryModal({ images, initialIndex, onClose }: GalleryModalProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex)
+  const [imageSize, setImageSize] = useState({ width: 0, height: 0 })
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -42,20 +43,43 @@ export function GalleryModal({ images, initialIndex, onClose }: GalleryModalProp
     setCurrentIndex((prev) => (prev - 1 + images.length) % images.length)
   }
 
+  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.target as HTMLImageElement
+    setImageSize({
+      width: img.naturalWidth,
+      height: img.naturalHeight
+    })
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 backdrop-blur-sm">
-      <div className="relative w-full max-w-[90rem] mx-auto">
+      <div className="relative w-full h-full flex items-center justify-center p-4">
         <Button variant="ghost" size="icon" className="absolute top-4 right-4 text-white z-10" onClick={onClose}>
           <X className="h-6 w-6" />
         </Button>
-        <div className="relative aspect-video">
-          <Image
-            src={images[currentIndex]?.image || "/placeholder.svg"}
-            alt={`Gallery image ${currentIndex + 1}`}
-            fill
-            className="object-contain"
-          />
+        
+        <div className="relative w-full h-full flex items-center justify-center">
+          <div 
+            className="relative"
+            style={{
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              width: imageSize.width > 0 ? 'auto' : '100%',
+              height: imageSize.height > 0 ? 'auto' : '100%'
+            }}
+          >
+            <Image
+              src={images[currentIndex]?.image || "/placeholder.svg"}
+              alt={`Gallery image ${currentIndex + 1}`}
+              width={imageSize.width}
+              height={imageSize.height}
+              className="max-w-full max-h-[90vh] object-contain"
+              onLoad={handleImageLoad}
+              priority
+            />
+          </div>
         </div>
+
         <Button
           variant="ghost"
           size="icon"

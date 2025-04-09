@@ -35,30 +35,53 @@ import { listBookingDoc } from '@/lib/api/listBookingdoc'
 import { deleteBookingDoc } from '@/lib/api/deleteBookingDoc'
 import { fetchProperties } from '@/lib/api/fetchProperties'
 import { fetchUsers } from '@/lib/api/fetchUsers'
-import { Property } from '@/types/property'
-import { User } from '@/types/user'
+import { type Property } from "@/types/property"
+import { type User } from "@/types/user"
 import { bookProperty } from '@/lib/api/bookProperty'
 
+// Define Document and Booking interfaces that will be used by other files
 export interface Document {
   id: number;
-  document: string;
+  name: string;
+  file: string;
+  document?: string;
+  type?: string;
+  user?: number;
+}
+
+interface BookingProperty {
+  id: number;
+  name: string;
+  images: Array<{
+    image: string;
+  }>;
+  rooms: Array<{
+    id: number;
+    name: string;
+  }>;
+}
+
+interface BookingUser {
+  id: number;
+  name: string;
+  email: string;
+  mobile: string;
 }
 
 export interface Booking {
-  property: { id: number; name: string } | number;
+  id: number;
+  property: number | BookingProperty | null;
   room: number;
-  user: { id: number; name: string, mobile: string } | number;
+  price: number;
+  discount: number;
+  booking_type: string;
+  status: string;
+  payment_type: string;
   checkin_date: string;
   checkout_date: string;
-  status: string;
-  price: number;
-  booking_type: string;
-  payment_type: string;
-  documents?: Document[];
-  id: number;
-  number_of_guests?: number;
-  number_of_rooms?: number;
-  discount?: number;
+  created_at: string;
+  updated_at: string;
+  user?: number | BookingUser | null;
 }
 
 // Interface for the book property API params
@@ -79,6 +102,30 @@ interface BookPropertyParams {
   token?: string;
 }
 
+// Add type definitions for response structures
+interface ApiResponse<T> {
+  results: T[]
+}
+
+// Update BookingData to match what comes from API but be compatible with Booking interface
+interface BookingData {
+  id: number
+  property: Property | number | null
+  room?: number
+  user: User | number | null
+  checkin_date: string
+  checkout_date: string
+  status: string
+  price: number
+  booking_type: string
+  payment_type: string
+  number_of_guests?: number
+  number_of_rooms?: number
+  discount?: number
+  documents?: Document[]
+  [key: string]: unknown
+}
+
 export default function Bookings() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -95,65 +142,59 @@ export default function Bookings() {
   const [users, setUsers] = useState<User[]>([])
 
   const getBookingsData = useCallback(async () => {
+    console.log("Fetching bookings data...")
     setIsLoadingBookings(true)
+    
     try {
-      console.log('Fetching bookings data...')
       const bookingsResponse = await fetchBookings()
       
-      // Process booking data to ensure we have primitive values
-      const processedBookings = Array.isArray(bookingsResponse) 
-        ? bookingsResponse 
-        : bookingsResponse && typeof bookingsResponse === 'object' && 'results' in (bookingsResponse as any)
-          ? (bookingsResponse as any).results
-          : [];
+      let processedBookings: Booking[] = []
       
-      // Process each booking to ensure property and user are correctly handled
-      const normalizedBookings = processedBookings.map((booking: any) => {
+      if (Array.isArray(bookingsResponse)) {
+        processedBookings = bookingsResponse
+      } else if (bookingsResponse && typeof bookingsResponse === 'object' && 'results' in (bookingsResponse as any)) {
+        processedBookings = (bookingsResponse as any).results
+      } else {
+        processedBookings = []
+      }
+      
+      console.log("Processed bookings:", processedBookings)
+      
+      const normalizedBookings: Booking[] = processedBookings.map((booking: any): Booking => {
         return {
           ...booking,
-          // Ensure property is either an object with needed fields or null
-          property: typeof booking.property === 'object' 
-            ? booking.property 
-            : booking.property 
-              ? { id: Number(booking.property), name: `Property ${booking.property}` }
-              : null,
-          // Ensure user is either an object with needed fields or null
-          user: typeof booking.user === 'object' 
-            ? booking.user 
-            : booking.user
-              ? { id: Number(booking.user), name: `User ${booking.user}`, mobile: '' }
-              : null,
-          // Ensure all other fields are primitive values
-          checkin_date: booking.checkin_date || '',
-          checkout_date: booking.checkout_date || '',
-          status: booking.status || 'pending',
-          price: typeof booking.price === 'number' ? booking.price : 0,
-          booking_type: booking.booking_type || '',
-          payment_type: booking.payment_type || '',
-        };
-      });
+          property: (booking.property !== null && typeof booking.property === 'object') ? booking.property : null,
+          user: (booking.user !== null && typeof booking.user === 'object') ? booking.user : null
+        }
+      })
       
-      setBookings(normalizedBookings);
-      
-      // Fetch properties and users
       const propertiesResponse = await fetchProperties()
-      const processedProperties = Array.isArray(propertiesResponse) 
-        ? propertiesResponse 
-        : propertiesResponse && typeof propertiesResponse === 'object' && 'results' in (propertiesResponse as any)
-          ? (propertiesResponse as any).results
-          : [];
-      setProperties(processedProperties)
+      let properties: any[] = []
+      
+      if (Array.isArray(propertiesResponse)) {
+        properties = propertiesResponse
+      } else if (propertiesResponse && typeof propertiesResponse === 'object' && 'results' in (propertiesResponse as any)) {
+        properties = (propertiesResponse as any).results
+      } else {
+        properties = []
+      }
       
       const usersResponse = await fetchUsers()
-      const processedUsers = Array.isArray(usersResponse) 
-        ? usersResponse 
-        : usersResponse && typeof usersResponse === 'object' && 'results' in (usersResponse as any)
-          ? (usersResponse as any).results
-          : [];
-      setUsers(processedUsers)
-    } catch (error: any) {
-      console.error('Error fetching bookings:', error)
-      toast.error(`Failed to fetch bookings: ${error.message}`)
+      let users: any[] = []
+      
+      if (Array.isArray(usersResponse)) {
+        users = usersResponse
+      } else if (usersResponse && typeof usersResponse === 'object' && 'results' in (usersResponse as any)) {
+        users = (usersResponse as any).results
+      } else {
+        users = []
+      }
+      
+      setBookings(normalizedBookings)
+      setProperties(properties)
+      setUsers(users)
+    } catch (error) {
+      console.error("Error fetching booking data:", error)
       setBookings([])
       setProperties([])
       setUsers([])
@@ -299,10 +340,10 @@ export default function Bookings() {
               bookings.map((booking) => (
                 <TableRow key={booking.id}>
                   <TableCell className="font-medium">
-                    {typeof booking.property === 'object' ? booking.property.name : ''}
+                    {booking.property && typeof booking.property === 'object' ? booking.property.name : ''}
                   </TableCell>
                   <TableCell>
-                    {typeof booking.user === 'object' ? booking.user.name : ''}
+                    {booking.user && typeof booking.user === 'object' ? booking.user.name : ''}
                   </TableCell>
                   <TableCell>{booking.checkin_date}</TableCell>
                   <TableCell>{booking.checkout_date}</TableCell>
@@ -315,6 +356,7 @@ export default function Bookings() {
                       <option value="confirmed">Confirmed</option>
                       <option value="pending">Pending</option>
                       <option value="cancelled">Cancelled</option>
+                      <option value="completed">Completed</option>
                     </select>
                   </TableCell>
                   <TableCell>₹{booking.price}</TableCell>
@@ -405,12 +447,12 @@ export default function Bookings() {
                     <div className="flex items-center gap-3">
                       <FileText className="h-5 w-5 text-gray-600" />
                       <div>
-                        <p className="font-medium">{document.document.split('/').pop()}</p>
+                        <p className="font-medium">{document.name.split('/').pop()}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <a
-                        href={document.document}
+                        href={document.file}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-md"

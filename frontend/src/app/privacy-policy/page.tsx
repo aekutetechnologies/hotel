@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { ChevronLeft } from "lucide-react"
 import Link from "next/link"
 import Footer from "@/components/Footer"
-import Navbar from "@/components/Navbar"
+import { Header } from "@/components/Header"
 
 export default function PrivacyPolicyPage() {
   const router = useRouter()
@@ -31,21 +31,7 @@ export default function PrivacyPolicyPage() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Navbar */}
-      <div className="w-full relative">
-        <div className="flex justify-between items-center px-4 md:px-6 py-3 bg-white shadow-sm max-w-[100vw] overflow-x-hidden">
-          <div className="flex-1">
-            <Navbar
-              isLoggedIn={isLoggedIn}
-              userName={userName}
-              handleLogout={handleLogout}
-              handleLoginClick={() => {}}
-              setShowDetailSection={() => {}}
-              isClosed={false}
-              currentSection="hotel"
-            />
-          </div>
-        </div>
-      </div>
+      <Header />
       
       {/* Main content */}
       <main className="flex-1 bg-gray-50 py-8">

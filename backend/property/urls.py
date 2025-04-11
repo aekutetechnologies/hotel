@@ -27,5 +27,6 @@ urlpatterns = [
     path('areas/<str:city_name>/', views.unique_areas_by_city, name='unique-areas-by-city'),
     path('toggle-favourite/', views.add_favorite_property, name='add-favorite-property'),
     path('favorite-properties/', views.get_favorite_properties, name='get-favorite-properties'),
+    path('reviews/create/', views.create_review, name='create_review'),
 ]
 

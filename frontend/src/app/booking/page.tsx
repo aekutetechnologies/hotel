@@ -5,7 +5,7 @@ import { Header } from '@/components/Header'
 import Footer from '@/components/Footer'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Star, CalendarIcon, PackageSearch, Clock, Bed } from 'lucide-react'
+import { Star, CalendarIcon, PackageSearch, Clock, Bed, X } from 'lucide-react'
 import { toast, ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { getUserBookings } from '@/lib/api/fetchUserBookings'
@@ -13,24 +13,31 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { Booking } from '@/types/booking'
 import { format, parseISO } from 'date-fns'
+import { createUserReview } from '@/lib/api/createUserReview'
+import { getBookingReview } from '@/lib/api/fetchBookingReview'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 
 export default function BookingPage() {
-  console.log("BookingPage component is rendering")
   const [selectedBooking, setSelectedBooking] = useState<number | null>(null)
+  const [selectedProperty, setSelectedProperty] = useState<number>(0)
   const [bookings, setBookings] = useState<Booking[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(true)
-
-  useEffect(() => {
-    console.log("useEffect in BookingPage is running - simplified")
-  }, [])
+  const [selectedRating, setSelectedRating] = useState<number>(0)
+  const [hoverRating, setHoverRating] = useState<number>(0)
+  const [reviewMode, setReviewMode] = useState<'write' | 'view'>('write')
+  const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false)
+  const [viewingReview, setViewingReview] = useState<{
+    id: number;
+    rating: number;
+    review: string;
+    created_at: string;
+  } | null>(null)
 
   useEffect(() => {
     const fetchBookings = async () => {
-      console.log("fetching bookings")
       setIsLoading(true)
       try {
         const data = await getUserBookings()
-        console.log(data)
         setBookings(data)
       } catch (error: any) {
         toast.error(error.message || 'Failed to fetch bookings')
@@ -281,6 +288,52 @@ export default function BookingPage() {
     URL.revokeObjectURL(url)
   }
 
+  // Function to handle review actions
+  const handleReviewAction = async (booking: Booking, mode: 'write' | 'view') => {
+    setReviewMode(mode)
+    setSelectedBooking(booking.id)
+    setSelectedProperty(booking.property.id)
+    
+    if (mode === 'view' && booking.is_review_created) {
+      try {
+        // Look for the review in the property reviews
+        const propertyReview = booking.property.reviews?.find(r => r.id == booking.review_id)
+        if (propertyReview) {
+          setViewingReview({
+            id: propertyReview.id,
+            rating: propertyReview.rating,
+            review: propertyReview.review,
+            created_at: propertyReview.created_at
+          })
+        } else {
+          // If not found in property reviews, try the API
+          const review = await getBookingReview(booking.id)
+          if (review) {
+            setViewingReview({
+              id: review.id,
+              rating: review.rating,
+              review: review.review,
+              created_at: review.created_at
+            })
+          } else {
+            toast.error('Review not found')
+          }
+        }
+      } catch (error) {
+        toast.error('Failed to load review')
+      }
+    }
+    
+    setIsDialogOpen(true)
+  }
+
+  // Add cleanup function for dialog
+  const handleDialogClose = () => {
+    setIsDialogOpen(false)
+    setViewingReview(null)
+    setSelectedRating(0)
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -296,8 +349,8 @@ export default function BookingPage() {
                     <CardTitle className="flex justify-between">
                       <span>Booking ID: {booking.id}</span>
                       <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                        booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                        booking.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                        booking.status === 'confirmed' ? 'bg-blue-100 text-blue-800' :
+                        booking.status === 'completed' ? 'bg-green-100 text-green-800' :
                         booking.status === 'cancelled' ? 'bg-red-100 text-red-800' :
                         booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                         'bg-gray-100 text-gray-800'
@@ -380,15 +433,27 @@ export default function BookingPage() {
                         </div>
                         
                         <div className="flex flex-wrap gap-4">
-                          {booking.status === 'completed' && (
+                          {booking.status === 'completed' && !booking.is_review_created && (
                             <Button
                               variant="neutral"
-                              onClick={() => setSelectedBooking(booking.id)}
+                              onClick={() => handleReviewAction(booking, 'write')}
                             >
                               Write a Review
                             </Button>
                           )}
-                          <Button variant="neutral" className="text-[#B11E43] border-[#B11E43]"
+                          
+                          {booking.status === 'completed' && booking.is_review_created && (
+                            <Button
+                              variant="neutral"
+                              onClick={() => handleReviewAction(booking, 'view')}
+                            >
+                              View Review
+                            </Button>
+                          )}
+                          
+                          <Button 
+                            variant="neutral" 
+                            className="text-[#B11E43] border-[#B11E43]"
                             onClick={() => downloadInvoice(booking)}
                           >
                             Download Invoice
@@ -462,71 +527,173 @@ export default function BookingPage() {
               </motion.div>
             </motion.div>
           )}
+        </div>
+      </main>
 
-          {selectedBooking && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Write a Review</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form className="space-y-4">
+      {/* Review Dialog */}
+      <Dialog 
+        open={isDialogOpen} 
+        onOpenChange={(open) => {
+          if (!open) handleDialogClose()
+          else setIsDialogOpen(true)
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {reviewMode === 'write' ? 'Write a Review' : 'Your Review'}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {reviewMode === 'write' ? (
+            <form 
+              className="space-y-4"
+              onSubmit={async (e) => {
+                e.preventDefault()
+                const formData = new FormData(e.currentTarget)
+                const review = formData.get('review') as string
+
+                try {
+                  const reviewData = {
+                    booking_id: selectedBooking!,
+                    rating: selectedRating,
+                    review,
+                    property: selectedProperty
+                  }
+
+                  // Define proper type for review response
+                  interface ReviewResponse {
+                    id: number;
+                    booking: number;
+                    property: number;
+                    rating: number;
+                    review: string;
+                    created_at: string;
+                  }
+
+                  const response = await createUserReview(reviewData) as ReviewResponse
+                  
+                  // Update the booking in the state to reflect the review has been created
+                  setBookings(prevBookings => 
+                    prevBookings.map(booking => 
+                      booking.id === selectedBooking 
+                        ? { 
+                            ...booking, 
+                            is_review_created: true,
+                            review_id: response.id || 0
+                          } 
+                        : booking
+                    )
+                  )
+                  
+                  toast.success('Review submitted successfully!')
+                  handleDialogClose()
+                } catch (error: any) {
+                  toast.error(error.message || 'Failed to submit review. Please try again.')
+                }
+              }}
+            >
+              <div>
+                <label className="block text-sm font-medium mb-2">Rating</label>
+                <div className="flex gap-1 mb-4">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      className="text-2xl focus:outline-none"
+                      onClick={() => setSelectedRating(star)}
+                      onMouseEnter={() => setHoverRating(star)}
+                      onMouseLeave={() => setHoverRating(0)}
+                    >
+                      <Star
+                        className={`h-6 w-6 transition-colors duration-200 ${
+                          (hoverRating || selectedRating) >= star
+                            ? 'text-yellow-400 fill-yellow-400'
+                            : 'text-gray-300'
+                        }`}
+                      />
+                    </button>
+                  ))}
+                </div>
+                {selectedRating === 0 && (
+                  <p className="text-sm text-red-500">Please select a rating</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Your Review</label>
+                <textarea
+                  name="review"
+                  className="w-full p-2 border rounded-md"
+                  rows={4}
+                  placeholder="Share your experience..."
+                  required
+                ></textarea>
+              </div>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="neutral"
+                  onClick={handleDialogClose}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  className="bg-[#B11E43] hover:bg-[#8f1836] text-white"
+                  disabled={selectedRating === 0}
+                >
+                  Submit Review
+                </Button>
+              </DialogFooter>
+            </form>
+          ) : (
+            <div className="space-y-4">
+              {viewingReview ? (
+                <>
                   <div>
-                    <label className="block text-sm font-medium mb-2">Rating</label>
-                    <div className="flex gap-1 mb-4">
+                    <h3 className="text-sm font-medium mb-2">Your Rating</h3>
+                    <div className="flex gap-1">
                       {[1, 2, 3, 4, 5].map((star) => (
-                        <button
+                        <Star
                           key={star}
-                          type="button"
-                          className="text-2xl focus:outline-none"
-                        >
-                          <Star
-                            className={`h-6 w-6 text-gray-300 hover:text-yellow-400 hover:fill-yellow-400`}
-                          />
-                        </button>
+                          className={`h-5 w-5 ${
+                            star <= viewingReview.rating
+                              ? 'text-yellow-400 fill-yellow-400'
+                              : 'text-gray-300'
+                          }`}
+                        />
                       ))}
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2">Your Review</label>
-                    <textarea
-                      className="w-full p-2 border rounded-md"
-                      rows={4}
-                      placeholder="Share your experience..."
-                    ></textarea>
+                    <h3 className="text-sm font-medium mb-2">Your Review</h3>
+                    <p className="text-gray-700 border p-3 rounded-md bg-gray-50">{viewingReview.review}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2">Add Photos</label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      className="hidden"
-                      id="review-image-upload"
-                    />
-                    <label htmlFor="review-image-upload">
-                      <Button type="button" variant="neutral" className="cursor-pointer">
-                        Upload Photos
-                      </Button>
-                    </label>
+                    <p className="text-xs text-gray-500">
+                      Posted on {format(new Date(viewingReview.created_at), 'dd MMM yyyy')}
+                    </p>
                   </div>
-                  <div className="flex justify-end gap-4">
+                  <DialogFooter>
                     <Button
                       type="button"
                       variant="neutral"
-                      onClick={() => setSelectedBooking(null)}
+                      onClick={handleDialogClose}
                     >
-                      Cancel
+                      Close
                     </Button>
-                    <Button type="submit" className="bg-[#B11E43] hover:bg-[#8f1836] text-white">
-                      Submit Review
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
+                  </DialogFooter>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-6">
+                  <p className="text-gray-500">Loading review...</p>
+                </div>
+              )}
+            </div>
           )}
-        </div>
-      </main>
+        </DialogContent>
+      </Dialog>
+      
       <ToastContainer />
       <Footer sectionType="hotels" />
     </div>

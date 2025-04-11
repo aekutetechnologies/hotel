@@ -13,6 +13,7 @@ from .models import (
     State,
     Country,
     FavoriteProperty,
+    ReviewImage,
 )
 
 from offer.models import PropertyOffer
@@ -291,3 +292,36 @@ class FavoritePropertySerializer(serializers.ModelSerializer):
     class Meta:
         model = FavoriteProperty
         fields = "__all__"
+
+class ReviewCreateSerializer(serializers.ModelSerializer):
+    photos = serializers.ListField(
+        child=serializers.FileField(),
+        write_only=True,
+        required=False
+    )
+    
+    class Meta:
+        model = Review
+        fields = ['booking_id', 'rating', 'review', 'photos']
+        extra_kwargs = {
+            'review': {'required': True},
+            'rating': {'required': True}
+        }
+
+    def validate_rating(self, value):
+        if not 1 <= value <= 5:
+            raise serializers.ValidationError("Rating must be between 1 and 5")
+        return value
+
+    def create(self, validated_data):
+        photos = validated_data.pop('photos', [])
+        review = Review.objects.create(**validated_data)
+        
+        # Create ReviewImage objects for each photo
+        for photo in photos:
+            ReviewImage.objects.create(
+                image=photo,
+                review=review
+            )
+        
+        return review

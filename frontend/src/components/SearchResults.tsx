@@ -16,6 +16,7 @@ import { toast } from 'react-toastify'
 import { Amenity, Property } from '@/types/property'
 import { ErrorPage } from '@/components/ErrorPage'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Button } from "@/components/ui/button"
 
 // Define interface for room amenities if not defined in types
 interface RoomAmenity {
@@ -72,10 +73,29 @@ export function SearchResults() {
   const [properties, setProperties] = useState<Property[]>([])
   const [hasError, setHasError] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const [isFilterLoading, setIsFilterLoading] = useState(false)
+  // Add state for mobile filter visibility (default hidden on mobile)
+  const [showFiltersOnMobile, setShowFiltersOnMobile] = useState(false)
   const bookingType = searchParams?.get('bookingType') || 'daily'
-
-  // Add this new state to track filter changes specifically
-  const [isFilterLoading, setIsFilterLoading] = useState(false);
+  
+  // Add this to handle window width detection for responsive layout
+  const [isDesktop, setIsDesktop] = useState(false)
+  
+  // Check if we're on desktop when component mounts and on window resize
+  useEffect(() => {
+    const checkIfDesktop = () => {
+      setIsDesktop(window.innerWidth >= 768)
+    }
+    
+    // Check initially
+    checkIfDesktop()
+    
+    // Add resize listener
+    window.addEventListener('resize', checkIfDesktop)
+    
+    // Clean up event listener
+    return () => window.removeEventListener('resize', checkIfDesktop)
+  }, [])
 
   useEffect(() => {
     const id = localStorage.getItem('userId');
@@ -395,119 +415,222 @@ export function SearchResults() {
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
           border: 2px solid #B11E43;
         }
+
+        /* Mobile filter overlay styles */
+        @media (max-width: 768px) {
+          .filter-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 40;
+          }
+          
+          .filter-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-height: 85vh;
+            z-index: 50;
+            border-top-left-radius: 1rem;
+            border-top-right-radius: 1rem;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+          }
+          
+          .filter-drawer-handle {
+            width: 50px;
+            height: 4px;
+            background-color: #ccc;
+            border-radius: 2px;
+            margin: 10px auto;
+          }
+        }
       `}</style>
       <div className="container mx-auto px-4 py-6">
-        <div className="flex flex-col md:flex-row h-screen">
-          {/* Filters Sidebar */}
-          <motion.div 
-            className="md:w-1/4 md:max-w-xs flex-shrink-0 md:mr-6"
-            initial={{ x: -20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ duration: 0.4 }}
+        {/* Mobile Filter Toggle Button */}
+        <div className="md:hidden mb-4 sticky top-0 z-10 bg-gray-50 pb-2">
+          <Button 
+            variant="neutral" 
+            className="w-full flex items-center justify-center gap-2 bg-white shadow-sm border-gray-200"
+            onClick={() => setShowFiltersOnMobile(!showFiltersOnMobile)}
           >
-            <motion.div 
-              className="bg-white rounded-lg shadow p-4 space-y-6 md:sticky md:top-4 overflow-y-auto max-h-[calc(100vh-2rem)]"
-              whileHover={{ boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
-              transition={{ duration: 0.2 }}
-            >
-              <motion.h2 
-                className="text-lg font-semibold"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-              >
-                Filters
-              </motion.h2>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="4" y1="21" x2="4" y2="14" />
+              <line x1="4" y1="10" x2="4" y2="3" />
+              <line x1="12" y1="21" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12" y2="3" />
+              <line x1="20" y1="21" x2="20" y2="16" />
+              <line x1="20" y1="12" x2="20" y2="3" />
+              <line x1="1" y1="14" x2="7" y2="14" />
+              <line x1="9" y1="8" x2="15" y2="8" />
+              <line x1="17" y1="16" x2="23" y2="16" />
+            </svg>
+            Filters {(selectedLocations.length > 0 || selectedAmenities.length > 0) && 
+              <Badge variant="secondary" className="ml-1 text-xs bg-gray-100">
+                {selectedLocations.length + selectedAmenities.length}
+              </Badge>
+            }
+          </Button>
+        </div>
 
-              {/* Price Range */}
+        <div className="flex flex-col md:flex-row h-screen">
+          {/* Mobile Filter Overlay */}
+          <AnimatePresence>
+            {showFiltersOnMobile && (
               <motion.div 
-                className="space-y-4"
+                className="filter-overlay md:hidden"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-              >
-                <h3 className="font-medium mb-4">Price Range</h3>
-                <div className="range-slider">
-                <Slider
-                  min={0}
-                    max={20000}
-                  step={1000}
-                  value={priceRange}
-                  onValueChange={setPriceRange}
-                  className="mb-2"
-                />
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>₹{priceRange[0]}</span>
-                  <span>₹{priceRange[1]}</span>
-                </div>
-              </motion.div>
-
-              {/* Locations */}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowFiltersOnMobile(false)}
+              />
+            )}
+          </AnimatePresence>
+          
+          {/* Filters Sidebar - Desktop always visible, Mobile conditionally visible */}
+          <AnimatePresence>
+            {(showFiltersOnMobile || isDesktop) && (
               <motion.div 
-                className="space-y-4"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
+                className="md:w-1/4 md:max-w-xs flex-shrink-0 md:mr-6 md:block filter-panel md:static md:bg-transparent md:shadow-none md:z-auto"
+                initial={{ y: "100%", opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: "100%", opacity: 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
               >
-                <h3 className="font-medium mb-4">Popular Locations</h3>
-                <Input
-                  type="search"
-                  placeholder="Search locations..."
-                  className="mb-2"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <div className="space-y-2 max-h-48 overflow-y-auto scrollbar-hidden">
-                  {filteredLocations.map((location, locationIndex) => (
-                    <motion.label 
-                      key={locationIndex} 
-                      className="flex items-center p-2 rounded-md hover:bg-gray-50 cursor-pointer"
-                      whileHover={{ backgroundColor: "rgb(249 250 251)", x: 2 }}
-                      whileTap={{ scale: 0.98 }}
+                {/* Drag Handle for Mobile */}
+                <div className="filter-drawer-handle md:hidden" />
+                
+                <motion.div 
+                  className="bg-white rounded-lg shadow p-4 space-y-6 md:sticky md:top-4 overflow-y-auto max-h-[calc(100vh-2rem)]"
+                  whileHover={{ boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="flex justify-between items-center">
+                    <motion.h2 
+                      className="text-lg font-semibold"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.2 }}
                     >
-                      <Checkbox
-                        checked={selectedLocations.includes(location)}
-                        onCheckedChange={() => handleLocationChange(location)}
-                        className="mr-2"
-                      />
-                      <span className="text-sm">{location}</span>
-                    </motion.label>
-                  ))}
-                </div>
-              </motion.div>
-
-              {/* Amenities */}
-              <motion.div 
-                className="space-y-4"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6 }}
-              >
-                <h3 className="font-medium mb-4">Amenities</h3>
-                <div className="space-y-2 max-h-70 overflow-y-auto scrollbar-hidden">
-                  {roomAmenities.map((amenity) => (
-                    <motion.label 
-                      key={amenity.id} 
-                      className="flex items-center p-2 rounded-md hover:bg-gray-50 cursor-pointer"
-                      whileHover={{ backgroundColor: "rgb(249 250 251)", x: 2 }}
-                      whileTap={{ scale: 0.98 }}
+                      Filters
+                    </motion.h2>
+                    
+                    {/* Close Button - Only on Mobile */}
+                    <button 
+                      className="md:hidden text-gray-400 hover:text-gray-600"
+                      onClick={() => setShowFiltersOnMobile(false)}
                     >
-                      <Checkbox
-                        checked={selectedAmenities.includes(amenity.name)}
-                        onCheckedChange={() => handleAmenityChange(amenity.name)}
-                        className="mr-2"
-                      />
-                      <span className="text-sm">{amenity.name}</span>
-                    </motion.label>
-                  ))}
-                </div>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                    </button>
+                  </div>
+
+                  {/* Price Range */}
+                  <motion.div 
+                    className="space-y-4"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.4 }}
+                  >
+                    <h3 className="font-medium mb-4">Price Range</h3>
+                    <div className="range-slider">
+                    <Slider
+                      min={0}
+                        max={20000}
+                      step={1000}
+                      value={priceRange}
+                      onValueChange={setPriceRange}
+                      className="mb-2"
+                    />
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>₹{priceRange[0]}</span>
+                      <span>₹{priceRange[1]}</span>
+                    </div>
+                  </motion.div>
+
+                  {/* Locations */}
+                  <motion.div 
+                    className="space-y-4"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.5 }}
+                  >
+                    <h3 className="font-medium mb-4">Popular Locations</h3>
+                    <Input
+                      type="search"
+                      placeholder="Search locations..."
+                      className="mb-2"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    <div className="space-y-2 max-h-48 overflow-y-auto scrollbar-hidden">
+                      {filteredLocations.map((location, locationIndex) => (
+                        <motion.label 
+                          key={locationIndex} 
+                          className="flex items-center p-2 rounded-md hover:bg-gray-50 cursor-pointer"
+                          whileHover={{ backgroundColor: "rgb(249 250 251)", x: 2 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <Checkbox
+                            checked={selectedLocations.includes(location)}
+                            onCheckedChange={() => handleLocationChange(location)}
+                            className="mr-2"
+                          />
+                          <span className="text-sm">{location}</span>
+                        </motion.label>
+                      ))}
+                    </div>
+                  </motion.div>
+
+                  {/* Amenities */}
+                  <motion.div 
+                    className="space-y-4"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.6 }}
+                  >
+                    <h3 className="font-medium mb-4">Amenities</h3>
+                    <div className="space-y-2 max-h-70 overflow-y-auto scrollbar-hidden">
+                      {roomAmenities.map((amenity) => (
+                        <motion.label 
+                          key={amenity.id} 
+                          className="flex items-center p-2 rounded-md hover:bg-gray-50 cursor-pointer"
+                          whileHover={{ backgroundColor: "rgb(249 250 251)", x: 2 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <Checkbox
+                            checked={selectedAmenities.includes(amenity.name)}
+                            onCheckedChange={() => handleAmenityChange(amenity.name)}
+                            className="mr-2"
+                          />
+                          <span className="text-sm">{amenity.name}</span>
+                        </motion.label>
+                      ))}
+                    </div>
+                  </motion.div>
+                  
+                  {/* Apply Filters Button - Only on Mobile */}
+                  <motion.div className="md:hidden">
+                    <Button 
+                      className="w-full bg-[#B11E43] hover:bg-[#8f1836] text-white mt-4"
+                      onClick={() => setShowFiltersOnMobile(false)}
+                    >
+                      Apply Filters
+                    </Button>
+                  </motion.div>
+                </motion.div>
               </motion.div>
-            </motion.div>
-          </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Main Content */}
-          <div className="flex-1 overflow-y-auto scrollbar-hidden">
+          <div className={`flex-1 overflow-y-auto scrollbar-hidden ${showFiltersOnMobile && !isDesktop ? 'opacity-30 pointer-events-none' : ''}`}>
             {/* Header */}
             <div className="flex justify-between items-center mb-4">
               <h1 className="text-xl font-semibold">

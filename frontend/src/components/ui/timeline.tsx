@@ -65,12 +65,14 @@ export const Timeline = ({ data, theme = "hotel" }: TimelineProps) => {
         {data.map((item, index) => (
           <div key={index} className="flex justify-start pt-20 md:pt-40 gap-4 md:gap-10">
             <div className="sticky flex flex-row z-40 items-start top-20 md:top-40 self-start">
-              <div className="h-10 w-10 relative rounded-full bg-white dark:bg-black flex items-center justify-center">
-                <div
-                  className={`h-4 w-4 rounded-full ${theme === "hotel" ? "bg-[#A31C44]/20 border-[#A31C44]" : "bg-[#2A2B2E]/20 border-[#2A2B2E]"} border p-2`}
-                />
+              <div className="relative flex items-center justify-center">
+                <div className="absolute left-0 w-5 h-5 bg-white dark:bg-black rounded-full flex items-center justify-center">
+                  <div
+                    className={`h-3 w-3 rounded-full ${theme === "hotel" ? "bg-[#A31C44] border-[#A31C44]" : "bg-[#2A2B2E] border-[#2A2B2E]"} border`}
+                  />
+                </div>
               </div>
-              <div className="pl-4 md:pl-6">
+              <div className="pl-6 md:pl-8">
                 <h3
                   className={`text-2xl md:text-4xl font-bold ${textColor}`}
                 >
@@ -80,7 +82,7 @@ export const Timeline = ({ data, theme = "hotel" }: TimelineProps) => {
               </div>
             </div>
 
-            <div className="relative pl-4 w-full">
+            <div className="relative pl-2 md:pl-4 w-full">
               <p className="text-neutral-800 dark:text-neutral-200 text-sm mb-8">
                 {item.description}
               </p>
@@ -95,7 +97,7 @@ export const Timeline = ({ data, theme = "hotel" }: TimelineProps) => {
             height: height + "px",
             maxHeight: `calc(100% - 80px)`,
           }}
-          className={`absolute left-5 md:left-8 top-0 overflow-hidden w-[4px] ${bgLineColor}`}
+          className={`absolute left-[10px] top-0 overflow-hidden w-[2.5px] ${bgLineColor}`}
         />
 
         {/* Animated progress line */}
@@ -104,7 +106,7 @@ export const Timeline = ({ data, theme = "hotel" }: TimelineProps) => {
             height: height + "px",
             maxHeight: `calc(100% - 80px)`,
           }}
-          className="absolute left-5 md:left-8 top-0 overflow-hidden w-[4px]"
+          className="absolute left-[10px] top-0 overflow-hidden w-[2.5px]"
         >
           <motion.div
             style={{
@@ -112,7 +114,7 @@ export const Timeline = ({ data, theme = "hotel" }: TimelineProps) => {
               opacity: opacityTransform,
               maxHeight: "100%",
             }}
-            className={`absolute inset-x-0 top-0 w-[4px] ${lineGradient} from-[0%] via-[10%] rounded-full shadow-[0_0_8px_rgba(0,0,0,0.3)] shadow-current`}
+            className={`absolute inset-x-0 top-0 w-[2.5px] ${lineGradient} from-[0%] via-[10%] rounded-full shadow-[0_0_8px_rgba(0,0,0,0.3)] shadow-current`}
           />
         </div>
 
@@ -122,7 +124,7 @@ export const Timeline = ({ data, theme = "hotel" }: TimelineProps) => {
             top: heightTransform,
             opacity: opacityTransform,
           }}
-          className={`absolute left-5 md:left-8 w-[12px] h-[12px] -ml-[4px] rounded-full ${theme === "hotel" ? "bg-[#A31C44]" : "bg-[#2A2B2E]"}`}
+          className={`absolute left-[10px] w-[10px] h-[10px] -ml-[3.75px] rounded-full ${theme === "hotel" ? "bg-[#A31C44]" : "bg-[#2A2B2E]"}`}
         >
           <span
             className={`absolute inset-0 rounded-full ${theme === "hotel" ? "bg-[#A31C44]" : "bg-[#2A2B2E]"} animate-ping opacity-75`}

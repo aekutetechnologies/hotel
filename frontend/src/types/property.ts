@@ -148,7 +148,7 @@ export interface Review {
     name: string;
   };
   rating: number;
-  detail: string;
+  review: string;
   created_at: string;
   images: string[];
 } 

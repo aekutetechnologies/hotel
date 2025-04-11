@@ -29,7 +29,7 @@ interface Review {
     name: string;
   };
   rating: number;
-  detail: string;
+  review: string;
   created_at: string;
   images: string[];
 }
@@ -432,6 +432,82 @@ export default function PropertyDetails() {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-grow container mx-auto px-4 py-8">
+        <style jsx global>{`
+          .scrollbar-hidden {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+          .scrollbar-hidden::-webkit-scrollbar {
+            display: none;
+          }
+          @media (max-width: 640px) {
+            .container {
+              padding-left: 1rem;
+              padding-right: 1rem;
+            }
+            .property-section {
+              margin-bottom: 2rem;
+            }
+          }
+          .mobile-booking-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.1);
+            z-index: 40;
+            padding: 0.75rem 1rem;
+          }
+          @media (min-width: 1024px) {
+            .mobile-booking-bar {
+              display: none;
+            }
+          }
+        `}</style>
+
+        {/* Mobile Booking Bar - Fixed at the bottom of screen on mobile only */}
+        <div className="mobile-booking-bar flex items-center justify-between">
+          <div className="flex flex-col">
+            <div className="flex items-center gap-1">
+              <span className="text-lg font-bold text-[#B11E43]">
+                ₹{(() => {
+                  // Find lowest priced room
+                  if (!property.rooms || property.rooms.length === 0) return 0;
+                  
+                  const prices = property.rooms.map(room => {
+                    if (isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
+                      const basePrice = parseFloat(room.monthly_rate);
+                      const discount = parseFloat(String(room.discount || '0'));
+                      return basePrice * (1 - discount / 100);
+                    } else {
+                      const basePrice = bookingType === 'hourly' 
+                        ? parseFloat(room.hourly_rate || '0') 
+                        : parseFloat(room.daily_rate || '0');
+                      const discount = parseFloat(String(room.discount || '0'));
+                      return basePrice * (1 - discount / 100);
+                    }
+                  });
+                  
+                  return Math.min(...prices).toFixed(0);
+                })()}
+              </span>
+              <span className="text-xs text-gray-500">
+                {isHostel ? '/month' : bookingType === 'hourly' ? '/hour' : '/night'}
+              </span>
+            </div>
+            {totalSelectedRooms > 0 && (
+              <span className="text-xs text-gray-500">{totalSelectedRooms} room{totalSelectedRooms > 1 ? 's' : ''} selected</span>
+            )}
+          </div>
+          <Button 
+            onClick={() => document.querySelector('.lg\\:col-span-1')?.scrollIntoView({ behavior: 'smooth' })}
+            className="bg-[#B11E43] hover:bg-[#8f1836] text-white"
+          >
+            View Booking Options
+          </Button>
+        </div>
+
         {/* Property Header */}
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl font-bold mb-2">{property.name}</h1>
@@ -466,14 +542,14 @@ export default function PropertyDetails() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="mb-8 border-b border-gray-200 overflow-x-auto">
+        <div className="mb-8 border-b border-gray-200 overflow-x-auto scrollbar-hidden">
           <div className="flex min-w-max">
             <button 
               onClick={(e) => {
                 e.preventDefault();
                 document.getElementById('overview')?.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="px-6 py-3 text-gray-800 font-medium border-b-2 border-[#B11E43] hover:bg-gray-50"
+              className="px-3 sm:px-6 py-3 text-sm sm:text-base text-gray-800 font-medium border-b-2 border-[#B11E43] hover:bg-gray-50"
             >
               Overview
             </button>
@@ -482,7 +558,7 @@ export default function PropertyDetails() {
                 e.preventDefault();
                 document.getElementById('facilities')?.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="px-6 py-3 text-gray-600 hover:text-gray-800 font-medium border-b-2 border-transparent hover:border-gray-300 hover:bg-gray-50"
+              className="px-3 sm:px-6 py-3 text-sm sm:text-base text-gray-600 hover:text-gray-800 font-medium border-b-2 border-transparent hover:border-gray-300 hover:bg-gray-50"
             >
               Amenities
             </button>
@@ -491,7 +567,7 @@ export default function PropertyDetails() {
                 e.preventDefault();
                 document.getElementById('prices')?.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="px-6 py-3 text-gray-600 hover:text-gray-800 font-medium border-b-2 border-transparent hover:border-gray-300 hover:bg-gray-50"
+              className="px-3 sm:px-6 py-3 text-sm sm:text-base text-gray-600 hover:text-gray-800 font-medium border-b-2 border-transparent hover:border-gray-300 hover:bg-gray-50"
             >
               Info & prices
             </button>
@@ -500,18 +576,18 @@ export default function PropertyDetails() {
                 e.preventDefault();
                 document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="px-6 py-3 text-gray-600 hover:text-gray-800 font-medium border-b-2 border-transparent hover:border-gray-300 hover:bg-gray-50"
+              className="px-3 sm:px-6 py-3 text-sm sm:text-base text-gray-600 hover:text-gray-800 font-medium border-b-2 border-transparent hover:border-gray-300 hover:bg-gray-50"
             >
-              Guest reviews ({property.reviews?.length || 0})
+              Reviews ({property.reviews?.length || 0})
             </button>
             <button 
               onClick={(e) => {
                 e.preventDefault();
                 document.getElementById('rules')?.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="px-6 py-3 text-gray-600 hover:text-gray-800 font-medium border-b-2 border-transparent hover:border-gray-300 hover:bg-gray-50"
+              className="px-3 sm:px-6 py-3 text-sm sm:text-base text-gray-600 hover:text-gray-800 font-medium border-b-2 border-transparent hover:border-gray-300 hover:bg-gray-50"
             >
-              House rules
+              Rules
             </button>
           </div>
         </div>
@@ -553,7 +629,7 @@ export default function PropertyDetails() {
               </div>
               
               {/* Image thumbnails */}
-              <div className="flex gap-2 mt-2 overflow-x-auto pb-2">
+              <div className="flex gap-2 mt-2 overflow-x-auto pb-2 scrollbar-hidden">
                 {property.images.map((image, index) => (
                   <button
                     key={`image-thumbnail-${image.id || index}`}
@@ -607,10 +683,10 @@ export default function PropertyDetails() {
                   return (
                     <div 
                       key={amenityKey} 
-                      className="flex items-center gap-2 p-4 border rounded-lg"
+                      className="flex items-center gap-2 p-3 sm:p-4 border rounded-lg"
                     >
                       {IconComponent}
-                      <span>{amenity.name || 'Unknown amenity'}</span>
+                      <span className="text-sm sm:text-base">{amenity.name || 'Unknown amenity'}</span>
                     </div>
                   )
                 })}
@@ -627,10 +703,10 @@ export default function PropertyDetails() {
                   const quantity = selectedRoom?.quantity || 0;
                   
                   return (
-                    <div key={roomId} className="border rounded-lg p-4">
-                      <div className="flex space-x-4">
-                        {/* Image Slider (Left Side) */}
-                        <div className="w-1/3 relative">
+                    <div key={roomId} className="border rounded-lg p-3 sm:p-4">
+                      <div className="flex flex-col sm:flex-row sm:space-x-4">
+                        {/* Image Slider (Left Side - Full width on mobile, 1/3 on desktop) */}
+                        <div className="w-full sm:w-1/3 relative mb-4 sm:mb-0">
                           {room.images && room.images.length > 0 ? (
                             <div className="relative w-full h-48 overflow-hidden rounded-lg mb-2">
                               <Image
@@ -669,10 +745,10 @@ export default function PropertyDetails() {
                           )}
                         </div>
 
-                        {/* Room Details (Right Side) */}
-                        <div className="w-2/3">
-                          <div className="flex justify-between h-full flex-col">
-                            <div className="flex justify-between">
+                        {/* Room Details (Right Side - Full width on mobile, 2/3 on desktop) */}
+                        <div className="w-full sm:w-2/3">
+                          <div className="flex flex-col justify-between h-full">
+                            <div className="flex flex-col sm:flex-row sm:justify-between mb-4">
                               <div>
                                 <h3 className="text-xl font-semibold mb-2">{'name' in room ? room.name : (room as ExtendedRoom).occupancyType}</h3>
                                 <p className="text-gray-600 mb-2">{'size' in room ? `Room size: ${room.size} sq. ft` : `Available beds: ${(room as ExtendedRoom).availableBeds}/${(room as ExtendedRoom).totalBeds} sq. ft`}</p>
@@ -707,57 +783,59 @@ export default function PropertyDetails() {
                                   </div>
                                 </div>
                               </div>
-                              <div className="flex flex-col items-end gap-1 text-sm text-gray-700">
+                              <div className="flex flex-col items-start sm:items-end gap-1 text-sm text-gray-700 mt-2 sm:mt-0">
                                 {room.security_deposit !== undefined && <div><span className="text-black-900 font-semibold">Security Deposit:</span> <span className="text-gray-700">{(room as ExtendedRoom).security ? 'Yes' : 'No'}</span></div>}
                               </div>
                             </div>
-                            <div className="text-right mb-4">
-                              <div className="text-2xl font-bold text-[#B11E43]">
-                                ₹{(() => {
-                                  try {
-                                    // Safely handle price calculations
-                                    if (isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
-                                      const basePrice = parseFloat(room.monthly_rate);
-                                      const discount = parseFloat(String(room.discount || '0'));
-                                      if (isNaN(basePrice) || isNaN(discount)) return 0;
-                                      return (basePrice * (1 - discount / 100)).toFixed(0);
-                                    } else {
-                                      const basePrice = bookingType === 'hourly' 
-                                        ? parseFloat(room.hourly_rate || '0') 
-                                        : parseFloat(room.daily_rate || '0');
-                                      const discount = parseFloat(String(room.discount || '0'));
-                                      if (isNaN(basePrice) || isNaN(discount)) return 0;
-                                      return (basePrice * (1 - discount / 100)).toFixed(0);
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between">
+                              <div className="text-right mb-4 sm:mb-0">
+                                <div className="text-2xl font-bold text-[#B11E43]">
+                                  ₹{(() => {
+                                    try {
+                                      // Safely handle price calculations
+                                      if (isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
+                                        const basePrice = parseFloat(room.monthly_rate);
+                                        const discount = parseFloat(String(room.discount || '0'));
+                                        if (isNaN(basePrice) || isNaN(discount)) return 0;
+                                        return (basePrice * (1 - discount / 100)).toFixed(0);
+                                      } else {
+                                        const basePrice = bookingType === 'hourly' 
+                                          ? parseFloat(room.hourly_rate || '0') 
+                                          : parseFloat(room.daily_rate || '0');
+                                        const discount = parseFloat(String(room.discount || '0'));
+                                        if (isNaN(basePrice) || isNaN(discount)) return 0;
+                                        return (basePrice * (1 - discount / 100)).toFixed(0);
+                                      }
+                                    } catch (err) {
+                                      console.error("Price calculation error:", err);
+                                      return 0;
                                     }
-                                  } catch (err) {
-                                    console.error("Price calculation error:", err);
-                                    return 0;
-                                  }
-                                })()}
-                              </div>
-                              <div className="text-gray-500 line-through">
-                                ₹{(() => {
-                                  try {
-                                    if (isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
-                                      return parseFloat(room.monthly_rate).toFixed(0);
-                                    } else {
-                                      return bookingType === 'hourly' 
-                                        ? parseFloat(room.hourly_rate || '0').toFixed(0) 
-                                        : parseFloat(room.daily_rate || '0').toFixed(0);
+                                  })()}
+                                </div>
+                                <div className="text-gray-500 line-through">
+                                  ₹{(() => {
+                                    try {
+                                      if (isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
+                                        return parseFloat(room.monthly_rate).toFixed(0);
+                                      } else {
+                                        return bookingType === 'hourly' 
+                                          ? parseFloat(room.hourly_rate || '0').toFixed(0) 
+                                          : parseFloat(room.daily_rate || '0').toFixed(0);
+                                      }
+                                    } catch (err) {
+                                      console.error("Original price calculation error:", err);
+                                      return 0;
                                     }
-                                  } catch (err) {
-                                    console.error("Original price calculation error:", err);
-                                    return 0;
+                                  })()}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0 
+                                    ? 'per month' 
+                                    : bookingType === 'hourly' ? 'per hour' : 'per night'
                                   }
-                                })()}
+                                </div>
                               </div>
-                              <div className="text-xs text-gray-500">
-                                {isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0 
-                                  ? 'per month' 
-                                  : bookingType === 'hourly' ? 'per hour' : 'per night'
-                                }
-                              </div>
-                              <div className="flex items-center justify-end mt-2">
+                              <div className="flex items-center justify-end">
                                 <Button
                                   onClick={(e) => handleRoomQuantityChange(roomId, -1, e)}
                                   variant="neutral" 
@@ -788,51 +866,55 @@ export default function PropertyDetails() {
             </section>
 
             {/* About */}
-            <section>
+            <section className="property-section">
               <h2 className="text-2xl font-semibold mb-4">About this property</h2>
               <p className="text-gray-700">{property.description}</p>
             </section>
 
             {/* Map Section */}
-            <section>
-              <h2 className="text-2xl font-semibold mb-4">Location</h2>
-              {property.latitude && property.longitude && (
-                <ShowMap
-                  latitude={parseFloat(property.latitude)}
-                  longitude={parseFloat(property.longitude)}
-                />
-              )}
-            </section>
+            {!showGallery && (
+              <section className="property-section">
+                <h2 className="text-2xl font-semibold mb-4">Location</h2>
+                {property.latitude && property.longitude && (
+                  <div className="h-64 sm:h-80 md:h-96 w-full rounded-lg overflow-hidden">
+                    <ShowMap
+                      latitude={parseFloat(property.latitude)}
+                      longitude={parseFloat(property.longitude)}
+                    />
+                  </div>
+                )}
+              </section>
+            )}
 
             {/* Reviews */}
-            <section id="reviews">
+            <section id="reviews" className="property-section">
               <h2 className="text-2xl font-semibold mb-4">Ratings and reviews</h2>
               <ReviewSection reviews={property.reviews || []} />
             </section>
 
             {/* Policies */}
-            <section id="rules">
+            <section id="rules" className="property-section">
               <h2 className="text-2xl font-semibold mb-4">House Rules & Policies</h2>
               <div className="space-y-4">
-                <div className="p-6 bg-white shadow-lg rounded-xl">
+                <div className="p-4 sm:p-6 bg-white shadow-lg rounded-xl">
                   <h3 className="text-xl font-semibold mb-4">Rules & Policies</h3>
                   <ul className="space-y-2">
                       {property.rules.map((rule, index) => (
                       <li key={rule.id || `rule-${index}`} className="flex items-start">
-                        <ClipboardList className="h-5 w-5 mr-2 text-[#B11E43]" />
-                        <span>{rule.name}</span>
+                        <ClipboardList className="h-5 w-5 mr-2 text-[#B11E43] flex-shrink-0 mt-0.5" />
+                        <span className="text-sm sm:text-base">{rule.name}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
                 
-                <div className="p-6 bg-white shadow-lg rounded-xl">
+                <div className="p-4 sm:p-6 bg-white shadow-lg rounded-xl">
                   <h3 className="text-xl font-semibold mb-4">Documentation Required</h3>
                   <ul className="space-y-2">
                       {property.documentation.map((doc, index) => (
                       <li key={doc.id || `doc-${index}`} className="flex items-start">
-                        <FileCheck className="h-5 w-5 mr-2 text-[#B11E43]" />
-                        <span>{doc.name}</span>
+                        <FileCheck className="h-5 w-5 mr-2 text-[#B11E43] flex-shrink-0 mt-0.5" />
+                        <span className="text-sm sm:text-base">{doc.name}</span>
                       </li>
                     ))}
                   </ul>
@@ -841,38 +923,38 @@ export default function PropertyDetails() {
             </section>
 
             {/* Fine Print Section */}
-            <section id="fine-print">
+            <section id="fine-print" className="property-section">
               <h2 className="text-2xl font-semibold mb-4">The fine print</h2>
-              <div className="p-6 bg-white shadow-lg rounded-xl">
+              <div className="p-4 sm:p-6 bg-white shadow-lg rounded-xl">
                 <p className="text-gray-700 mb-4">Important information about your booking:</p>
                 <ul className="space-y-2 text-gray-600">
                   <li className="flex items-start">
                     <ClipboardList className="h-5 w-5 mr-2 text-[#B11E43] flex-shrink-0 mt-0.5" />
-                    <span>Check-in time starts at {property.check_in_time || '2:00 PM'}</span>
+                    <span className="text-sm sm:text-base">Check-in time starts at {property.check_in_time || '2:00 PM'}</span>
                   </li>
                   <li className="flex items-start">
                     <ClipboardList className="h-5 w-5 mr-2 text-[#B11E43] flex-shrink-0 mt-0.5" />
-                    <span>Check-out time is {property.check_out_time || '12:00 PM'}</span>
+                    <span className="text-sm sm:text-base">Check-out time is {property.check_out_time || '12:00 PM'}</span>
                   </li>
                   <li className="flex items-start">
                     <ClipboardList className="h-5 w-5 mr-2 text-[#B11E43] flex-shrink-0 mt-0.5" />
-                    <span>Front desk staff will greet guests on arrival</span>
+                    <span className="text-sm sm:text-base">Front desk staff will greet guests on arrival</span>
                   </li>
                   {property.property_type === 'hotel' && (
                     <li className="flex items-start">
                       <ClipboardList className="h-5 w-5 mr-2 text-[#B11E43] flex-shrink-0 mt-0.5" />
-                      <span>24-hour front desk service available</span>
+                      <span className="text-sm sm:text-base">24-hour front desk service available</span>
                     </li>
                   )}
                   {property.security_deposit && (
                     <li className="flex items-start">
                       <ClipboardList className="h-5 w-5 mr-2 text-[#B11E43] flex-shrink-0 mt-0.5" />
-                      <span>Security deposit of ₹{property.security_deposit} required at check-in</span>
+                      <span className="text-sm sm:text-base">Security deposit of ₹{property.security_deposit} required at check-in</span>
                     </li>
                   )}
                   <li className="flex items-start">
                     <ClipboardList className="h-5 w-5 mr-2 text-[#B11E43] flex-shrink-0 mt-0.5" />
-                    <span>Pets are not allowed on the property</span>
+                    <span className="text-sm sm:text-base">Pets are not allowed on the property</span>
                   </li>
                 </ul>
               </div>
@@ -881,7 +963,7 @@ export default function PropertyDetails() {
 
           {/* Right Column - Booking Card */}
           <div className="lg:col-span-1">
-            <div className="sticky top-4">
+            <div className="lg:sticky lg:top-4">
               <BookingCard
                 bookingType={bookingType}
                 property={property}

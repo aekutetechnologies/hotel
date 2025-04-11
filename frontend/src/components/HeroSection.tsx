@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 // Custom CSS for radial gradient overlay
 const overlayStyles = {
   hotels: {
-    background: "radial-gradient(circle at center, rgba(94, 15, 38, 0.9) 0%, rgba(94, 15, 38, 0.7) 90%)",
+    background: "radial-gradient(circle at center, rgba(178, 30, 66, 0.9) 0%, rgba(178, 30, 66, 0.7) 90%)",
   },
   hostels: {
     background: "radial-gradient(circle at center, rgba(30, 41, 59, 0.9) 0%, rgba(30, 41, 59, 0.7) 90%)",

@@ -17,6 +17,8 @@ export interface Booking {
   discount: number;
   payment_type: string;
   booking_room_types?: Array<Record<string, number>>; // Array of objects where key is room ID and value is count
+  is_review_created?: boolean; // Whether a review has been created for this booking
+  review_id?: number; // ID of the review if one exists
   property: {
     id: number;
     images: Array<{
@@ -30,6 +32,16 @@ export interface Booking {
         id: number;
         name: string;
       }>;
+    }>;
+    reviews?: Array<{
+      id: number;
+      user: {
+        name: string;
+      };
+      rating: number;
+      review: string;
+      created_at: string;
+      images?: string[];
     }>;
   };
   user: {

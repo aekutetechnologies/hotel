@@ -46,6 +46,15 @@ const Map: React.FC<MapProps> = ({ latitude, longitude }) => {
     // Add marker
     L.marker([latitude, longitude], { icon: customIcon }).addTo(map);
 
+    // Set z-index for all leaflet containers to be lower
+    document.querySelectorAll('.leaflet-pane').forEach((el) => {
+      (el as HTMLElement).style.zIndex = '0';
+    });
+    
+    document.querySelectorAll('.leaflet-control-container').forEach((el) => {
+      (el as HTMLElement).style.zIndex = '1';
+    });
+
     // Clean up function
     return () => {
       if (mapInstanceRef.current) {

@@ -345,6 +345,13 @@ const Navbar: React.FC<NavbarProps> = ({
                             Terms & Conditions
                           </Link>
                           <Link 
+                            href="/cancellation-policy"
+                            className="text-xl md:text-2xl py-3 px-4 hover:bg-white/10 rounded-lg cursor-pointer transition-all duration-300 hover:translate-x-2"
+                            onClick={() => setNavModal(false)}
+                          >
+                            Cancellation Policy
+                          </Link>
+                          <Link 
                             href="/privacy-policy"
                             className="text-xl md:text-2xl py-3 px-4 hover:bg-white/10 rounded-lg cursor-pointer transition-all duration-300 hover:translate-x-2"
                             onClick={() => setNavModal(false)}

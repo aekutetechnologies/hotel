@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Star } from 'lucide-react'
+import { Star, X, ChevronDown } from 'lucide-react'
 import Image from 'next/image'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
@@ -13,7 +13,7 @@ interface Review {
     name: string
   }
   rating: number
-  detail: string
+  review: string
   created_at: string
   images: string[]
 }
@@ -107,27 +107,27 @@ export function ReviewSection({ reviews }: ReviewSectionProps) {
         {reviews.slice(0, 1).map((review) => (
           <div key={review.id} className="border-b pb-6">
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center">
+              <div className="min-w-10 h-10 rounded-full bg-red-600 flex items-center justify-center">
                 <span className="text-white font-medium text-lg">{review.user.name.charAt(0)}</span>
               </div>
               <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex flex-wrap items-center gap-2 mb-2">
                   <span className="font-medium">{review.user.name}</span>
                   <Badge variant="outline" className="bg-green-50">
                     {review.rating}★
                   </Badge>
                   <span className="text-sm text-gray-500">{new Date(review.created_at).toLocaleDateString()}</span>
                 </div>
-                <p className="text-gray-700 mb-4">{review.detail}</p>
-                {review.images && (
-                  <div className="flex gap-2">
+                <p className="text-gray-700 mb-4">{review.review}</p>
+                {review.images && review.images.length > 0 && (
+                  <div className="flex flex-wrap gap-3">
                     {review.images.map((image, index) => (
-                      <div key={`${review.id}-image-${index}`} className="relative w-20 h-20">
+                      <div key={`${review.id}-image-${index}`} className="relative w-24 h-24 overflow-hidden border rounded-md shadow-sm">
                         <Image
                           src={image}
                           alt={`Review image ${index + 1}`}
                           fill
-                          className="object-cover rounded-lg"
+                          className="object-cover"
                         />
                       </div>
                     ))}
@@ -147,47 +147,61 @@ export function ReviewSection({ reviews }: ReviewSectionProps) {
             </Button>
           )}
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[60vw]">
-          <DialogHeader>
-            <DialogTitle>All Reviews</DialogTitle>
+        <DialogContent 
+          className="sm:max-w-[60vw]" 
+          style={{ 
+            zIndex: 50,
+            maxHeight: '85vh'  // Limit height to 85% of viewport height
+          }}
+        >
+          <DialogHeader className="relative">
+            <DialogTitle>All Reviews ({reviews.length})</DialogTitle>
             <DialogDescription>
-              Here are all the reviews for this property.
+              Average rating: {averageRating.toFixed(1)}★ • {getRatingDescription(averageRating)}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-6">
-            {reviews.map((review) => (
-              <div key={review.id} className="border-b pb-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center">
-                    <span className="text-white font-medium text-lg">{review.user.name.charAt(0)}</span>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="font-medium">{review.user.name}</span>
-                      <Badge variant="outline" className="bg-green-50">
-                        {review.rating}★
-                      </Badge>
-                      <span className="text-sm text-gray-500">{new Date(review.created_at).toLocaleDateString()}</span>
+          
+          <div className="relative">
+            <div className="space-y-6 overflow-y-auto max-h-[calc(80vh-120px)] pr-2 pb-2">
+              {reviews.map((review) => (
+                <div key={review.id} className="border-b pb-6 last:border-0">
+                  <div className="flex items-start gap-4">
+                    <div className="min-w-10 h-10 rounded-full bg-red-600 flex items-center justify-center">
+                      <span className="text-white font-medium text-lg">{review.user.name.charAt(0)}</span>
                     </div>
-                    <p className="text-gray-700 mb-4">{review.detail}</p>
-                    {review.images && (
-                      <div className="flex gap-2">
-                        {review.images.map((image, index) => (
-                          <div key={`${review.id}-image-${index}`} className="relative w-20 h-20">
-                            <Image
-                              src={image}
-                              alt={`Review image ${index + 1}`}
-                              fill
-                              className="object-cover rounded-lg"
-                            />
-                          </div>
-                        ))}
+                    <div className="flex-1">
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <span className="font-medium">{review.user.name}</span>
+                        <Badge variant="outline" className="bg-green-50">
+                          {review.rating}★
+                        </Badge>
+                        <span className="text-sm text-gray-500">{new Date(review.created_at).toLocaleDateString()}</span>
                       </div>
-                    )}
+                      <p className="text-gray-700 mb-4">{review.review}</p>
+                      {review.images && review.images.length > 0 && (
+                        <div className="flex flex-wrap gap-3">
+                          {review.images.map((image, index) => (
+                            <div key={`${review.id}-image-${index}`} className="relative w-24 h-24 overflow-hidden border rounded-md shadow-sm">
+                              <Image
+                                src={image}
+                                alt={`Review image ${index + 1}`}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+            
+            {/* Scroll indicator */}
+            <div className="absolute bottom-0 left-0 right-0 h-12 pointer-events-none bg-gradient-to-t from-white to-transparent flex justify-center items-end pb-2">
+              <ChevronDown className="h-5 w-5 text-gray-400 animate-bounce" />
+            </div>
           </div>
         </DialogContent>
       </Dialog>

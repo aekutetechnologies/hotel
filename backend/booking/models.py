@@ -5,6 +5,9 @@ from property.models import Property, Room
 from decimal import Decimal
 from django.core.exceptions import ValidationError
 from datetime import datetime
+from property.models import Review, ReviewImage
+
+
 class Booking(models.Model):
     BOOKING_TYPE_CHOICES = [
         ('walkin', 'Walkin'),
@@ -58,36 +61,8 @@ class Booking(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
     booking_room_types = models.JSONField(null=True, blank=True)
-
-    def save(self, *args, **kwargs):
-        calculated_price = Decimal('0.00')
-
-        if self.room:
-            if self.booking_type == 'hourly':
-                if not self.room.hourly_rate:
-                    raise ValueError("Hourly rate not available for this room.")
-                delta = self.checkout_date - self.checkin_date
-                total_hours = delta.total_seconds() / 3600
-                calculated_price = Decimal(total_hours) * self.room.hourly_rate
-            else:
-                # if self.checking_date and self.checkout_date are string, convert them to date
-                if isinstance(self.checkin_date, str):
-                    self.checkin_date = datetime.strptime(self.checkin_date, '%Y-%m-%d').date()
-                if isinstance(self.checkout_date, str):
-                    self.checkout_date = datetime.strptime(self.checkout_date, '%Y-%m-%d').date()
-                delta_days = (self.checkout_date - self.checkin_date).days
-                if delta_days < 0:
-                    raise ValueError("Checkout date cannot be before check-in date.")
-                calculated_price = Decimal(delta_days) * self.room.daily_rate
-
-            if self.discount is not None:
-                calculated_price -= calculated_price * (self.discount / Decimal('100.00'))
-        else:
-            # Handle property-level bookings if needed
-            pass
-
-        self.price = calculated_price.quantize(Decimal('0.00'))
-        super().save(*args, **kwargs)
+    is_review_created = models.BooleanField(default=False)
+    review_id = models.CharField(max_length=255, null=True, blank=True)
 
     def clean(self):
         if self.booking_type == 'hourly' and not self.room.hourly_rate:
@@ -109,3 +84,12 @@ class BookingDocument(models.Model):
 
     def __str__(self):
         return f"Booking Document {self.id} for Booking {self.booking.id}"
+        
+
+class BookingReview(models.Model):
+    id = models.AutoField(primary_key=True)
+    booking = models.ForeignKey(Booking, on_delete=models.CASCADE)
+    review = models.ForeignKey(Review, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)

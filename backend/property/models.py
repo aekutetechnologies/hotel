@@ -15,6 +15,7 @@ BED_TYPE_CHOICES = [
 ]
 
 class City(models.Model):
+    id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
@@ -24,6 +25,7 @@ class City(models.Model):
         return self.name
 
 class Country(models.Model):
+    id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
@@ -33,6 +35,7 @@ class Country(models.Model):
         return self.name
 
 class State(models.Model):
+    id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
@@ -42,6 +45,7 @@ class State(models.Model):
         return self.name
 
 class Amenity(models.Model):
+    id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
@@ -51,6 +55,7 @@ class Amenity(models.Model):
         return self.name
 
 class Rule(models.Model):
+    id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
@@ -60,6 +65,7 @@ class Rule(models.Model):
         return self.name
 
 class Documentation(models.Model):
+    id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
@@ -78,6 +84,7 @@ class PropertyImage(models.Model):
         return f"Image ID: {self.id}"
 
 class RoomImage(models.Model):
+    id = models.AutoField(primary_key=True)
     image = models.ImageField(upload_to='room_images/')
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
@@ -87,6 +94,7 @@ class RoomImage(models.Model):
         return f"Room Image ID: {self.id}"
 
 class Room(models.Model):
+    id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
     daily_rate = models.DecimalField(max_digits=10, decimal_places=2)
     hourly_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -111,6 +119,7 @@ class Room(models.Model):
         return self.name
 
 class Property(models.Model):
+    id = models.AutoField(primary_key=True)
     PROPERTY_TYPE_CHOICES = [
         ('hotel', 'Hotel'),
         ('hostel', 'Hostel'),
@@ -138,11 +147,24 @@ class Property(models.Model):
     def __str__(self):
         return self.name
 
+class ReviewImage(models.Model):
+    id = models.AutoField(primary_key=True)
+    image = models.ImageField(upload_to='review_images/')
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"Review Image ID: {self.id}"
+
 class Review(models.Model):
+    id = models.AutoField(primary_key=True)
     user = models.ForeignKey(HsUser, on_delete=models.CASCADE)
     property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='reviews')
+    booking_id = models.CharField(max_length=255, null=True, blank=True)
+    images = models.ManyToManyField(ReviewImage, blank=True)
     rating = models.IntegerField(default=0)
-    detail = models.TextField()
+    review = models.TextField()
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
@@ -151,6 +173,7 @@ class Review(models.Model):
         return f"Review by {self.user.mobile} on {self.property.name}"
 
 class Reply(models.Model):
+    id = models.AutoField(primary_key=True)
     user = models.ForeignKey(HsUser, on_delete=models.CASCADE)
     review = models.ForeignKey(Review, on_delete=models.CASCADE)
     detail = models.TextField()
@@ -163,6 +186,7 @@ class Reply(models.Model):
 
 
 class FavoriteProperty(models.Model):
+    id = models.AutoField(primary_key=True)
     user = models.ForeignKey(HsUser, on_delete=models.CASCADE)
     property = models.ForeignKey(Property, on_delete=models.CASCADE)
     created_at = models.DateTimeField(default=timezone.now)

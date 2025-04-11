@@ -127,8 +127,25 @@
   animation: marquee var(--duration) linear infinite;
 }
 
+.leaflet-container {
+  z-index: 0 !important;
+}
+
+.leaflet-control-container {
+  z-index: 1 !important;
+}
+
 .leaflet-pane {
-  z-index: 10 !important;
+  z-index: 0 !important;
+}
+
+.leaflet-top, 
+.leaflet-bottom {
+  z-index: 1 !important;
+}
+
+.leaflet-popup-pane {
+  z-index: 2 !important;
 }
 
 .testimonial-scroll::-webkit-scrollbar {

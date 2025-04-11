@@ -13,10 +13,11 @@ import { fetchProperty } from '@/lib/api/fetchProperty'
 import { formatPrice } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { bookProperty } from '@/lib/api/bookProperty'
-import { SignIn } from '@/components/SignIn'
 import { LoadingIndicator } from '@/components/ui/LoadingIndicator'
-import { CalendarDays } from "lucide-react"
+import { CalendarDays, X } from "lucide-react"
 import { format, parseISO } from 'date-fns'
+import { Separator } from "@/components/ui/separator"
+import { LoginDialog } from '@/components/LoginDialog'
 
 const capitalize = (s: string) => s && String(s[0]).toUpperCase() + String(s).slice(1)
 
@@ -39,6 +40,15 @@ interface BookPropertyParams {
   booking_time: string;
   token?: string;
   booking_room_types?: Array<Record<string, number>>;
+  offer_code?: string;
+  offer_discount?: number;
+}
+
+interface Offer {
+  id: number;
+  code: string;
+  title: string;
+  discount_percentage: string;
 }
 
 export default function BookProperty() {
@@ -51,6 +61,7 @@ export default function BookProperty() {
   const [selectedRoom, setSelectedRoom] = useState<any>(null) // type it later
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false) // Track login status
   const [showSignIn, setShowSignIn] = useState<boolean>(false) // State for SignIn modal
+  const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null) // Track selected offer
 
   const checkInDateParam = searchParams.get('checkInDate') || '';
   const checkOutDateParam = searchParams.get('checkOutDate') || '';
@@ -60,6 +71,7 @@ export default function BookProperty() {
   const bookingTypeParam = searchParams.get('bookingType') || 'daily';
   const roomsParam = searchParams.get('rooms') || '1';
   const selectedRoomsParam = searchParams.get('selectedRooms') || '';
+  const selectedOfferParam = searchParams.get('selectedOffer') || '';
 
   // Parse selected rooms from URL parameter
   const [selectedRoomDetails, setSelectedRoomDetails] = useState<any[]>([]);
@@ -175,6 +187,82 @@ export default function BookProperty() {
     setBooking(prev => ({ ...prev, [name]: value }))
   }
 
+  // Parse selected offer from URL parameter
+  useEffect(() => {
+    if (selectedOfferParam) {
+      try {
+        const parsedOffer = JSON.parse(selectedOfferParam);
+        setSelectedOffer(parsedOffer);
+        console.log("Parsed selected offer:", parsedOffer);
+      } catch (error) {
+        console.error("Error parsing selected offer:", error);
+      }
+    }
+  }, [selectedOfferParam]);
+
+  // Calculate offer discount
+  const calculateOfferDiscount = (price: number) => {
+    if (!selectedOffer) return 0;
+    
+    const discountPercentage = parseFloat(selectedOffer.discount_percentage);
+    if (isNaN(discountPercentage)) return 0;
+    
+    return price * (discountPercentage / 100);
+  };
+
+  // Calculate total price across all selected rooms with quantities, discounts, and offers
+  const calculateTotalPrice = () => {
+    let total = 0;
+    
+    if (property && property.rooms && Array.isArray(property.rooms)) {
+      property.rooms.forEach((room: any) => {
+        const quantity = selectedRoomQuantities[room.id] || 0;
+        if (quantity > 0) {
+          const basePrice = booking.bookingType === 'hourly' 
+            ? parseFloat(room.hourly_rate || '0') 
+            : parseFloat(room.daily_rate || '0');
+          const discount = parseFloat(room.discount || '0');
+          const discountedPrice = basePrice * (1 - (discount / 100));
+          total += quantity * discountedPrice;
+        }
+      });
+    }
+    
+    return parseFloat(total.toFixed(2));
+  };
+  
+  // Get final price after offer discount
+  const getFinalPrice = () => {
+    const baseTotal = calculateTotalPrice();
+    const offerDiscount = calculateOfferDiscount(baseTotal);
+    const taxes = baseTotal * 0.18; // 18% GST
+    
+    return baseTotal - offerDiscount + taxes;
+  };
+
+  // Handle offer change
+  const handleOfferChange = (offerId: string) => {
+    if (!property) return;
+    
+    const propertyAny = property as any;
+    if (!propertyAny.offers) return;
+    
+    if (offerId === '') {
+      setSelectedOffer(null);
+      return;
+    }
+    
+    const offer = propertyAny.offers.find((o: any) => o.offer.code === offerId);
+    if (offer) {
+      setSelectedOffer({
+        id: offer.id,
+        code: offer.offer.code,
+        title: offer.offer.title,
+        discount_percentage: offer.offer.discount_percentage
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -200,21 +288,27 @@ export default function BookProperty() {
       booking_room_types: Array<Record<string, number>>;
     };
     
+    // Create the booking_room_types array with room id as key and quantity as value
+    let bookingRoomTypes: Array<Record<string, number>> = [];
+    
+    // Calculate the total price for the booking
+    const totalPrice = getFinalPrice();
+    
     if (selectedRoomDetails.length > 0) {
       // Use the first selected room for the booking API
       // In a real app, you might want to handle multiple room types in the API
       const primaryRoom = selectedRoomDetails[0];
       
       // Create the booking_room_types array with room id as key and quantity as value
-      const bookingRoomTypes: Array<Record<string, number>> = selectedRoomDetails.map(room => ({
+      bookingRoomTypes = selectedRoomDetails.map(room => ({
         [room.id]: room.quantity
       }));
       
       bookingData = {
-        user: localStorage.getItem('userId'), // Assuming userId is stored in localStorage
+        user: localStorage.getItem('userId'),
         property: propertyId,
         room: primaryRoom.id,
-        price: parseFloat(primaryRoom.price || '0'),
+        price: totalPrice,
         discount: 0, // We would need to pass this from the property page
         booking_time: booking.bookingType, // Use the selected booking type
         booking_type: 'online', // Same as booking_time
@@ -222,8 +316,8 @@ export default function BookProperty() {
         payment_type: 'upi', // Default payment type, can be updated later
         checkin_date: booking.checkIn,
         checkout_date: booking.bookingType === 'hourly' ? booking.checkIn : booking.checkOut,
-        checkin_time: booking.checkInTime,
-        checkout_time: booking.checkOutTime,
+        checkin_time: booking.bookingType === 'hourly' ? booking.checkInTime : '12:00',
+        checkout_time: booking.bookingType === 'hourly' ? booking.checkOutTime : '11:00',
         number_of_guests: parseInt(booking.guests, 10),
         number_of_rooms: selectedRoomDetails.reduce((total, room) => total + room.quantity, 0),
         token: token,
@@ -239,24 +333,20 @@ export default function BookProperty() {
       // Also store booking room types for API calls from confirmation page if needed
       sessionStorage.setItem('bookingRoomTypes', JSON.stringify(bookingRoomTypes));
     } else {
-      // Get the appropriate price based on booking type
-      const roomPrice = booking.bookingType === 'hourly' 
-        ? selectedRoom.hourly_rate 
-        : selectedRoom.daily_rate;
-      
       // Define a type for room data structure
       interface SelectedRoomInfo {
         id: string;
         name: string;
         quantity: number;
         price: string | number;
+        discount?: string | number;
       }
       
       // Create an array of selected rooms with quantities
       const selectedRoomsWithQty: SelectedRoomInfo[] = [];
       
       // Create the booking_room_types array with room id as key and quantity as value
-      const bookingRoomTypes: Array<Record<string, number>> = [];
+      bookingRoomTypes = [];
       
       if (property && property.rooms && Array.isArray(property.rooms)) {
         Object.entries(selectedRoomQuantities)
@@ -268,7 +358,8 @@ export default function BookProperty() {
                 id: roomId,
                 name: room.name || 'Room',
                 quantity: qty,
-                price: booking.bookingType === 'hourly' ? room.hourly_rate : room.daily_rate
+                price: booking.bookingType === 'hourly' ? room.hourly_rate : room.daily_rate,
+                discount: room.discount
               });
               
               // Add to booking_room_types array
@@ -285,10 +376,10 @@ export default function BookProperty() {
       sessionStorage.setItem('bookingRoomTypes', JSON.stringify(bookingRoomTypes));
           
       bookingData = {
-        user: localStorage.getItem('userId'), // Assuming userId is stored in localStorage
+        user: localStorage.getItem('userId'),
         property: propertyId,
         room: selectedRoom.id,
-        price: parseFloat(roomPrice || '0'),
+        price: totalPrice,
         discount: parseFloat(selectedRoom.discount || '0'),
         booking_time: booking.bookingType, // Use the selected booking type
         booking_type: 'online', // Same as booking_time
@@ -306,6 +397,12 @@ export default function BookProperty() {
       extraBookingData = {
         booking_room_types: bookingRoomTypes
       };
+    }
+
+    // Include offer information in booking data if an offer is selected
+    if (selectedOffer) {
+      bookingData.offer_code = selectedOffer.code;
+      bookingData.offer_discount = calculateOfferDiscount(calculateTotalPrice());
     }
 
     console.log("Booking data:", bookingData);
@@ -359,6 +456,21 @@ export default function BookProperty() {
     });
   };
 
+  // Handle successful login
+  const handleLoginSuccess = (name: string) => {
+    // Check for token to ensure login was successful
+    const token = localStorage.getItem('accessToken')
+    if (token) {
+      setIsLoggedIn(true)
+      // Refresh the local storage values that might have been updated
+      const userId = localStorage.getItem('userId')
+      const userName = localStorage.getItem('name')
+      
+      console.log('Login successful:', { name, userId })
+    }
+    setShowSignIn(false)
+  }
+
   if (!property) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -374,15 +486,19 @@ export default function BookProperty() {
   return (
     <>
     {!isLoggedIn ? (
-      <div className="min-h-screen flex flex-col items-center justify-center">
-        <p className="text-center mb-4">Please sign in to continue your booking</p>
+      <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8">
+        <p className="text-center mb-4 text-base sm:text-lg">Please sign in to continue your booking</p>
         <Button
-          className="bg-[#B11E43] text-white hover:bg-[#8f1836]"
+          className="bg-[#B11E43] text-white hover:bg-[#8f1836] w-full sm:w-auto"
           onClick={() => setShowSignIn(true)}
         >
           Sign In to Book
         </Button>
-        {showSignIn && <SignIn onClose={() => setShowSignIn(false)} setIsLoggedIn={setIsLoggedIn} />}
+        <LoginDialog 
+          isOpen={showSignIn}
+          onClose={() => setShowSignIn(false)}
+          onLoginSuccess={handleLoginSuccess}
+        />
       </div>
     ) : ( // Conditionally render booking form based on login
     <div className="min-h-screen flex flex-col">
@@ -562,24 +678,75 @@ export default function BookProperty() {
                 )}
               </div>
 
-              <div className="pt-4 border-t">
-                <div className="flex justify-between text-sm mb-2">
-                  <span>Room charges</span>
-                  <span>₹{property?.rooms?.reduce((total, room) => {
-                    const quantity = selectedRoomQuantities[room.id] || 0;
-                    const price = parseFloat(room.price || '0');
-                    return total + (quantity * price);
-                  }, 0).toFixed(2)}</span>
+              {/* Offers section */}
+              {property && (property as any).offers && (property as any).offers.length > 0 ? (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Apply Offer</label>
+                  <div className="border rounded-md p-4">
+                    {selectedOffer ? (
+                      <div className="flex items-center justify-between p-2 border rounded-md">
+                        <div>
+                          <p className="font-medium">{selectedOffer.code}</p>
+                          <p className="text-sm text-gray-500">{selectedOffer.title}</p>
+                          <p className="text-sm text-green-600">-{selectedOffer.discount_percentage}% discount</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedOffer(null)}
+                          className="p-1"
+                        >
+                          <X className="h-4 w-4 text-gray-500" />
+                          <span className="sr-only">Remove offer</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <Select onValueChange={handleOfferChange}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select an offer" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(property as any).offers.map((offer: any) => (
+                            <SelectItem key={offer.id} value={offer.offer.code}>
+                              <div className="flex justify-between items-center">
+                                <span>{offer.offer.code}</span>
+                                <span className="text-green-600">-{offer.offer.discount_percentage}%</span>
+                              </div>
+                              <p className="text-sm text-gray-500">{offer.offer.title}</p>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
                 </div>
-                <div className="flex justify-between font-medium">
-                  <span>Total</span>
-                  <span>₹{property?.rooms?.reduce((total, room) => {
-                    const quantity = selectedRoomQuantities[room.id] || 0;
-                    const price = parseFloat(room.price || '0');
-                    const discount = parseFloat(room.discount || '0');
-                    const discountedPrice = price * (1 - (discount / 100));
-                    return total + (quantity * discountedPrice);
-                  }, 0).toFixed(2)}</span>
+              ) : null}
+
+              {/* Updated Price Breakdown */}
+              <div className="pt-4 border-t">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm mb-2">
+                    <span>Room charges</span>
+                    <span>₹{calculateTotalPrice().toFixed(2)}</span>
+                  </div>
+                  
+                  {selectedOffer && (
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span>Offer discount ({selectedOffer.code})</span>
+                      <span>-₹{calculateOfferDiscount(calculateTotalPrice()).toFixed(2)}</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between text-sm">
+                    <span>Taxes (18%)</span>
+                    <span>₹{(calculateTotalPrice() * 0.18).toFixed(2)}</span>
+                  </div>
+                  
+                  <Separator className="my-2" />
+                  
+                  <div className="flex justify-between font-medium">
+                    <span>Total</span>
+                    <span>₹{getFinalPrice().toFixed(2)}</span>
+                  </div>
                 </div>
               </div>
 

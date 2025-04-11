@@ -1,4 +1,4 @@
-from rest_framework.decorators import api_view, parser_classes
+from rest_framework.decorators import api_view, parser_classes, permission_classes
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework import status
@@ -33,13 +33,16 @@ from .serializers import (
     ReviewSerializer,
     ReplySerializer,
     CitySerializer,
-    FavoritePropertySerializer
+    FavoritePropertySerializer,
+    ReviewCreateSerializer
 )
 
 from users.decorators import custom_authentication_and_permissions
 from django.shortcuts import get_object_or_404
 from backend.settings import WEBSITE_URL
 from django.db.models import Q
+from rest_framework.permissions import IsAuthenticated
+from booking.models import Booking
 
 
 @api_view(["GET", "POST"])
@@ -291,6 +294,8 @@ def review_list(request):
         serializer = ReviewSerializer(reviews, many=True)
         return Response(serializer.data)
     elif request.method == "POST":
+        print(f"Request data: {request.data}")
+        print(f"Request user: {request.user}")
         serializer = ReviewSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -604,3 +609,59 @@ def get_favorite_properties(request):
     favorite_properties = FavoriteProperty.objects.filter(user=user, is_active=True)
     serializer = FavoritePropertySerializer(favorite_properties, many=True, context={"request": request})
     return Response(serializer.data)
+
+
+@api_view(['POST'])
+@custom_authentication_and_permissions()
+def create_review(request):
+    """
+    Create a review for a property.
+    """
+    try:
+        serializer = ReviewCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            # Get the booking object
+            booking_id = serializer.validated_data.get('booking_id')
+            try:
+                booking = Booking.objects.get(id=booking_id)
+            except Booking.DoesNotExist:
+                return Response(
+                    {"error": "Booking not found"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            # Check if the booking belongs to the current user
+            if booking.user != request.user:
+                return Response(
+                    {"error": "You can only review your own bookings"},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+            # Check if the booking is completed
+            if booking.status != 'completed':
+                return Response(
+                    {"error": "You can only review completed bookings"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Create the review
+            review = serializer.save(
+                user=request.user,
+                property=booking.property
+            )
+
+            if review:
+                booking.is_review_created = True
+                booking.review_id = review.id
+                booking.save()
+
+            return Response(
+                {"message": "Review created successfully", "review_id": review.id},
+                status=status.HTTP_201_CREATED
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response(
+            {"error": str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

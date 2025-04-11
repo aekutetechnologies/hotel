@@ -36,7 +36,7 @@ export default function ShowMap({ latitude, longitude }: ShowMapProps) {
   }
 
   return (
-    <div className="h-96 w-full rounded-lg overflow-hidden">
+    <div className="h-96 w-full rounded-lg overflow-hidden relative" style={{ zIndex: 0 }}>
       <MapComponent key={mountKey} latitude={latitude} longitude={longitude} />
     </div>
   )

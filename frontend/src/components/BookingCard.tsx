@@ -595,7 +595,13 @@ export function BookingCard({
                       ? room.hourly_rate 
                       : room.daily_rate
                 }))
-            )
+            ),
+            selectedOffer: selectedOffer ? JSON.stringify({
+              id: selectedOffer.id,
+              code: selectedOffer.offer.code,
+              title: selectedOffer.offer.title,
+              discount_percentage: selectedOffer.offer.discount_percentage
+            }) : ''
           }
         }}
         rel="noopener noreferrer">
@@ -612,9 +618,6 @@ export function BookingCard({
             <CheckCircle2 className="h-4 w-4" />
             10 people booked this property today
           </p>
-          <button className="text-sm text-[#B11E43] flex items-center gap-1">
-            Cancellation Policy <Info className="h-4 w-4" />
-          </button>
         </div>
       </CardFooter>
     </Card>

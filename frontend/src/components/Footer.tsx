@@ -98,6 +98,12 @@ const Footer = ({ sectionType }: FooterProps) => {
                 whileHover={{ x: 5 }}
                 className="cursor-pointer hover:text-white transition-all duration-200"
               >
+                <Link href="/cancellation-policy">Cancellation Policy</Link>
+              </motion.li>
+              <motion.li 
+                whileHover={{ x: 5 }}
+                className="cursor-pointer hover:text-white transition-all duration-200"
+              >
                 <Link href="/terms-and-conditions">Terms & Conditions</Link>
               </motion.li>
               <motion.li 

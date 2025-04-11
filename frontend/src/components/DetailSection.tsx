@@ -332,11 +332,13 @@ export function DetailSection({
           {/* Hero Section with Search */}
           <HeroSection sectionType={sectionType} />
 
-          {/* Place Cards */}
-          <PlaceCard type={getSingularType(sectionType)} />
+          {/* Place Cards - further reducing vertical spacing with larger negative margin */}
+          <div className="mt-[-8rem]">
+            <PlaceCard type={getSingularType(sectionType)} />
+          </div>
 
           {/* Property Timeline */}
-          <div className="bg-white w-full">
+          <div className="bg-white w-full mt-[-4rem]">
             <PropertyTimeline type={getSingularType(sectionType)} />
           </div>
 

@@ -39,12 +39,17 @@ export function PropertyCard({ property, searchParams }: PropertyCardProps) {
   const isHostel = property.property_type === 'hostel'
   const bookingType = searchParams.get('bookingType') || 'daily'
   
-  // For hostels, use monthly rates when available
+  // Calculate price based on booking type
   const originalPrice = property.rooms && property.rooms.length > 0 ? 
     Math.min(...property.rooms.map(room => {
       if (isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
+        // Always use monthly rate for hostels if available
         return parseFloat(room.monthly_rate);
+      } else if (bookingType === 'hourly' && room.hourly_rate && parseFloat(room.hourly_rate) > 0) {
+        // Use hourly rate when booking type is hourly
+        return parseFloat(room.hourly_rate);
       } else {
+        // Default to daily rate
         return parseFloat(room.daily_rate || room.price || '0');
       }
     })) :
@@ -273,7 +278,7 @@ export function PropertyCard({ property, searchParams }: PropertyCardProps) {
                       <span className="text-xs sm:text-sm text-gray-500 line-through">
                         ₹{originalPrice}
                       </span>
-                      <Badge variant="secondary" className="text-xs bg-[#FFEAEF] text-[#B11E43] border border-[#FFDCE6]">
+                      <Badge variant="secondary" className="bg-green-50 text-green-600 hover:bg-green-50 hover:text-green-600">
                         {discount}% OFF
                       </Badge>
                     </div>

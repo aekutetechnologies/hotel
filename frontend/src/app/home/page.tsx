@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { DetailSection } from '@/components/DetailSection';
 
 // Testimonial data - move from main page to here
@@ -91,7 +91,8 @@ const hotelTestimonials = [
   },
 ];
 
-export default function HomePage() {
+// Create a client component that uses useSearchParams
+function HomeContent() {
   const searchParams = useSearchParams();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState("");
@@ -140,5 +141,19 @@ export default function HomePage() {
       setShowDetailSection={setShowDetailSection}
       handleLoginClick={handleLoginClick}
     />
+  );
+}
+
+// Create a loading fallback for Suspense
+function HomeLoading() {
+  return <div className="flex justify-center items-center h-screen">Loading...</div>;
+}
+
+// Main page component that wraps HomeContent in Suspense
+export default function HomePage() {
+  return (
+    <Suspense fallback={<HomeLoading />}>
+      <HomeContent />
+    </Suspense>
   );
 }

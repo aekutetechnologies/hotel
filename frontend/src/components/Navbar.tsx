@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CgDetailsMore } from "react-icons/cg";
 import { RxCross2 } from "react-icons/rx";
-import { ArrowRight, Facebook, Instagram, Linkedin } from "lucide-react";
+import { ArrowRight, Facebook, Instagram, Linkedin, MessageCircle } from "lucide-react";
 import Image from "next/image";
 import { ProfileDropdown } from "./profile-dropdown";
 import { NewButton } from "./ui/new-button";
@@ -25,6 +25,8 @@ interface NavbarProps {
   onNavModalChange?: (isOpen: boolean) => void;
   isDetailPage?: boolean;
 }
+
+const whatsappLink = "https://api.whatsapp.com/send?phone=9090151524&text=I%20checked%20the%20website,%20and%20I%20have%20a%20few%20questions%20to%20ask"
 
 const Navbar: React.FC<NavbarProps> = ({
   isLoggedIn,
@@ -158,7 +160,7 @@ const Navbar: React.FC<NavbarProps> = ({
           </motion.button>
           {/* Logo with conditional redirect logic */}
           <Link 
-            href={isDetailPage ? `/home?type=${currentSection === 'hotel' ? 'hotels' : 'hostels'}` : '/'}
+            href="/"
           >
             <Image
               src={navModal ? "/white-logo.png" : "/logo.png"}
@@ -171,18 +173,25 @@ const Navbar: React.FC<NavbarProps> = ({
           </Link>
         </div>
 
-        {isLoggedIn ? (
-          <ProfileDropdown userName={userName} onLogout={handleLogout} />
-        ) : (
-          <NewButton
-            variant="default"
-            onClick={handleLoginClick}
-            size="sm"
-          >
-            <LogIn className="w-5 h-5 mr-2" />
-            <span>Login</span>
-          </NewButton>
-        )}
+        <div className="flex items-center gap-4">
+          <Link href={whatsappLink} target="_blank" rel="noopener noreferrer" className="hidden md:flex items-center gap-2 text-base text-gray-600 hover:text-gray-900">
+            <MessageCircle className="h-5 w-5 text-green-600" />
+            <span>9090151524</span>
+          </Link>
+          
+          {isLoggedIn ? (
+            <ProfileDropdown userName={userName} onLogout={handleLogout} />
+          ) : (
+            <NewButton
+              variant="default"
+              onClick={handleLoginClick}
+              size="sm"
+            >
+              <LogIn className="w-5 h-5 mr-2" />
+              <span>Login</span>
+            </NewButton>
+          )}
+        </div>
       </div>
 
       <AnimatePresence>

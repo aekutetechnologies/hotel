@@ -9,7 +9,6 @@ import { NewButton } from "@/components/ui/new-button";
 import { HomeHero } from "@/components/HomeHero";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { Logo } from "@/components/Logo";
-import WhatsApp from "@/components/WhatsApp";
 
 // Define static data
 const hotelImages = [
@@ -196,9 +195,6 @@ export default function Home() {
               handleExpandedSectionClick={handleExpandedSectionClick}
             />
           </motion.div>
-          
-          {/* WhatsApp Widget */}
-          <WhatsApp />
         </div>
       )}
 

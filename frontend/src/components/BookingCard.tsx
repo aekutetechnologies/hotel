@@ -441,18 +441,36 @@ export function BookingCard({
                     value={rooms}
                     onChange={(e) => setRooms(parseInt(e.target.value) || 1)}
                     min={1}
-                    className="mt-1"
+                    className="mt-1 bg-gray-100"
+                    disabled
                   />
                 </div>
                 <div>
                   <Label>Number of Guests</Label>
-                  <Input 
-                    type="number" 
-                    value={guests}
-                    onChange={(e) => setGuests(parseInt(e.target.value))}
-                    min={1}
-                    className="mt-1"
-                  />
+                  <div className="relative">
+                    <Input 
+                      type="number" 
+                      value={guests}
+                      onChange={(e) => {
+                        const newValue = parseInt(e.target.value) || 1;
+                        // For hotel properties, cap at 3 guests per room
+                        if (!isHostel && rooms > 0) {
+                          const maxGuests = rooms * 3;
+                          setGuests(Math.min(newValue, maxGuests));
+                        } else {
+                          setGuests(newValue);
+                        }
+                      }}
+                      min={1}
+                      max={!isHostel ? rooms * 3 : undefined}
+                      className="mt-1"
+                    />
+                    {!isHostel && (
+                      <div className="absolute left-0 -bottom-5 text-xs text-gray-500">
+                        Max 3 guests per room
+                      </div>
+                    )}
+                  </div>
                 </div>
               </>
           </div>

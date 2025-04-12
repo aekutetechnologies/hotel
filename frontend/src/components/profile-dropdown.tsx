@@ -48,7 +48,7 @@ export function ProfileDropdown({ onLogout, userName }: ProfileDropdownProps) {
     localStorage.clear()
     
     // Redirect to home page
-    router.push('/')
+    router.push('/home?type=hotels')
   }
 
   return (

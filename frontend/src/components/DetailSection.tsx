@@ -11,7 +11,6 @@ import Features from "@/components/Features";
 import SocialSection from "@/components/SocialSection";
 import TestimonialSection from "@/components/testimonial-section";
 import { HeroSection } from "./HeroSection";
-import WhatsApp from "./WhatsApp";
 import Footer from "./Footer";
 import { usePathname } from "next/navigation";
 
@@ -365,10 +364,9 @@ export function DetailSection({
 
           {/* Footer */}
           <Footer sectionType={sectionType} />
-
-          <WhatsApp />
         </div>
       </motion.div>
+      
     </motion.div>
   );
 }

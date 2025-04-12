@@ -437,7 +437,7 @@ export function SearchForm({ sectionType }: SearchFormProps) {
             <label htmlFor="check-in" className="text-xs text-gray-500 font-medium">
               Check In Date
             </label>
-            <div className="relative cursor-pointer">
+            <div className="relative cursor-pointer" onClick={() => checkInRef.current?.showPicker()}>
             <input
               id="check-in"
               ref={checkInRef}
@@ -463,7 +463,7 @@ export function SearchForm({ sectionType }: SearchFormProps) {
                   <label htmlFor="check-in-time" className="text-xs text-gray-500 font-medium">
                     Check In Time
                   </label>
-              <div className="relative cursor-pointer" onClick={() => checkInTimeRef.current?.focus()}>
+              <div className="relative cursor-pointer" onClick={() => checkInTimeRef.current?.showPicker()}>
                   <input
                     id="check-in-time"
                     ref={checkInTimeRef}
@@ -485,7 +485,7 @@ export function SearchForm({ sectionType }: SearchFormProps) {
                   <label htmlFor="check-out" className="text-xs text-gray-500 font-medium">
                 Check Out Date
                   </label>
-              <div className="relative cursor-pointer">
+              <div className="relative cursor-pointer" onClick={() => checkOutRef.current?.showPicker()}>
                   <input
                     id="check-out"
                     ref={checkOutRef}
@@ -511,7 +511,7 @@ export function SearchForm({ sectionType }: SearchFormProps) {
                   <label htmlFor="check-out-time" className="text-xs text-gray-500 font-medium">
                     Check Out Time
                   </label>
-              <div className="relative cursor-pointer" onClick={() => checkOutTimeRef.current?.focus()}>
+              <div className="relative cursor-pointer" onClick={() => checkOutTimeRef.current?.showPicker()}>
                   <input
                     id="check-out-time"
                     ref={checkOutTimeRef}
@@ -559,46 +559,47 @@ export function SearchForm({ sectionType }: SearchFormProps) {
 
         {/* Show Rooms field for hotels */}
         {sectionType === "hotels" && (
-            <div className="flex items-center flex-1 min-w-full md:min-w-[80px] p-2 border-b md:border-b-0 md:border-r border-gray-200">
+            <div className="flex items-center flex-1 min-w-full md:min-w-[80px] p-2 border-b md:border-b-0 md:border-r border-gray-200 relative group">
               <div className="flex flex-col flex-grow">
-                <label className="text-xs text-gray-500 font-medium">Rooms <span className="text-xs text-gray-400">(max 5)</span></label>
-              <div className="flex items-center relative">
-                <div className="flex items-center flex-grow">
-                  <button
-                    type="button"
-                    className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center"
-                    onClick={decrementRooms}
-                    disabled={rooms <= 1}
-                    aria-label="Decrease rooms"
-                  >
-                    <Minus size={14} />
-                  </button>
-                  <span className="mx-2 text-sm">{rooms}</span>
-                  <button
-                    type="button"
-                    className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center"
-                    onClick={incrementRooms}
-                    disabled={rooms >= 5}
-                    aria-label="Increase rooms"
-                  >
-                    <Plus size={14} />
-                  </button>
+                <label className="text-xs text-gray-500 font-medium">Rooms</label>
+                <div className="flex items-center relative">
+                  <div className="flex items-center flex-grow">
+                    <button
+                      type="button"
+                      className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center"
+                      onClick={decrementRooms}
+                      disabled={rooms <= 1}
+                      aria-label="Decrease rooms"
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <span className="mx-2 text-sm">{rooms}</span>
+                    <button
+                      type="button"
+                      className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center"
+                      onClick={incrementRooms}
+                      disabled={rooms >= 5}
+                      aria-label="Increase rooms"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
                 </div>
               </div>
+              
+              {/* Tooltip */}
+              <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black text-white text-xs p-2 rounded pointer-events-none -bottom-12 left-0 whitespace-nowrap z-20">
+                Maximum 5 rooms, 3 guests per room
+                <div className="absolute -top-1 left-4 transform rotate-45 w-2 h-2 bg-black"></div>
+              </div>
             </div>
-          </div>
         )}
 
         {/* Guests */}
-        <div className="flex items-center flex-1 min-w-full md:min-w-[80px] p-2 border-b md:border-b-0 md:border-r border-gray-200">
+        <div className="flex items-center flex-1 min-w-full md:min-w-[80px] p-2 border-b md:border-b-0 md:border-r border-gray-200 relative group">
           <div className="flex flex-col flex-grow">
             <label className="text-xs text-gray-500 font-medium">
               Guests 
-              {sectionType === "hotels" ? (
-                <span className="text-xs text-gray-400">(max 3 per room)</span>
-              ) : (
-                <span className="text-xs text-gray-400">(max 2)</span>
-              )}
             </label>
             <div className="flex items-center relative">
               <div className="flex items-center flex-grow">
@@ -616,7 +617,7 @@ export function SearchForm({ sectionType }: SearchFormProps) {
                 type="button"
                 className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center"
                 onClick={incrementGuests}
-                disabled={sectionType === "hotels" ? guests >= rooms * 3 : guests >= 2}
+                disabled={sectionType === "hotels" ? guests >= rooms * 3 : guests >= 10}
                 aria-label="Increase guests"
               >
                 <Plus size={14} />
@@ -624,6 +625,14 @@ export function SearchForm({ sectionType }: SearchFormProps) {
               </div>
             </div>
           </div>
+          
+          {/* Tooltip */}
+          {sectionType === "hotels" && (
+            <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black text-white text-xs p-2 rounded pointer-events-none -bottom-12 left-0 whitespace-nowrap z-20">
+              Maximum 5 rooms, 3 guests per room
+              <div className="absolute -top-1 left-4 transform rotate-45 w-2 h-2 bg-black"></div>
+            </div>
+          )}
         </div>
 
         {/* Search Button */}

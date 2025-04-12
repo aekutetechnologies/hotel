@@ -70,12 +70,13 @@ export function ProfileDropdown({ onLogout, userName }: ProfileDropdownProps) {
       </DropdownMenuTrigger>
       <DropdownMenuContent 
         align="end" 
-        alignOffset={-8}
+        alignOffset={0}
         className="p-2 rounded-b-lg rounded-t-none border-t-0 shadow-lg mt-1" 
         style={{ 
           zIndex: 1000,
           width: `${triggerWidth}px`,
           marginTop: '-2px',
+          marginLeft: '-5px',
           borderTopLeftRadius: 0,
           borderTopRightRadius: 0,
           borderTop: 'none',

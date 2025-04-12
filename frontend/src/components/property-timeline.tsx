@@ -159,69 +159,7 @@ export function PropertyTimeline({ type = "hotel" }: PropertyTimelineProps) {
           />
         </div>
       ),
-    },
-    {
-      year: "Community Spaces",
-      title: "",
-      description:
-        "HSquare's signature communal areas foster genuine connections. Our designer spaces include high-tech entertainment zones, fully-equipped fitness centers, collaborative workspaces, and relaxing lounges—all thoughtfully designed to bring people together while respecting the need for different activity zones.",
-      content: (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-          <Image
-            src="/images/hostels/hostel_1.jpg"
-            alt="HSquare common lounge"
-            width={500}
-            height={500}
-            className="rounded-lg object-cover h-48 sm:h-52 md:h-60 w-full shadow-lg"
-          />
-          <Image
-            src="/images/hostels/hostel_2.jpg"
-            alt="HSquare gaming zone"
-            width={500}
-            height={500}
-            className="rounded-lg object-cover h-48 sm:h-52 md:h-60 w-full shadow-lg"
-          />
-          <Image
-            src="/images/hostels/hostel_3.jpg"
-            alt="HSquare fitness center"
-            width={500}
-            height={500}
-            className="rounded-lg object-cover h-48 sm:h-52 md:h-60 w-full shadow-lg sm:col-span-2 md:col-span-1"
-          />
-        </div>
-      ),
-    },
-    {
-      year: "Curated Dining",
-      title: "",
-      description:
-        "HSquare's culinary program blends nutrition with community. Our dining halls serve diverse menus with healthy, flavorful options that cater to all dietary preferences. Regular community meals and food events create opportunities to share stories and cultures over delicious food.",
-      content: (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-          <Image
-            src="/images/hostels/hostel_1.jpg"
-            alt="HSquare dining hall"
-            width={500}
-            height={500}
-            className="rounded-lg object-cover h-48 sm:h-52 md:h-60 w-full shadow-lg"
-          />
-          <Image
-            src="/images/hostels/hostel_2.jpg"
-            alt="HSquare healthy meals"
-            width={500}
-            height={500}
-            className="rounded-lg object-cover h-48 sm:h-52 md:h-60 w-full shadow-lg"
-          />
-          <Image
-            src="/images/hostels/hostel_3.jpg"
-            alt="HSquare community dinner"
-            width={500}
-            height={500}
-            className="rounded-lg object-cover h-48 sm:h-52 md:h-60 w-full shadow-lg sm:col-span-2 md:col-span-1"
-          />
-        </div>
-      ),
-    },
+    }
   ]
 
   return (

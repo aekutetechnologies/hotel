@@ -509,7 +509,7 @@ def public_search_properties(request):
                 rooms = int(rooms)
                 # Filter properties with rooms that have enough available rooms
                 properties = properties.filter(
-                    rooms__left_number_of_rooms__gte=rooms
+                    rooms__number_of_rooms__gte=rooms
                 )
             except ValueError:
                 pass
@@ -518,6 +518,8 @@ def public_search_properties(request):
             try:
                 guests = int(guests)
                 # Filter properties with rooms that can accommodate guests
+                # guests should be guests divided by number of rooms
+                guests = guests / rooms
                 properties = properties.filter(
                     rooms__maxoccupancy__gte=guests
                 )

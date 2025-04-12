@@ -53,6 +53,7 @@ class Booking(models.Model):
     payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPE_CHOICES, default='upi')
     price = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     discount = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    offer_id = models.IntegerField(null=True, blank=True, default=0)
     documents = models.JSONField(null=True, blank=True)
     room_no = models.CharField(max_length=50, null=True, blank=True)
     number_of_guests = models.IntegerField(default=1)

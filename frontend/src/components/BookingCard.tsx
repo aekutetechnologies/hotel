@@ -140,6 +140,36 @@ export function BookingCard({
 
   const hours = Array.from({ length: 24 }, (_, i) => i)
 
+  // Get today's date in YYYY-MM-DD format for date restrictions
+  const today = new Date()
+  const formattedToday = format(today, 'yyyy-MM-dd')
+  const currentHour = today.getHours()
+  
+  // Filter available hours based on current time when date is today
+  const getAvailableHours = (forCheckout = false) => {
+    if (!date) return hours
+    
+    const isToday = date && format(date, 'yyyy-MM-dd') === formattedToday
+    
+    if (isToday) {
+      // If today, only show future hours
+      if (forCheckout && date && checkOut && date.toDateString() === checkOut.toDateString()) {
+        // For checkout on the same day as checkin, ensure times are after checkin time
+        const checkinHour = parseInt(checkInTime, 10)
+        return hours.filter(hour => hour > currentHour && hour > checkinHour)
+      }
+      return hours.filter(hour => hour > currentHour)
+    }
+    
+    // For checkout time, if it's the same day as checkin, only show hours after checkin time
+    if (forCheckout && date && checkOut && date.toDateString() === checkOut.toDateString()) {
+      const checkinHour = parseInt(checkInTime, 10)
+      return hours.filter(hour => hour > checkinHour)
+    }
+    
+    return hours
+  }
+
   const formatTime = (hour: number | string) => {
     try {
       const hourNum = typeof hour === 'string' ? parseInt(hour, 10) : hour;
@@ -155,6 +185,56 @@ export function BookingCard({
     }
   }
 
+  // Set default times if booking is for today and current time options aren't valid
+  useEffect(() => {
+    if (date && format(date, 'yyyy-MM-dd') === formattedToday) {
+      // If selected time is before current time, update it
+      const selectedCheckInHour = parseInt(checkInTime, 10)
+      
+      if (selectedCheckInHour <= currentHour) {
+        // Set check-in time to next hour
+        const nextHour = currentHour + 1
+        setCheckInTime(nextHour.toString())
+        
+        // Also update checkout time
+        const newCheckoutHour = (nextHour + 2) % 24
+        setCheckOutTime(newCheckoutHour.toString())
+      }
+    }
+  }, [date, currentHour, formattedToday, checkInTime])
+
+  // Enforce checkout date is after checkin date
+  useEffect(() => {
+    if (date && checkOut) {
+      const checkinDate = new Date(date)
+      const checkoutDate = new Date(checkOut)
+      
+      if (checkoutDate < checkinDate) {
+        // If checkout is before checkin, set checkout to checkin
+        setCheckOutDate(date)
+      }
+    }
+  }, [date, checkOut])
+
+  // Enforce checkout time is after checkin time on the same day
+  useEffect(() => {
+    if (date && checkOut && date.toDateString() === checkOut.toDateString() && 
+        checkInTime && checkOutTime && parseInt(checkOutTime) <= parseInt(checkInTime)) {
+      // If checkout time is before or equal to checkin time on the same day
+      const newCheckoutTime = (parseInt(checkInTime) + 2) % 24
+      setCheckOutTime(String(newCheckoutTime))
+    }
+  }, [date, checkOut, checkInTime, checkOutTime])
+  
+  // Update checkout date when check-in date or months change for monthly bookings
+  useEffect(() => {
+    if (bookingType === 'monthly' && date) {
+      const newCheckoutDate = new Date(date);
+      newCheckoutDate.setMonth(newCheckoutDate.getMonth() + months);
+      setCheckOutDate(newCheckoutDate);
+    }
+  }, [date, months, bookingType]);
+
   // Debug logs to help troubleshoot time values
   useEffect(() => {
     console.log("BookingCard received times:", { 
@@ -165,15 +245,6 @@ export function BookingCard({
       bookingType
     });
   }, [initialCheckInTime, initialCheckOutTime, checkInTime, checkOutTime, bookingType]);
-
-  // Update checkout date when check-in date or months change for monthly bookings
-  useEffect(() => {
-    if (bookingType === 'monthly' && date) {
-      const newCheckoutDate = new Date(date);
-      newCheckoutDate.setMonth(newCheckoutDate.getMonth() + months);
-      setCheckOutDate(newCheckoutDate);
-    }
-  }, [date, months, bookingType]);
 
   const calculatePrice = () => {
     // If no rooms are selected, return 0
@@ -334,6 +405,7 @@ export function BookingCard({
                   selected={date}
                   onSelect={setDate}
                   initialFocus
+                  disabled={(date) => date < new Date(formattedToday)}
                 />
               </PopoverContent>
             </Popover>
@@ -350,7 +422,7 @@ export function BookingCard({
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    {hours.map((hour) => (
+                    {getAvailableHours().map((hour) => (
                       <SelectItem key={hour} value={hour.toString()}>
                         {formatTime(hour)}
                       </SelectItem>
@@ -367,7 +439,7 @@ export function BookingCard({
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    {hours.map((hour) => (
+                    {getAvailableHours(true).map((hour) => (
                       <SelectItem key={hour} value={hour.toString()}>
                         {formatTime(hour)}
                       </SelectItem>
@@ -398,6 +470,11 @@ export function BookingCard({
                     selected={checkOut}
                     onSelect={setCheckOutDate}
                     initialFocus
+                    disabled={(calDate) => {
+                      // Disable dates before checkin date or today
+                      if (!date) return calDate < new Date(formattedToday);
+                      return calDate < new Date(formattedToday) || calDate < date;
+                    }}
                   />
                 </PopoverContent>
               </Popover>
@@ -424,6 +501,10 @@ export function BookingCard({
                     selected={checkOut}
                     onSelect={setCheckOutDate}
                     initialFocus
+                    disabled={(date) => {
+                      // Disable dates before checkin date or today
+                      return date < new Date(formattedToday) || (date && date < new Date(formattedToday))
+                    }}
                   />
                 </PopoverContent>
               </Popover>

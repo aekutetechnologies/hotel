@@ -33,6 +33,7 @@ interface BookPropertyParams {
   status: string;
   discount: number;
   price: number;
+  offer_id: number;
   booking_type: string;
   payment_type: string;
   number_of_guests: number;
@@ -309,6 +310,7 @@ export default function BookProperty() {
         property: propertyId,
         room: primaryRoom.id,
         price: totalPrice,
+        offer_id: selectedOffer?.id || 0,
         discount: 0, // We would need to pass this from the property page
         booking_time: booking.bookingType, // Use the selected booking type
         booking_type: 'online', // Same as booking_time
@@ -380,6 +382,7 @@ export default function BookProperty() {
         property: propertyId,
         room: selectedRoom.id,
         price: totalPrice,
+        offer_id: selectedOffer?.id || 0,
         discount: parseFloat(selectedRoom.discount || '0'),
         booking_time: booking.bookingType, // Use the selected booking type
         booking_type: 'online', // Same as booking_time

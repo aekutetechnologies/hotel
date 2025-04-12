@@ -15,7 +15,7 @@ export default function NewBooking() {
 
   const [booking, setBooking] = useState({
     propertyId: propertyId || '',
-    guestName: '',
+    mobile: '',
     checkIn: '',
     checkOut: '',
     guests: '',
@@ -85,11 +85,11 @@ export default function NewBooking() {
               )}
             </div>
             <div>
-              <Label htmlFor="guestName">Guest Name</Label>
+              <Label htmlFor="guestNumber">Guest Number</Label>
               <Input
-                id="guestName"
-                name="guestName"
-                value={booking.guestName}
+                id="guestNumber"
+                name="guestNumber"
+                value={booking.mobile}
                 onChange={handleChange}
                 required
               />

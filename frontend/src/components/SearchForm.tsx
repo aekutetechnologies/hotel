@@ -71,16 +71,16 @@ export function SearchForm({ sectionType }: SearchFormProps) {
       // Handle time prefilling for hourly bookings
       if (bookingType === "hour") {
         const currentHour = today.getHours()
-        const nextHour = (currentHour + 1) % 24
+        // Always set checkin time to at least the next hour
+        const nextHour = currentHour + 1
         
         // Format times (HH:MM)
-        const currentTime = format(today, 'HH:mm')
         const nextHourTime = `${nextHour.toString().padStart(2, '0')}:00`
-        const twoHoursLaterTime = `${((currentHour + 2) % 24).toString().padStart(2, '0')}:00`
+        const twoHoursLaterTime = `${(nextHour + 2 < 24 ? nextHour + 2 : nextHour + 2 - 24).toString().padStart(2, '0')}:00`
         
         // Set minimum times
-        setMinCheckInTime(currentTime)
-        setMinCheckOutTime(nextHourTime)
+        setMinCheckInTime(nextHourTime)
+        setMinCheckOutTime(twoHoursLaterTime)
         
         // Prefill the times
         setCheckInTime(nextHourTime)
@@ -210,34 +210,64 @@ export function SearchForm({ sectionType }: SearchFormProps) {
       return
     }
 
-    // Validate dates and times
+    // Get current date/time for validation
     const now = new Date()
-    const checkInDate = parseISO(checkIn)
+    const todayStart = new Date(now)
+    todayStart.setHours(0, 0, 0, 0)
     
-    if (isBefore(checkInDate, startOfTomorrow()) && format(checkInDate, 'yyyy-MM-dd') !== format(now, 'yyyy-MM-dd')) {
-      alert("Check-in date cannot be in the past")
+    // Validate check-in date
+    if (!checkIn) {
+      alert("Please select a check-in date")
       return
     }
     
-    // Only validate checkout for daily bookings in hotels
-    if (sectionType === "hotels" && bookingType === "day" && checkOut) {
+    const checkInDate = parseISO(checkIn)
+    if (isBefore(checkInDate, todayStart)) {
+      alert("Check-in date cannot be in the past")
+      setCheckIn(format(now, 'yyyy-MM-dd'))
+      return
+    }
+    
+    // Validate check-out date for daily/monthly bookings
+    if ((bookingType === "day" || bookingType === "month") && checkOut) {
       const checkOutDate = parseISO(checkOut)
       if (isBefore(checkOutDate, checkInDate)) {
         alert("Check-out date cannot be before check-in date")
+        setCheckOut(checkIn)
         return
       }
     }
     
-    // Only validate time for hourly bookings in hotels
-    if (sectionType === "hotels" && bookingType === "hour") {
-      if (checkIn === format(now, 'yyyy-MM-dd') && checkInTime < format(now, 'HH:mm')) {
-        alert("Check-in time cannot be in the past")
+    // Validate time for hourly bookings
+    if (bookingType === "hour") {
+      if (!checkInTime) {
+        alert("Please select a check-in time")
         return
       }
       
-      if (checkOutTime && checkIn === checkOut && checkOutTime <= checkInTime) {
-        alert("Check-out time must be after check-in time")
+      if (!checkOutTime) {
+        alert("Please select a check-out time")
         return
+      }
+      
+      // If booking is for today, validate check-in time is not in the past
+      if (format(checkInDate, 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd')) {
+        const [checkInHour, checkInMinute] = checkInTime.split(':').map(Number)
+        const currentHour = now.getHours()
+        const currentMinute = now.getMinutes()
+        
+        if (checkInHour < currentHour || (checkInHour === currentHour && checkInMinute < currentMinute)) {
+          alert("Check-in time cannot be in the past")
+          return
+        }
+      }
+      
+      // Validate checkout time is after checkin time on the same day
+      if (checkIn === checkOut) {
+        if (checkOutTime <= checkInTime) {
+          alert("Check-out time must be after check-in time")
+          return
+        }
       }
     }
 
@@ -311,6 +341,17 @@ export function SearchForm({ sectionType }: SearchFormProps) {
     const newDate = e.target.value
     setCheckIn(newDate)
     
+    // Validate that the new date is not in the past
+    const selectedDate = parseISO(newDate);
+    const currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0); // Reset time to start of day for comparison
+    
+    if (isBefore(selectedDate, currentDate)) {
+      // Don't allow past dates
+      setCheckIn(format(currentDate, 'yyyy-MM-dd'));
+      return;
+    }
+    
     // If booking type is monthly, update checkout date based on months
     if (bookingType === "month") {
       try {
@@ -325,14 +366,66 @@ export function SearchForm({ sectionType }: SearchFormProps) {
     } else {
       // For other booking types, ensure checkout is not before checkin
       if (checkOut && isBefore(parseISO(checkOut), parseISO(newDate))) {
+        // If checkout is before the new checkin, set checkout to be the same as checkin
         setCheckOut(newDate)
       }
     }
   }
 
-  // Update check-in time handler
+  // Update check-out date handler to validate it's after check-in
+  const handleCheckOutChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const newDate = e.target.value
+    
+    // Validate checkout is not before checkin
+    if (checkIn && isBefore(parseISO(newDate), parseISO(checkIn))) {
+      // If checkout is before checkin, set it to checkin
+      setCheckOut(checkIn);
+      return;
+    }
+    
+    setCheckOut(newDate)
+  }
+
+  // Helper function to get current time-based constraints
+  const getCurrentTimeConstraints = () => {
+    const now = new Date()
+    const currentHour = now.getHours()
+    const currentMinute = now.getMinutes()
+    const currentTime = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`
+    const nextHour = currentHour + 1
+    const nextHourTime = `${nextHour.toString().padStart(2, '0')}:00`
+    
+    return {
+      currentHour,
+      currentMinute,
+      currentTime,
+      nextHourTime
+    }
+  }
+
+  // Update check-in time handler with improved validation
   const handleCheckInTimeChange = (e: ChangeEvent<HTMLInputElement>) => {
     const newTime = e.target.value
+    const today = new Date()
+    const formattedToday = format(today, 'yyyy-MM-dd')
+    
+    // If date is today, validate time is not in the past
+    if (checkIn === formattedToday) {
+      const { currentTime } = getCurrentTimeConstraints()
+      
+      if (newTime <= currentTime) {
+        // If selected time is in the past, set to next hour
+        const { nextHourTime } = getCurrentTimeConstraints()
+        setCheckInTime(nextHourTime)
+        
+        // Also update checkout time to be 2 hours later
+        const [hours] = nextHourTime.split(':').map(Number)
+        const newCheckoutHour = (hours + 2) % 24
+        setCheckOutTime(`${newCheckoutHour.toString().padStart(2, '0')}:00`)
+        return
+      }
+    }
+    
     setCheckInTime(newTime)
     
     // If check-out is on the same day and time is earlier, adjust check-out time
@@ -341,6 +434,38 @@ export function SearchForm({ sectionType }: SearchFormProps) {
       const newCheckOutHours = (hours + 2) % 24
       setCheckOutTime(`${newCheckOutHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`)
     }
+  }
+  
+  // Update check-out time handler with improved validation
+  const handleCheckOutTimeChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const newTime = e.target.value
+    const today = new Date()
+    const formattedToday = format(today, 'yyyy-MM-dd')
+    
+    // If on the same day, validate checkout time is after checkin time
+    if (checkIn === checkOut) {
+      if (newTime <= checkInTime) {
+        const [hours, minutes] = checkInTime.split(':').map(Number)
+        const newCheckOutHours = (hours + 2) % 24
+        setCheckOutTime(`${newCheckOutHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`)
+        return
+      }
+      
+      // Additional check if the date is today
+      if (checkIn === formattedToday) {
+        const { currentTime } = getCurrentTimeConstraints()
+        
+        if (newTime <= currentTime) {
+          // If selected time is in the past, use a time based on checkin time
+          const [hours, minutes] = checkInTime.split(':').map(Number)
+          const newCheckOutHours = (hours + 2) % 24
+          setCheckOutTime(`${newCheckOutHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`)
+          return
+        }
+      }
+    }
+    
+    setCheckOutTime(newTime)
   }
 
   // Handle booking type change with appropriate updates
@@ -493,8 +618,8 @@ export function SearchForm({ sectionType }: SearchFormProps) {
                     className="opacity-0 absolute inset-0 w-full h-full cursor-pointer z-10"
                     value={checkOut}
                     min={minCheckOutDate}
-                    onChange={(e) => setCheckOut(e.target.value)}
-                />
+                    onChange={handleCheckOutChange}
+                  />
                 <div className="flex items-center justify-between w-full pr-2">
                   <span className="text-sm">{checkOut ? format(parseISO(checkOut), 'dd MMM yyyy') : ''}</span>
                   <CalendarDays className="h-4 w-4 text-black" />
@@ -519,7 +644,7 @@ export function SearchForm({ sectionType }: SearchFormProps) {
                     className="outline-none text-sm w-full cursor-pointer"
                     value={checkOutTime}
                     min={checkIn === checkOut ? minCheckOutTime : undefined}
-                    onChange={(e) => setCheckOutTime(e.target.value)}
+                    onChange={handleCheckOutTimeChange}
                   />
               </div>
             </div>

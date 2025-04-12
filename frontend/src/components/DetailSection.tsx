@@ -110,20 +110,44 @@ export function DetailSection({
 
   const scrollToTop = () => {
     console.log("Scrolling to top");
-    // Find the main content container with our updated structure
+    
+    // Try multiple selector approaches to ensure we find the right element
+    // First try our specific content container
     const contentElement = document.querySelector('.overflow-y-auto.h-full.scrollbar-hide');
+    
     if (contentElement) {
       contentElement.scrollTo({
         top: 0,
         behavior: 'smooth'
       });
-    } else if (detailSectionRef.current) {
-      // Fallback to the main container
+      return;
+    }
+    
+    // Try the main detail section container
+    if (detailSectionRef.current) {
       detailSectionRef.current.scrollTo({
         top: 0,
         behavior: 'smooth'
       });
+      return;
     }
+    
+    // Fallback to window scroll as a last resort
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+    
+    // Additionally, try to focus the search form if it exists
+    setTimeout(() => {
+      const searchForm = document.querySelector('form');
+      if (searchForm) {
+        const firstInput = searchForm.querySelector('input');
+        if (firstInput) {
+          firstInput.focus();
+        }
+      }
+    }, 800); // Allow time for the scroll to complete
   };
 
   // Create a pulse animation
@@ -169,7 +193,10 @@ export function DetailSection({
             stiffness: 200,
             damping: 15
           }}
-          onClick={scrollToTop}
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent click from bubbling to parent
+            scrollToTop();
+          }}
         >
           <motion.div 
             className="relative cursor-pointer w-auto"

@@ -94,6 +94,7 @@ interface BookPropertyParams {
   status: string;
   discount: number;
   price: number;
+  offer_id: number;
   booking_type: string;
   payment_type: string;
   number_of_guests: number;
@@ -343,7 +344,7 @@ export default function Bookings() {
                     {booking.property && typeof booking.property === 'object' ? booking.property.name : ''}
                   </TableCell>
                   <TableCell>
-                    {booking.user && typeof booking.user === 'object' ? booking.user.name : ''}
+                    {booking.user && typeof booking.user === 'object' ? booking.user.mobile : ''}
                   </TableCell>
                   <TableCell>{booking.checkin_date}</TableCell>
                   <TableCell>{booking.checkout_date}</TableCell>

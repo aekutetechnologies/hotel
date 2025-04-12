@@ -9,6 +9,7 @@ interface BookPropertyParams {
   status: string;
   discount: number;
   price: number;
+  offer_id: number;
   booking_type: string;
   booking_time: string;
   payment_type: string;

@@ -17,8 +17,8 @@ from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-WEBSITE_URL = 'http://localhost:8000'
-# WEBSITE_URL = 'http://147.93.97.63/api'
+# WEBSITE_URL = 'http://localhost:8000'
+WEBSITE_URL = 'http://147.93.97.63/api'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/

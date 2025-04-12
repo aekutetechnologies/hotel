@@ -122,6 +122,7 @@ export function PropertiesSlider() {
                     alt={property.name}
                     style={{ objectFit: 'cover', width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}
                     className="rounded-md"
+                    loading="lazy"
                   />
                   <div className="absolute inset-x-2 bottom-2 h-20 bg-gradient-to-t from-black to-transparent"></div>
                   <div className="absolute top-4 left-4">

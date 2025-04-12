@@ -46,6 +46,7 @@ export function WhyChoose() {
               src="/images/whychooseus.png"
               alt="Premium Hotel Room"
               className="absolute inset-0 w-full h-full object-cover"
+              loading="lazy"
             />
           </div>
         </div>

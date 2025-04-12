@@ -815,6 +815,7 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
                     console.error("Image load error for URL:", image.image_url);
                     (e.target as HTMLImageElement).src = "/placeholder-image.jpg";
                   }}
+                  loading="lazy"
                 />
                 <Button
                   type="button"
@@ -1138,6 +1139,7 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = "/placeholder-image.jpg";
                         }}
+                        loading="lazy"
                       />
                       <Button
                         type="button"

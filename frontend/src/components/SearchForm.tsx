@@ -416,7 +416,7 @@ export function SearchForm({ sectionType }: SearchFormProps) {
               </div>
             </div>
             {locationPredictions.length > 0 && (
-              <ul className="absolute z-10 w-full mt-10 bg-white border border-gray-300 rounded-md shadow-lg">
+              <ul className="absolute z-20 w-full mt-10 bg-white border border-gray-300 rounded-md shadow-lg">
                 {locationPredictions.map((prediction) => (
                   <li
                     key={prediction.id}

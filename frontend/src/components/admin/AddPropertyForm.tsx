@@ -757,6 +757,7 @@ export function AddPropertyForm() {
                     console.error("Image load error for URL:", image.image_url);
                     (e.target as HTMLImageElement).src = "/placeholder-image.jpg";
                   }}
+                  loading="lazy"
                 />
                 <Button
                   type="button"
@@ -1080,6 +1081,7 @@ export function AddPropertyForm() {
                           onError={(e) => {
                             (e.target as HTMLImageElement).src = "/placeholder-image.jpg";
                           }}
+                          loading="lazy"
                         />
                         <Button
                           type="button"

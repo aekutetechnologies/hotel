@@ -116,7 +116,7 @@ export function Header() {
         shadow-md 
         w-full 
         py-4 
-        z-10
+        z-50
       ">
         <div className="container mx-auto px-4 flex justify-between items-center">
           <Link href="/home?type=hotels" className="flex items-center">

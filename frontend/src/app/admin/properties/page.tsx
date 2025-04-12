@@ -172,6 +172,7 @@ export default function Properties() {
                   src={property.images?.[0]?.image_url || '/placeholder-property.jpg'} 
                   alt={property.name}
                   className="w-full h-full object-cover"
+                  loading="lazy"
                 />
               </div>
               <div className="p-5">

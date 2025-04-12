@@ -139,6 +139,7 @@ export function PropertyForm({ initialData, isEditing = false }: PropertyFormPro
                   src={image}
                   alt={`Property ${index + 1}`}
                   className="w-full h-full object-cover rounded-lg"
+                  loading="lazy"
                 />
                 <Button
                   type="button"

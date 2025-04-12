@@ -74,7 +74,7 @@ export function ProfileDropdown({ onLogout, userName }: ProfileDropdownProps) {
         alignOffset={0}
         className="p-2 rounded-b-lg rounded-t-none border-t-0 shadow-lg mt-1" 
         style={{ 
-          zIndex: 1000,
+          zIndex: 60,
           width: `${triggerWidth}px`,
           marginTop: '-2px',
           marginLeft: '-5px',

@@ -658,7 +658,7 @@ export function ViewPropertyForm({ initialData, isEditing = false }: PropertyFor
           <div className="mt-4">
             {location.address ? (
               <div className="relative h-[200px] w-full rounded-lg overflow-hidden">
-                <img src={location.address} alt="Map" className="w-full h-full object-cover" />
+                <img src={location.address} alt="Map" className="w-full h-full object-cover" loading="lazy"/>
                 <Button 
                   onClick={handleMapOpen} 
                   variant="neutral" 
@@ -727,6 +727,7 @@ export function ViewPropertyForm({ initialData, isEditing = false }: PropertyFor
                     console.error("Image load error for URL:", image.image_url);
                     (e.target as HTMLImageElement).src = "/placeholder-image.jpg";
                   }}
+                  loading="lazy"
                 />
                 <Button
                   type="button"

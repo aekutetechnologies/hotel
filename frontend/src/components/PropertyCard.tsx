@@ -160,6 +160,7 @@ export function PropertyCard({ property, searchParams }: PropertyCardProps) {
               onLoad={() => setIsImageLoaded(true)}
               onError={() => setIsImageLoaded(true)}
               style={{ opacity: isImageLoaded ? 1 : 0 }}
+              loading="lazy"
             />
             <Badge
               variant="secondary"
@@ -199,6 +200,7 @@ export function PropertyCard({ property, searchParams }: PropertyCardProps) {
                     onLoad={() => setIsImageLoaded(true)}
                     onError={() => setIsImageLoaded(true)}
                     style={{ opacity: isImageLoaded ? 1 : 0 }}
+                    loading="lazy"
                   />
                 </div>
               ))}

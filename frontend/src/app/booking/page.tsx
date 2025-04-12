@@ -368,6 +368,7 @@ export default function BookingPage() {
                           width={300}
                           height={200}
                           className="rounded-lg object-cover w-full h-48"
+                          loading="lazy"
                         />
                       </div>
                       <div className="flex-1">

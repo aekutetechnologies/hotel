@@ -79,6 +79,7 @@ export function PropertyDetails({ property }: PropertyDetailsProps) {
                   src={typeof image === 'string' ? image : (image.image_url || image.image || '')}
                   alt={`Property image ${index + 1}`}
                   className="object-cover rounded-lg w-full h-full"
+                  loading="lazy"
                 />
               </div>
             ))}

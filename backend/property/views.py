@@ -560,7 +560,6 @@ def public_search_properties(request):
                 is_active=True
             ).values_list('property_id', flat=True)
 
-            print(f"User favorites: {user_favorites}")
             context['user_favorites'] = user_favorites
             
         serializer = PropertyViewSerializer(

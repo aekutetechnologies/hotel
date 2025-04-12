@@ -245,24 +245,6 @@ export function HomeHero({
             </div>
           </div>
           <div className="relative z-10 p-8 md:p-12 lg:p-16 flex flex-col justify-between h-full">
-            <AnimatePresence>
-              {expandedSection === "hotels" && (
-                <motion.button
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="absolute top-32 left-8 text-white flex items-center gap-2"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleBack();
-                  }}
-                >
-                  <ChevronLeft className="h-6 w-6" />
-                  <span>Back</span>
-                </motion.button>
-              )}
-            </AnimatePresence>
             {(!expandedSection || expandedSection === "hotels") && (
               <>
                 <div className="my-auto py-12">
@@ -440,24 +422,6 @@ export function HomeHero({
             </div>
           </div>
           <div className="relative z-10 p-8 md:p-12 lg:p-16 flex flex-col justify-between h-full">
-            <AnimatePresence>
-              {expandedSection === "hostels" && (
-                <motion.button
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="absolute top-32 left-8 text-white flex items-center gap-2"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleBack();
-                  }}
-                >
-                  <ChevronLeft className="h-6 w-6" />
-                  <span>Back</span>
-                </motion.button>
-              )}
-            </AnimatePresence>
             {(!expandedSection || expandedSection === "hostels") && (
               <>
                 <div className="my-auto py-12">

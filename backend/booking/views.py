@@ -11,7 +11,7 @@ from property.serializers import PropertyViewSerializer
 @custom_authentication_and_permissions()
 def booking_list(request):
     if request.method == 'GET':
-        bookings = Booking.objects.all()
+        bookings = Booking.objects.all().order_by('-created_at')
         serializer = BookingViewSerializer(bookings, many=True)
         return Response(serializer.data)
     elif request.method == 'POST':
@@ -89,7 +89,7 @@ def booking_list_by_user(request):
     Returns:
         Response: A list of booking objects with serialized property details.
     """
-    bookings = Booking.objects.filter(user=request.user)
+    bookings = Booking.objects.filter(user=request.user).order_by('-created_at')
     serializer = BookingUserViewSerializer(bookings, many=True)
     return Response(serializer.data)
 
@@ -139,6 +139,6 @@ def booking_document_view(request, pk):
 @api_view(['GET'])
 @custom_authentication_and_permissions()
 def booking_list_by_user_id(request, user_id):
-    bookings = Booking.objects.filter(user_id=user_id)
+    bookings = Booking.objects.filter(user_id=user_id).order_by('-created_at')
     serializer = BookingUserViewSerializer(bookings, many=True)
     return Response(serializer.data)

@@ -1,7 +1,7 @@
 'use client'
 
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Icon } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -50,8 +50,8 @@ interface MapPickerProps {
 }
 
 export function MapPicker({ onLocationChange, initialPosition = [19.1194, 72.8468] }: MapPickerProps) {
-  // Generate a unique ID for this map instance that stays constant during the component's lifecycle
-  const mapId = useRef(`map-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`).current;
+  // Generate a unique ID for this map instance that changes on EVERY render
+  const mapId = `map-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   const mapInstanceRef = useRef<any>(null);
   
   const [location, setLocation] = useState<{ lat: number; lng: number }>({
@@ -62,7 +62,7 @@ export function MapPicker({ onLocationChange, initialPosition = [19.1194, 72.846
   const [isLoading, setIsLoading] = useState(true)
 
   // Add comprehensive cleanup function for the map
-  const cleanupMap = () => {
+  const cleanupMap = useCallback(() => {
     console.log(`Cleaning up map instance: ${mapId}`);
     
     try {
@@ -99,9 +99,15 @@ export function MapPicker({ onLocationChange, initialPosition = [19.1194, 72.846
       
       // Force Leaflet to forget about this map container
       if (L && L.DomUtil) {
+        // Clean up all maps in DomUtil to be sure
         const leaf = L.DomUtil.get(mapId);
         if (leaf && (leaf as any)._leaflet_id) {
           (leaf as any)._leaflet_id = null;
+        }
+        
+        // Force clean any other map references
+        if (typeof (L as any)._leaflet_id_map === 'object') {
+          delete (L as any)._leaflet_id_map[mapId];
         }
       }
       
@@ -109,7 +115,7 @@ export function MapPicker({ onLocationChange, initialPosition = [19.1194, 72.846
     } catch (error) {
       console.error("Error during map cleanup:", error);
     }
-  };
+  }, [mapId]);
 
   // Simulate checking if map loaded correctly and ensure cleanup on unmount
   useEffect(() => {
@@ -127,7 +133,7 @@ export function MapPicker({ onLocationChange, initialPosition = [19.1194, 72.846
       clearTimeout(timeout);
       cleanupMap();
     };
-  }, []);
+  }, [cleanupMap]);
 
   // Store map instance reference when it's created via MapContainer
   const handleMapCreated = (map: any) => {

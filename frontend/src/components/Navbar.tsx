@@ -23,6 +23,7 @@ interface NavbarProps {
   isClosed: boolean;
   currentSection?: "hotel" | "hostel";
   onNavModalChange?: (isOpen: boolean) => void;
+  isDetailPage?: boolean;
 }
 
 const Navbar: React.FC<NavbarProps> = ({
@@ -34,6 +35,7 @@ const Navbar: React.FC<NavbarProps> = ({
   isClosed,
   currentSection = "hotel",
   onNavModalChange,
+  isDetailPage,
 }) => {
   const [navModal, setNavModal] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
@@ -154,7 +156,10 @@ const Navbar: React.FC<NavbarProps> = ({
           >
             {navModal ? <RxCross2 size={24} /> : <CgDetailsMore size={24} />}
           </motion.button>
-          <Link href="/" onClick={() => window.location.reload()}>
+          {/* Logo with conditional redirect logic */}
+          <Link 
+            href={isDetailPage ? `/home?type=${currentSection === 'hotel' ? 'hotels' : 'hostels'}` : '/'}
+          >
             <Image
               src={navModal ? "/white-logo.png" : "/logo.png"}
               alt="Hsquare Logo"

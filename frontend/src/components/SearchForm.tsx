@@ -179,8 +179,28 @@ export function SearchForm({ sectionType }: SearchFormProps) {
     }
   }
   
-  const incrementGuests = () => setGuests((prev) => prev < 10 ? prev + 1 : 10)
+  // Update incrementGuests to respect max guests per room for hotels
+  const incrementGuests = () => {
+    if (sectionType === "hotels") {
+      const maxGuests = rooms * 3;
+      setGuests((prev) => prev < maxGuests ? prev + 1 : maxGuests);
+    } else {
+      setGuests((prev) => prev < 10 ? prev + 1 : 10);
+    }
+  }
+  
+  // Update decrementGuests to maintain minimum of 1 guest
   const decrementGuests = () => setGuests((prev) => (prev > 1 ? prev - 1 : 1))
+  
+  // Update guests when rooms change for hotels
+  useEffect(() => {
+    if (sectionType === "hotels") {
+      const maxGuests = rooms * 3;
+      if (guests > maxGuests) {
+        setGuests(maxGuests);
+      }
+    }
+  }, [rooms, sectionType, guests]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -541,7 +561,7 @@ export function SearchForm({ sectionType }: SearchFormProps) {
         {sectionType === "hotels" && (
             <div className="flex items-center flex-1 min-w-full md:min-w-[80px] p-2 border-b md:border-b-0 md:border-r border-gray-200">
               <div className="flex flex-col flex-grow">
-                <label className="text-xs text-gray-500 font-medium">Room <span className="text-xs text-gray-400">(max 5)</span></label>
+                <label className="text-xs text-gray-500 font-medium">Rooms <span className="text-xs text-gray-400">(max 5)</span></label>
               <div className="flex items-center relative">
                 <div className="flex items-center flex-grow">
                   <button
@@ -564,9 +584,6 @@ export function SearchForm({ sectionType }: SearchFormProps) {
                     <Plus size={14} />
                   </button>
                 </div>
-                {/* <div className="absolute right-0 top-1/2 transform -translate-y-1/2 pr-2 pointer-events-none">
-                  <Bed className="h-4 w-4 text-black" />
-            </div> */}
               </div>
             </div>
           </div>
@@ -575,7 +592,14 @@ export function SearchForm({ sectionType }: SearchFormProps) {
         {/* Guests */}
         <div className="flex items-center flex-1 min-w-full md:min-w-[80px] p-2 border-b md:border-b-0 md:border-r border-gray-200">
           <div className="flex flex-col flex-grow">
-            <label className="text-xs text-gray-500 font-medium">Guests <span className="text-xs text-gray-400">(max 10)</span></label>
+            <label className="text-xs text-gray-500 font-medium">
+              Guests 
+              {sectionType === "hotels" ? (
+                <span className="text-xs text-gray-400">(max 3 per room)</span>
+              ) : (
+                <span className="text-xs text-gray-400">(max 2)</span>
+              )}
+            </label>
             <div className="flex items-center relative">
               <div className="flex items-center flex-grow">
               <button
@@ -592,15 +616,12 @@ export function SearchForm({ sectionType }: SearchFormProps) {
                 type="button"
                 className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center"
                 onClick={incrementGuests}
-                disabled={guests >= 10}
+                disabled={sectionType === "hotels" ? guests >= rooms * 3 : guests >= 2}
                 aria-label="Increase guests"
               >
                 <Plus size={14} />
               </button>
               </div>
-              {/* <div className="absolute right-0 top-1/2 transform -translate-y-1/2 pr-2 pointer-events-none">
-                <Users className="h-4 w-4 text-black" />
-              </div> */}
             </div>
           </div>
         </div>

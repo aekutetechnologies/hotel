@@ -34,14 +34,6 @@ const AddNavbar = ({ type, onClose }: AddNavbarProps) => {
           </motion.div>
           <span className="font-medium tracking-wide">Best Rate available on our website</span>
         </section>
-
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white text-xl md:text-2xl lg:text-3xl focus:outline-none hover:opacity-80 transition-opacity"
-        >
-          <IoClose />
-        </button>
       </div>
     </motion.div>
   );

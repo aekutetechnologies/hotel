@@ -273,8 +273,6 @@ class PropertyViewSerializer(serializers.ModelSerializer):
         # Check if user is authenticated and property is in user favorites
         request = self.context.get('request')
         user_favorites = self.context.get('user_favorites', [])
-
-        print(f"User favorites: {user_favorites}")
         
         if request and hasattr(request, 'user'):
             return obj.id in user_favorites

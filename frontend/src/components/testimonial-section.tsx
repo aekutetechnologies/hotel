@@ -192,17 +192,11 @@ export default function TestimonialSection({ testimonials, theme }: any) {
                     </span>
                   ))}
                 </div>
-                <div className={`p-1 rounded-full ${index === activeIndex ? colors?.secondary : "bg-gray-200"}`}>
-                  <ArrowUpRight className={`h-4 w-4 ${index === activeIndex ? "text-white" : colors?.accent}`} />
-                </div>
               </div>
               <p className="text-sm md:text-base mb-4">"{testimonial.text}"</p>
               <div className="flex items-center gap-3">
                 <div>
                   <p className="font-semibold">{testimonial.author?.name}</p>
-                  <p className={`text-sm ${index === activeIndex ? colors?.text : "text-gray-600"}`}>
-                    {testimonial.author?.handle}
-                  </p>
                 </div>
               </div>
             </div>

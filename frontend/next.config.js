@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Temporarily disable React Strict Mode to avoid double-mounting issues with Leaflet
+  reactStrictMode: false,
+  
   images: {
     remotePatterns: [
       {

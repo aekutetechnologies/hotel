@@ -13,6 +13,7 @@ import TestimonialSection from "@/components/testimonial-section";
 import { HeroSection } from "./HeroSection";
 import WhatsApp from "./WhatsApp";
 import Footer from "./Footer";
+import { usePathname } from "next/navigation";
 
 interface DetailSectionProps {
   sectionType: "hotels" | "hostels";
@@ -106,6 +107,7 @@ export function DetailSection({
   }, []);
 
   const [isClosed, setIsClosed] = useState(true);
+  const pathname = usePathname();
 
   const scrollToTop = () => {
     console.log("Scrolling to top");
@@ -316,6 +318,7 @@ export function DetailSection({
               isClosed={isClosed}
               currentSection={getSingularType(sectionType)}
               onNavModalChange={handleNavModalChange}
+              isDetailPage={true}
             />
           </div>
         </div>

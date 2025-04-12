@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from "@/components/ui/input"
@@ -21,9 +21,8 @@ import { ImageCropper } from '@/components/ImageCropper'
 import { fetchAmenities } from '@/lib/api/fetchAmenities'
 import { fetchHotelPolicies } from '@/lib/api/fetchHotelPolicies'
 import { fetchDocumentation } from '@/lib/api/fetchDocumentation'
-import { editProperty } from '@/lib/api/editProperty'
-// Import FormMapPicker dynamically to prevent SSR issues
-import dynamic from 'next/dynamic'
+import { createProperty } from '@/lib/api/createProperty'
+import { MapPicker } from '@/components/MapPicker'
 import { Modal } from '@/components/ui/Modal'
 import { toast } from 'react-toastify'
 import { uploadImage } from '@/lib/api/uploadImage'
@@ -31,23 +30,6 @@ import { Spinner } from '@/components/ui/spinner'
 import { uploadRoomImage } from '@/lib/api/uploadRoomImage'
 import { fetchLocation } from '@/lib/api/fetchLocation'
 import { fetchState } from '@/lib/api/fetchState'
-
-// Dynamically import the FormMapPicker with no SSR to prevent leaflet errors
-const FormMapPicker = dynamic(() => import('@/components/FormMapPicker').then(mod => mod.FormMapPicker), {
-  ssr: false,
-  loading: () => (
-    <div className="h-full w-full flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
-        <p className="mt-2 text-gray-600">Loading map...</p>
-      </div>
-    </div>
-  )
-})
-
-interface PropertyFormProps {
-  initialData: Property // Required, no longer optional
-}
 
 // Define Room type
 interface Room {
@@ -64,7 +46,7 @@ interface Room {
   size: string;
   maxoccupancy: number;
   number_of_rooms: number;
-  amenities: number[] | Amenity[];
+  amenities: number[];
   roomImages: { id: string | number; image_url: string }[];
 }
 
@@ -149,123 +131,28 @@ const COUNTRY_CHOICES = [
   { value: 'india', label: 'India' },
 ];
 
-// Separate component for map to avoid rendering issues
-function PropertyMapSection({ 
-  location, 
-  setLocation 
-}: { 
-  location: { address: string; latitude: string; longitude: string }; 
-  setLocation: React.Dispatch<React.SetStateAction<{ address: string; latitude: string; longitude: string }>>;
-}) {
-  // We've replaced the interactive map picker with a simple coordinate input
-  // to avoid Leaflet map initialization issues and conflicts in the form context.
-  // This approach is more reliable especially with multiple instances of map components.
-  return (
-    <div className="mt-6">
-      <div className="flex justify-between items-center mb-2">
-        <h4 className="text-md font-medium">Location on Map</h4>
-        {location.latitude && location.longitude && (
-          <span className="text-sm text-green-600 flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-            Coordinates set
-          </span>
-        )}
-      </div>
-      <div className="bg-gray-50 p-2 rounded-lg mb-2 text-sm text-gray-600">
-        <p>Click anywhere on the map to set the property's coordinates. You can also zoom in for more precise location selection.</p>
-      </div>
-      <div className="h-[300px] w-full rounded-lg overflow-hidden border">
-        <FormMapPicker
-          key={`map-${Math.random().toString(36).substr(2, 9)}`} 
-          onLocationChange={(lat: number, lng: number) => {
-            setLocation(prev => {
-              if (prev.latitude === lat.toFixed(6) && prev.longitude === lng.toFixed(6)) {
-                return prev;
-              }
-              
-              toast.success("Location coordinates updated successfully");
-              return {
-                ...prev,
-                latitude: lat.toFixed(6),
-                longitude: lng.toFixed(6)
-              };
-            });
-          }}
-          initialPosition={
-            location.latitude && location.longitude
-              ? [parseFloat(location.latitude), parseFloat(location.longitude)]
-              : undefined
-          }
-        />
-      </div>
-      <div className="grid grid-cols-2 gap-2 mt-2">
-        <div className="flex items-center">
-          <span className="text-sm font-medium mr-2">Latitude:</span>
-          <span className="text-sm text-gray-700">{location.latitude || 'Not set'}</span>
-        </div>
-        <div className="flex items-center">
-          <span className="text-sm font-medium mr-2">Longitude:</span>
-          <span className="text-sm text-gray-700">{location.longitude || 'Not set'}</span>
-        </div>
-      </div>
-    </div>
-  );
-}
 
-export function EditPropertyForm({ initialData }: PropertyFormProps) {
-  // Normalize image URLs to handle different API response formats
-  const normalizeImageUrl = (image: any) => {
-    if (!image) return '';
-    return image.image_url || image.image || '';
-  };
-
-  console.log("EditPropertyForm initialData:", initialData)
+export function AddPropertyForm() {
   const router = useRouter()
   
-  // Get property_type, ensure it's either 'hotel' or 'hostel'
-  const propertyTypeValue = initialData.property_type === 'hostel' ? 'hostel' : 'hotel'
-  const [propertyType, setPropertyType] = useState<'hotel' | 'hostel'>(propertyTypeValue)
+  // Add a key for the map to ensure proper cleanup
+  const mapKey = useRef(Date.now()).current;
   
-  const [name, setName] = useState(initialData.name || '')
-  const [description, setDescription] = useState(initialData.description || '')
-  // @ts-ignore - Suppressing type errors for images
-  const [images, setImages] = useState<{ id: string; image_url: string }[]>(
-    initialData.images?.map((image: any) => ({
-      id: String(image.id || ''), 
-      image_url: normalizeImageUrl(image)
-    })) || []
-  )
+  // Initialize with default values for creating a new property
+  const [propertyType, setPropertyType] = useState<'hotel' | 'hostel'>('hotel')
+  const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
+  const [images, setImages] = useState<{ id: string; image_url: string }[]>([])
   const [loading, setLoading] = useState(false)
   const [location, setLocation] = useState({
-    address: initialData.location || '',
-    latitude: initialData.latitude || '',
-    longitude: initialData.longitude || ''
+    address: '',
+    latitude: '',
+    longitude: ''
   })
   const [amenities, setAmenities] = useState<Amenity[]>([])
   const [rules, setRules] = useState<Policy[]>([])
   const [documentation, setDocumentation] = useState<Documentation[]>([])
-  const [rooms, setRooms] = useState<Room[]>(() => {
-    if (!initialData.rooms) return [];
-    
-    return initialData.rooms.map((room: any) => {
-      // Process room amenities - ensure they're converted to numeric IDs
-      const processedAmenities = (room.amenities || []).map((amenity: any) => {
-        if (typeof amenity === 'number') return amenity;
-        if (typeof amenity === 'object' && amenity.id) return Number(amenity.id);
-        return 0; // fallback value
-      }).filter((id: number) => id > 0); // remove invalid values
-      
-      return {
-        ...room,
-        id: String(room.id || ''),
-        amenities: processedAmenities,
-        roomImages: (room.images || room.roomImages || []).map((img: any) => ({ 
-          id: String(img.id || ''), 
-          image_url: normalizeImageUrl(img)
-        })) || []
-      };
-    });
-  });
+  const [rooms, setRooms] = useState<Room[]>([])
   const [cropImage, setCropImage] = useState<string | null>(null)
   const [uploadingImages, setUploadingImages] = useState<boolean>(false)
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -273,57 +160,17 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
   const [roomUploadingImages, setRoomUploadingImages] = useState<boolean>(false);
   const [selectedRoomIndexForImage, setSelectedRoomIndexForImage] = useState<number | null>(null);
   const roomFileInputRef = useRef<HTMLInputElement>(null);
-
-  // @ts-ignore - Suppressing type errors for city
-  const [city, setCity] = useState<string>(
-    initialData._cityString || 
-    (typeof initialData.city === 'object' ? initialData.city?.name || '' : initialData.city || '')
-  )
+  const [city, setCity] = useState<string>('')
   const [citySuggestions, setCitySuggestions] = useState<any[]>([])
-  // @ts-ignore - Suppressing type errors for state
-  const [state, setState] = useState<string>(
-    initialData._stateString || 
-    (typeof initialData.state === 'object' ? initialData.state?.name || '' : initialData.state || '')
-  )
+  const [state, setState] = useState<string>('')
   const [country] = useState<string>('india') // Fixed to India
-  const [area, setArea] = useState<string>(initialData.area || '')
+  const [area, setArea] = useState<string>('')
   const [stateOptions, setStateOptions] = useState<State[]>([])
-  
-  // Load IDs from the new format
-  const [selectedAmenities, setSelectedAmenities] = useState<number[]>(
-    initialData._amenityIds || 
-    initialData.amenities?.map((amenity: any) => 
-      typeof amenity === 'object' ? Number(amenity.id) : Number(amenity)
-    ) || []
-  )
-  const [selectedPolicies, setSelectedPolicies] = useState<number[]>(
-    initialData._ruleIds || 
-    initialData.rules?.map((rule: any) => 
-      typeof rule === 'object' ? Number(rule.id) : Number(rule)
-    ) || []
-  )
-  const [selectedDocumentation, setSelectedDocumentation] = useState<number[]>(
-    initialData._documentationIds || 
-    initialData.documentation?.map((doc: any) => 
-      typeof doc === 'object' ? Number(doc.id) : Number(doc)
-    ) || []
-  )
+  const [selectedAmenities, setSelectedAmenities] = useState<number[]>([])
+  const [selectedPolicies, setSelectedPolicies] = useState<number[]>([])
+  const [selectedDocumentation, setSelectedDocumentation] = useState<number[]>([])
 
   useEffect(() => {
-    // Additional logging to help debug image issues
-    if (initialData.images?.length) {
-      console.log("Property images from API:", initialData.images);
-      console.log("Mapped image URLs:", images);
-    }
-
-    if (initialData.rooms?.length) {
-      console.log("Room data from API:", initialData.rooms.map(room => ({
-        id: room.id,
-        name: room.name,
-        images: room.images
-      })));
-    }
-  
     async function loadData() {
       try {
         const amenitiesResponse = await fetchAmenities()
@@ -336,7 +183,7 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
         setDocumentation(documentationResponse)
 
         try {
-          console.log("Loading states for property editing...")
+          console.log("Loading states data for property creation...")
           const statesResponse = await fetchState()
           
           if (Array.isArray(statesResponse) && statesResponse.length === 0) {
@@ -363,7 +210,7 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
     }
 
     loadData()
-  }, [initialData, images])
+  }, [])
 
   // Debug hook to track changes to rooms state
   useEffect(() => {
@@ -371,9 +218,6 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
       console.log('Rooms state updated:');
       rooms.forEach((room, index) => {
         console.log(`Room ${index} (${room.id}): ${room.name} - ${room.roomImages?.length || 0} images`);
-        if (room.roomImages?.length > 0) {
-          console.log(`Room ${index} image URLs:`, room.roomImages.map(img => img.image_url));
-        }
       });
     }
   }, [rooms]);
@@ -407,6 +251,8 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
   }, [setImages, setCropImage, uploadImage])
 
   const handleRoomCropComplete = useCallback(async (croppedImageBlob: Blob) => {
+    console.log(`handleRoomCropComplete called, blob size: ${croppedImageBlob?.size || 'No blob'}`);
+    console.log(`selectedRoomIndexForImage: ${selectedRoomIndexForImage}`);
     setRoomUploadingImages(true);
     try {
       if (!croppedImageBlob) {
@@ -415,18 +261,26 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
       }
 
       const imageFile = new File([croppedImageBlob], "room_cropped_image.webp", { type: "image/webp" });
+      console.log(`Created File object: ${imageFile.name}, type: ${imageFile.type}, size: ${imageFile.size}`);
+      
+      console.log('Calling uploadRoomImage...');
       const uploadResult = await uploadRoomImage(imageFile);
+      console.log('uploadRoomImage response:', uploadResult);
+      
       if (uploadResult && uploadResult.id && selectedRoomIndexForImage !== null) {
+        console.log(`Updating rooms with new image ID: ${uploadResult.id}`);
         setRooms(prevRooms => {
           const updatedRooms = [...prevRooms];
           updatedRooms[selectedRoomIndexForImage].roomImages = [
             ...(updatedRooms[selectedRoomIndexForImage].roomImages || []),
             { id: String(uploadResult.id), image_url: uploadResult.image_url }
           ];
+          console.log(`Room ${selectedRoomIndexForImage} now has ${updatedRooms[selectedRoomIndexForImage].roomImages.length} images`);
           return updatedRooms;
         });
         toast.success("Room image uploaded successfully!");
       } else {
+        console.error('Upload failed or room index is null:', { uploadResult, selectedRoomIndexForImage });
         toast.error("Room image upload failed.");
       }
     } catch (error: any) {
@@ -484,45 +338,38 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
     setLoading(true);
     try {
       const preparedRooms = rooms.map(room => {
-        // Ensure amenities are always numbers
-        const processedAmenities = (room.amenities || []).map((amenity: any) => {
-          if (typeof amenity === 'number') return amenity;
-          if (typeof amenity === 'object' && amenity.id) return Number(amenity.id);
-          return 0;
-        }).filter((id: number) => id > 0);
-        
-        return {
-          ...room,
-          amenities: processedAmenities,
-          images: room.roomImages.map(img => Number(img.id)), // Convert to image IDs
-        };
-      });
-    
-      const propertyData: PropertyApiData = {
-        name,
-        property_type: propertyType,
-        location: location.address,
-        latitude: location.latitude,
-        longitude: location.longitude,
-        images: images.map(img => Number(img.id)), // Send only image IDs
-        amenities: selectedAmenities,
-        rules: selectedPolicies,
-        documentation: selectedDocumentation,
-        rooms: preparedRooms,
-        description,
-        city,
-        state,
-        country,
-        area,
+      return {
+        ...room,
+          amenities: room.amenities,
+        images: room.roomImages.map(img => Number(img.id)), // Convert to image IDs
       };
+    });
+  
+    const propertyData: PropertyApiData = {
+      name,
+      property_type: propertyType,
+      location: location.address,
+      latitude: location.latitude,
+      longitude: location.longitude,
+      images: images.map(img => Number(img.id)), // Send only image IDs
+      amenities: selectedAmenities,
+      rules: selectedPolicies,
+      documentation: selectedDocumentation,
+      rooms: preparedRooms,
+      description,
+      city,
+      state,
+      country,
+      area,
+    };
 
-      console.log(`Updating property ${initialData.id}: ${name}`);
-      await editProperty(initialData.id.toString(), propertyData as any);
-      toast.success('Property updated successfully');
+      console.log('Creating new property:', name);
+      await createProperty(propertyData as any);
+      toast.success('Property created successfully');
       router.push('/admin/dashboard');
     } catch (error) {
-      console.error('Error updating property:', error);
-      toast.error('Failed to update property');
+      console.error('Error creating property:', error);
+      toast.error('Failed to create property');
     } finally {
       setLoading(false);
     }
@@ -575,7 +422,9 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
   };
 
   const triggerRoomFileInput = (index: number) => {
+    console.log(`triggerRoomFileInput called for room index: ${index}`);
     setSelectedRoomIndexForImage(index);
+    console.log(`roomFileInputRef exists: ${!!roomFileInputRef.current}`);
     roomFileInputRef.current?.click();
   };
 
@@ -780,10 +629,70 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
                 placeholder="Enter Location Name"
               />
             </div>
+            <div className="space-y-2">
+              <Label>Latitude</Label>
+              <Input
+                value={location.latitude}
+                readOnly
+              />
             </div>
+            <div className="space-y-2">
+              <Label>Longitude</Label>
+              <Input
+                value={location.longitude}
+                readOnly
+              />
+            </div>
+          </div>
           
           {/* Map directly embedded in the form */}
-          <PropertyMapSection location={location} setLocation={setLocation} />
+          <div className="mt-6">
+            <div className="flex justify-between items-center mb-2">
+              <h4 className="text-md font-medium">Location on Map</h4>
+              {location.latitude && location.longitude && (
+                <span className="text-sm text-green-600 flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                  Coordinates set
+                </span>
+              )}
+            </div>
+            <div className="bg-gray-50 p-2 rounded-lg mb-2 text-sm text-gray-600">
+              <p>Click anywhere on the map to set the property's coordinates. You can also zoom in for more precise location selection.</p>
+            </div>
+            <div className="h-[300px] w-full rounded-lg overflow-hidden border">
+              {useMemo(() => (
+                <MapPicker
+                  key={`map-instance-${mapKey}`}
+                  onLocationChange={(lat, lng) => {
+                    // Update the location state directly
+                    setLocation(prev => ({
+                      ...prev,
+                      latitude: lat.toFixed(6),
+                      longitude: lng.toFixed(6)
+                    }));
+                    
+                    // Show success notification
+                    toast.success("Location coordinates updated successfully");
+                  }}
+                  initialPosition={
+                    location.latitude && location.longitude
+                      ? [parseFloat(location.latitude), parseFloat(location.longitude)]
+                      : undefined
+                  }
+                />
+              ), [mapKey, location.latitude, location.longitude])}
+            </div>
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              <div className="flex items-center">
+                <span className="text-sm font-medium mr-2">Latitude:</span>
+                <span className="text-sm text-gray-700">{location.latitude || 'Not set'}</span>
+              </div>
+              <div className="flex items-center">
+                <span className="text-sm font-medium mr-2">Longitude:</span>
+                <span className="text-sm text-gray-700">{location.longitude || 'Not set'}</span>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -827,47 +736,21 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
                 </Button>
               </div>
             ))}
-            <label className="border-2 border-dashed rounded-lg aspect-[4/3] flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50">
-              <Upload className="h-8 w-8 text-gray-400 mb-2" />
-              <span className="text-sm text-gray-500">Upload Image</span>
-              <input
-                type="file"
-                className="hidden"
-                accept="image/*"
-                onChange={handleFileChange}
-              />
-            </label>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="neutral"
+                size="sm"
+                onClick={() => triggerFileInput()}
+                disabled={uploadingImages}
+              >
+                {uploadingImages ? <Spinner className="mr-2 h-4 w-4" /> : <Upload className="mr-2 h-4 w-4" />}
+                Upload Image
+              </Button>
             </div>
-
-          {/* Display loading state */}
-          {uploadingImages && (
-            <div className="mt-4 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#B11E43] mr-2"></div>
-              <span>Uploading image...</span>
           </div>
-          )}
         </CardContent>
       </Card>
-
-      {/* Image Cropper */}
-      {cropImage && (
-        <ImageCropper
-          image={cropImage}
-          aspectRatio={4/3}
-          onCropComplete={handleCropComplete}
-          onCancel={() => setCropImage(null)}
-        />
-      )}
-
-      {/* Room Cropper */}
-      {roomCropImage && (
-        <ImageCropper
-          image={roomCropImage}
-          aspectRatio={4/3}
-          onCropComplete={handleRoomCropComplete}
-          onCancel={() => setRoomCropImage(null)}
-        />
-      )}
 
       {/* Amenities */}
       <Card className="mb-4">
@@ -947,48 +830,9 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
       {/* Rooms Section */}
       <Card className="mb-4">
         <CardContent className="pt-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">Rooms</h3>
-            <Button
-              type="button"
-              variant="neutral"
-              size="sm"
-              onClick={addRoom}
-              className="flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" /> Add Room
-            </Button>
-          </div>
-          
-          {rooms.length === 0 ? (
-            <div className="text-center py-8 border-2 border-dashed rounded-lg">
-              <p className="text-gray-500 mb-4">No rooms added yet</p>
-              <Button
-                type="button"
-                variant="neutral"
-                size="sm"
-                onClick={addRoom}
-                className="flex items-center gap-2 mx-auto"
-              >
-                <Plus className="h-4 w-4" /> Add Your First Room
-              </Button>
-            </div>
-          ) : (
-            rooms.map((room, index) => (
-              <div key={room.id} className="mb-6 p-6 border rounded-lg bg-gray-50">
-                <div className="flex justify-between items-center mb-4">
-                  <h4 className="font-medium text-lg">{room.name || `Room ${index + 1}`}</h4>
-                  <Button
-                    type="button"
-                    variant="neutral"
-                    size="sm"
-                    onClick={() => removeRoom(index)}
-                    className="text-red-500"
-                  >
-                    <Trash className="h-4 w-4 mr-2" /> Remove
-                  </Button>
-                </div>
-                
+          <h3 className="text-lg font-semibold mb-4">Rooms</h3>
+          {rooms.map((room, index) => (
+            <div key={room.id} className="mb-4 p-4 border rounded-lg">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor={`room-name-${index}`}>Room Name</Label>
@@ -1090,80 +934,33 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
                     </SelectContent>
                   </Select>
                 </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                 <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
+                  <Label htmlFor={`room-privatebathroom-${index}`}>Private Bathroom</Label>
                   <Checkbox
                     id={`room-privatebathroom-${index}`}
                     checked={room.private_bathroom || false}
                     onCheckedChange={(checked) => updateRoom(index, { private_bathroom: !!checked })}
                   />
-                      <Label htmlFor={`room-privatebathroom-${index}`}>Private Bathroom</Label>
-                    </div>
                 </div>
                 <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
+                  <Label htmlFor={`room-smoking-${index}`}>Smoking Allowed</Label>
                   <Checkbox
                     id={`room-smoking-${index}`}
                     checked={room.smoking || false}
                     onCheckedChange={(checked) => updateRoom(index, { smoking: !!checked })}
                   />
-                      <Label htmlFor={`room-smoking-${index}`}>Smoking Allowed</Label>
-                    </div>
                 </div>
                 <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
+                  <Label htmlFor={`room-securitydeposit-${index}`}>Security Deposit</Label>
                   <Checkbox
                     id={`room-securitydeposit-${index}`}
                     checked={room.security_deposit || false}
                     onCheckedChange={(checked) => updateRoom(index, { security_deposit: !!checked })}
                   />
-                      <Label htmlFor={`room-securitydeposit-${index}`}>Security Deposit</Label>
                 </div>
-                </div>
-              </div>
-              
-                {/* Room Images Section */}
-                <div className="mt-6 border-t pt-4">
-                  <h5 className="font-medium mb-3">Room Images</h5>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {room.roomImages && room.roomImages.map((image, imageIndex) => (
-                      <div key={imageIndex} className="relative aspect-[4/3]">
-                      <img
-                        src={image.image_url}
-                          alt={`Room ${index + 1} Image ${imageIndex + 1}`}
-                          className="w-full h-full object-cover rounded-lg"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = "/placeholder-image.jpg";
-                        }}
-                      />
-                      <Button
-                        type="button"
-                        variant="neutral"
-                        size="icon"
-                          className="absolute top-2 right-2"
-                        onClick={() => removeRoomImage(index, imageIndex)}
-                      >
-                          <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                    <label 
-                      className="border-2 border-dashed rounded-lg aspect-[4/3] flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100"
-                      onClick={() => triggerRoomFileInput(index)}
-                    >
-                      <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                      <span className="text-sm text-gray-500">Add Room Image</span>
-                    </label>
-                </div>
-              </div>
-              
-                {/* Room Amenities */}
-                <div className="mt-6 border-t pt-4">
-                  <h5 className="font-medium mb-3">Room Amenities</h5>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                <div className="space-y-2">
+                  <Label>Amenities</Label>
+                  <div className="grid grid-cols-2 gap-2">
                     {amenities.map((amenity) => (
                       <div key={amenity.id} className="flex items-center space-x-2">
                         <Checkbox
@@ -1178,31 +975,13 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
                           }}
                         />
                         <Label htmlFor={`room-${index}-amenity-${amenity.id}`}>{amenity.name}</Label>
-            </div>
-          ))}
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
-            ))
-          )}
-
-      {/* Submit Button */}
-          <div className="mt-8 flex justify-end gap-4">
-        <Button
-          type="button"
-          variant="neutral"
-              onClick={() => router.back()}
-        >
-          Cancel
-        </Button>
-        <Button 
-          type="submit" 
-              className="bg-[#B11E43] hover:bg-[#8f1836]"
-              disabled={loading}
-        >
-              {loading ? 'Updating...' : 'Update Property'}
-        </Button>
-      </div>
+            </div>
+          ))}
         </CardContent>
       </Card>
     </form>

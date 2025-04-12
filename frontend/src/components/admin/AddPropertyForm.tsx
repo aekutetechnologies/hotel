@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo, lazy, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from "@/components/ui/input"
@@ -22,7 +22,8 @@ import { fetchAmenities } from '@/lib/api/fetchAmenities'
 import { fetchHotelPolicies } from '@/lib/api/fetchHotelPolicies'
 import { fetchDocumentation } from '@/lib/api/fetchDocumentation'
 import { createProperty } from '@/lib/api/createProperty'
-import { MapPicker } from '@/components/MapPicker'
+// Import MapPicker dynamically to prevent SSR issues
+import dynamic from 'next/dynamic'
 import { Modal } from '@/components/ui/Modal'
 import { toast } from 'react-toastify'
 import { uploadImage } from '@/lib/api/uploadImage'
@@ -30,6 +31,19 @@ import { Spinner } from '@/components/ui/spinner'
 import { uploadRoomImage } from '@/lib/api/uploadRoomImage'
 import { fetchLocation } from '@/lib/api/fetchLocation'
 import { fetchState } from '@/lib/api/fetchState'
+
+// Dynamically import the FormMapPicker with no SSR to prevent leaflet errors
+const FormMapPicker = dynamic(() => import('@/components/FormMapPicker').then(mod => mod.FormMapPicker), {
+  ssr: false,
+  loading: () => (
+    <div className="h-full w-full flex items-center justify-center bg-gray-100">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+        <p className="mt-2 text-gray-600">Loading map...</p>
+      </div>
+    </div>
+  )
+})
 
 // Define Room type
 interface Room {
@@ -131,12 +145,77 @@ const COUNTRY_CHOICES = [
   { value: 'india', label: 'India' },
 ];
 
+// Separate component for map to avoid rendering issues
+function PropertyMapSection({ 
+  location, 
+  setLocation 
+}: { 
+  location: { address: string; latitude: string; longitude: string }; 
+  setLocation: React.Dispatch<React.SetStateAction<{ address: string; latitude: string; longitude: string }>>;
+}) {
+  // Use a stable ID to avoid re-initialization issues
+  const mapId = useRef(`map-${Math.random().toString(36).substr(2, 9)}`).current;
+  
+  // Use callback to prevent unnecessary renders
+  const handleLocationChange = useCallback((lat: number, lng: number) => {
+    // Update the location state directly but memoize the callback
+    setLocation(prev => {
+      // Only update if values actually changed
+      if (prev.latitude === lat.toFixed(6) && prev.longitude === lng.toFixed(6)) {
+        return prev; // No change
+      }
+      
+      // If there's a change, show the notification and return new state
+      toast.success("Location coordinates updated successfully");
+      return {
+        ...prev,
+        latitude: lat.toFixed(6),
+        longitude: lng.toFixed(6)
+      };
+    });
+  }, [setLocation]);
+  
+  return (
+    <div className="mt-6">
+      <div className="flex justify-between items-center mb-2">
+        <h4 className="text-md font-medium">Location on Map</h4>
+        {location.latitude && location.longitude && (
+          <span className="text-sm text-green-600 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            Coordinates set
+          </span>
+        )}
+      </div>
+      <div className="bg-gray-50 p-2 rounded-lg mb-2 text-sm text-gray-600">
+        <p>Click anywhere on the map to set the property's coordinates. You can also zoom in for more precise location selection.</p>
+      </div>
+      <div className="h-[300px] w-full rounded-lg overflow-hidden border">
+        <FormMapPicker
+          key={mapId} 
+          onLocationChange={handleLocationChange}
+          initialPosition={
+            location.latitude && location.longitude
+              ? [parseFloat(location.latitude), parseFloat(location.longitude)]
+              : undefined
+          }
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-2 mt-2">
+        <div className="flex items-center">
+          <span className="text-sm font-medium mr-2">Latitude:</span>
+          <span className="text-sm text-gray-700">{location.latitude || 'Not set'}</span>
+        </div>
+        <div className="flex items-center">
+          <span className="text-sm font-medium mr-2">Longitude:</span>
+          <span className="text-sm text-gray-700">{location.longitude || 'Not set'}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function AddPropertyForm() {
   const router = useRouter()
-  
-  // Add a key for the map to ensure proper cleanup
-  const mapKey = useRef(Date.now()).current;
   
   // Initialize with default values for creating a new property
   const [propertyType, setPropertyType] = useState<'hotel' | 'hostel'>('hotel')
@@ -646,53 +725,7 @@ export function AddPropertyForm() {
           </div>
           
           {/* Map directly embedded in the form */}
-          <div className="mt-6">
-            <div className="flex justify-between items-center mb-2">
-              <h4 className="text-md font-medium">Location on Map</h4>
-              {location.latitude && location.longitude && (
-                <span className="text-sm text-green-600 flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                  Coordinates set
-                </span>
-              )}
-            </div>
-            {/* <div className="bg-gray-50 p-2 rounded-lg mb-2 text-sm text-gray-600">
-              <p>Click anywhere on the map to set the property's coordinates. You can also zoom in for more precise location selection.</p>
-            </div>
-            <div className="h-[300px] w-full rounded-lg overflow-hidden border">
-              {useMemo(() => (
-                <MapPicker
-                  key={`map-instance-${mapKey}-${Date.now()}`}
-                  onLocationChange={(lat, lng) => {
-                    // Update the location state directly
-                    setLocation(prev => ({
-                      ...prev,
-                      latitude: lat.toFixed(6),
-                      longitude: lng.toFixed(6)
-                    }));
-                    
-                    // Show success notification
-                    toast.success("Location coordinates updated successfully");
-                  }}
-                  initialPosition={
-                    location.latitude && location.longitude
-                      ? [parseFloat(location.latitude), parseFloat(location.longitude)]
-                      : undefined
-                  }
-                />
-              ), [location.latitude, location.longitude])}
-            </div> */}
-            <div className="grid grid-cols-2 gap-2 mt-2">
-              <div className="flex items-center">
-                <span className="text-sm font-medium mr-2">Latitude:</span>
-                <span className="text-sm text-gray-700">{location.latitude || 'Not set'}</span>
-              </div>
-              <div className="flex items-center">
-                <span className="text-sm font-medium mr-2">Longitude:</span>
-                <span className="text-sm text-gray-700">{location.longitude || 'Not set'}</span>
-              </div>
-            </div>
-          </div>
+          <PropertyMapSection location={location} setLocation={setLocation} />
         </CardContent>
       </Card>
 
@@ -736,21 +769,47 @@ export function AddPropertyForm() {
                 </Button>
               </div>
             ))}
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="neutral"
-                size="sm"
-                onClick={() => triggerFileInput()}
-                disabled={uploadingImages}
-              >
-                {uploadingImages ? <Spinner className="mr-2 h-4 w-4" /> : <Upload className="mr-2 h-4 w-4" />}
-                Upload Image
-              </Button>
-            </div>
+            <label className="border-2 border-dashed rounded-lg aspect-[4/3] flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50">
+              <Upload className="h-8 w-8 text-gray-400 mb-2" />
+              <span className="text-sm text-gray-500">Upload Image</span>
+              <input
+                type="file"
+                className="hidden"
+                accept="image/*"
+                onChange={handleFileChange}
+              />
+            </label>
           </div>
+
+          {/* Display loading state */}
+          {uploadingImages && (
+            <div className="mt-4 flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#B11E43] mr-2"></div>
+              <span>Uploading image...</span>
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      {/* Image Cropper */}
+      {cropImage && (
+        <ImageCropper
+          image={cropImage}
+          aspectRatio={4/3}
+          onCropComplete={handleCropComplete}
+          onCancel={() => setCropImage(null)}
+        />
+      )}
+
+      {/* Room Cropper */}
+      {roomCropImage && (
+        <ImageCropper
+          image={roomCropImage}
+          aspectRatio={4/3}
+          onCropComplete={handleRoomCropComplete}
+          onCancel={() => setRoomCropImage(null)}
+        />
+      )}
 
       {/* Amenities */}
       <Card className="mb-4">
@@ -830,137 +889,223 @@ export function AddPropertyForm() {
       {/* Rooms Section */}
       <Card className="mb-4">
         <CardContent className="pt-6">
-          <h3 className="text-lg font-semibold mb-4">Rooms</h3>
-          {rooms.map((room, index) => (
-            <div key={room.id} className="mb-4 p-4 border rounded-lg">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor={`room-name-${index}`}>Room Name</Label>
-                  <Input
-                    id={`room-name-${index}`}
-                    value={room.name}
-                    onChange={(e) => updateRoom(index, { name: e.target.value })}
-                    placeholder="Enter room name"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor={`room-hourly-rate-${index}`}>Hourly Rate</Label>
-                  <Input
-                    id={`room-hourly-rate-${index}`}
-                    type="number"
-                    step="0.01"
-                    value={room.hourly_rate || ''}
-                    onChange={(e) => updateRoom(index, { hourly_rate: e.target.value })}
-                    placeholder="Enter hourly rate"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor={`room-daily-rate-${index}`}>Daily Rate</Label>
-                  <Input
-                    id={`room-daily-rate-${index}`}
-                    type="number"
-                    step="0.01"
-                    value={room.daily_rate || ''}
-                    onChange={(e) => updateRoom(index, { daily_rate: e.target.value })}
-                    placeholder="Enter daily rate"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor={`room-monthly-rate-${index}`}>Monthly Rate</Label>
-                  <Input
-                    id={`room-monthly-rate-${index}`}
-                    type="number"
-                    step="0.01"
-                    value={room.monthly_rate || ''}
-                    onChange={(e) => updateRoom(index, { monthly_rate: e.target.value })}
-                    placeholder="Enter monthly rate"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor={`room-discount-${index}`}>Discount</Label>
-                  <Input
-                    id={`room-discount-${index}`}
-                    type="number"
-                    value={room.discount || ''}
-                    onChange={(e) => updateRoom(index, { discount: e.target.value })}
-                    placeholder="Enter discount"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor={`room-size-${index}`}>Size</Label>
-                  <Input
-                    id={`room-size-${index}`}
-                    value={room.size || ''}
-                    onChange={(e) => updateRoom(index, { size: e.target.value })}
-                    placeholder="Enter size"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor={`room-maxoccupancy-${index}`}>Max Occupancy</Label>
-                  <Input
-                    id={`room-maxoccupancy-${index}`}
-                    type="number"
-                    value={room.maxoccupancy || ''}
-                    onChange={(e) => updateRoom(index, { maxoccupancy: parseInt(e.target.value) })}
-                    placeholder="Enter max occupancy"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor={`room-numberofrooms-${index}`}>Number of Rooms</Label>
-                  <Input
-                    id={`room-numberofrooms-${index}`}
-                    type="number"
-                    value={room.number_of_rooms || ''}
-                    onChange={(e) => updateRoom(index, { number_of_rooms: parseInt(e.target.value) })}
-                    placeholder="Enter number of rooms"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor={`room-bedtype-${index}`}>Bed Type</Label>
-                  <Select
-                    value={room.bed_type || undefined}
-                    onValueChange={(value) => updateRoom(index, { bed_type: value })}
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Rooms</h3>
+            <Button
+              type="button"
+              variant="neutral"
+              size="sm"
+              onClick={addRoom}
+              className="flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" /> Add Room
+            </Button>
+          </div>
+          
+          {rooms.length === 0 ? (
+            <div className="text-center py-8 border-2 border-dashed rounded-lg">
+              <p className="text-gray-500 mb-4">No rooms added yet</p>
+              <Button
+                type="button"
+                variant="neutral"
+                size="sm"
+                onClick={addRoom}
+                className="flex items-center gap-2 mx-auto"
+              >
+                <Plus className="h-4 w-4" /> Add Your First Room
+              </Button>
+            </div>
+          ) : (
+            rooms.map((room, index) => (
+              <div key={room.id} className="mb-6 p-6 border rounded-lg bg-gray-50">
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="font-medium text-lg">{room.name || `Room ${index + 1}`}</h4>
+                  <Button
+                    type="button"
+                    variant="neutral"
+                    size="sm"
+                    onClick={() => removeRoom(index)}
+                    className="text-red-500"
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select bed type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {BED_TYPE_CHOICES.map((bedType) => (
-                        <SelectItem key={bedType.value} value={bedType.value}>
-                          {bedType.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    <Trash className="h-4 w-4 mr-2" /> Remove
+                  </Button>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor={`room-privatebathroom-${index}`}>Private Bathroom</Label>
-                  <Checkbox
-                    id={`room-privatebathroom-${index}`}
-                    checked={room.private_bathroom || false}
-                    onCheckedChange={(checked) => updateRoom(index, { private_bathroom: !!checked })}
-                  />
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor={`room-name-${index}`}>Room Name</Label>
+                    <Input
+                      id={`room-name-${index}`}
+                      value={room.name}
+                      onChange={(e) => updateRoom(index, { name: e.target.value })}
+                      placeholder="Enter room name"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`room-hourly-rate-${index}`}>Hourly Rate</Label>
+                    <Input
+                      id={`room-hourly-rate-${index}`}
+                      type="number"
+                      step="0.01"
+                      value={room.hourly_rate || ''}
+                      onChange={(e) => updateRoom(index, { hourly_rate: e.target.value })}
+                      placeholder="Enter hourly rate"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`room-daily-rate-${index}`}>Daily Rate</Label>
+                    <Input
+                      id={`room-daily-rate-${index}`}
+                      type="number"
+                      step="0.01"
+                      value={room.daily_rate || ''}
+                      onChange={(e) => updateRoom(index, { daily_rate: e.target.value })}
+                      placeholder="Enter daily rate"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`room-monthly-rate-${index}`}>Monthly Rate</Label>
+                    <Input
+                      id={`room-monthly-rate-${index}`}
+                      type="number"
+                      step="0.01"
+                      value={room.monthly_rate || ''}
+                      onChange={(e) => updateRoom(index, { monthly_rate: e.target.value })}
+                      placeholder="Enter monthly rate"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`room-discount-${index}`}>Discount</Label>
+                    <Input
+                      id={`room-discount-${index}`}
+                      type="number"
+                      value={room.discount || ''}
+                      onChange={(e) => updateRoom(index, { discount: e.target.value })}
+                      placeholder="Enter discount"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`room-size-${index}`}>Size</Label>
+                    <Input
+                      id={`room-size-${index}`}
+                      value={room.size || ''}
+                      onChange={(e) => updateRoom(index, { size: e.target.value })}
+                      placeholder="Enter size"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`room-maxoccupancy-${index}`}>Max Occupancy</Label>
+                    <Input
+                      id={`room-maxoccupancy-${index}`}
+                      type="number"
+                      value={room.maxoccupancy || ''}
+                      onChange={(e) => updateRoom(index, { maxoccupancy: parseInt(e.target.value) })}
+                      placeholder="Enter max occupancy"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`room-numberofrooms-${index}`}>Number of Rooms</Label>
+                    <Input
+                      id={`room-numberofrooms-${index}`}
+                      type="number"
+                      value={room.number_of_rooms || ''}
+                      onChange={(e) => updateRoom(index, { number_of_rooms: parseInt(e.target.value) })}
+                      placeholder="Enter number of rooms"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`room-bedtype-${index}`}>Bed Type</Label>
+                    <Select
+                      value={room.bed_type || undefined}
+                      onValueChange={(value) => updateRoom(index, { bed_type: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select bed type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {BED_TYPE_CHOICES.map((bedType) => (
+                          <SelectItem key={bedType.value} value={bedType.value}>
+                            {bedType.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor={`room-smoking-${index}`}>Smoking Allowed</Label>
-                  <Checkbox
-                    id={`room-smoking-${index}`}
-                    checked={room.smoking || false}
-                    onCheckedChange={(checked) => updateRoom(index, { smoking: !!checked })}
-                  />
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`room-privatebathroom-${index}`}
+                        checked={room.private_bathroom || false}
+                        onCheckedChange={(checked) => updateRoom(index, { private_bathroom: !!checked })}
+                      />
+                      <Label htmlFor={`room-privatebathroom-${index}`}>Private Bathroom</Label>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`room-smoking-${index}`}
+                        checked={room.smoking || false}
+                        onCheckedChange={(checked) => updateRoom(index, { smoking: !!checked })}
+                      />
+                      <Label htmlFor={`room-smoking-${index}`}>Smoking Allowed</Label>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`room-securitydeposit-${index}`}
+                        checked={room.security_deposit || false}
+                        onCheckedChange={(checked) => updateRoom(index, { security_deposit: !!checked })}
+                      />
+                      <Label htmlFor={`room-securitydeposit-${index}`}>Security Deposit</Label>
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor={`room-securitydeposit-${index}`}>Security Deposit</Label>
-                  <Checkbox
-                    id={`room-securitydeposit-${index}`}
-                    checked={room.security_deposit || false}
-                    onCheckedChange={(checked) => updateRoom(index, { security_deposit: !!checked })}
-                  />
+                
+                {/* Room Images Section */}
+                <div className="mt-6 border-t pt-4">
+                  <h5 className="font-medium mb-3">Room Images</h5>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {room.roomImages && room.roomImages.map((image, imageIndex) => (
+                      <div key={imageIndex} className="relative aspect-[4/3]">
+                        <img
+                          src={image.image_url}
+                          alt={`Room ${index + 1} Image ${imageIndex + 1}`}
+                          className="w-full h-full object-cover rounded-lg"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = "/placeholder-image.jpg";
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          variant="neutral"
+                          size="icon"
+                          className="absolute top-2 right-2"
+                          onClick={() => removeRoomImage(index, imageIndex)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    <label 
+                      className="border-2 border-dashed rounded-lg aspect-[4/3] flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100"
+                      onClick={() => triggerRoomFileInput(index)}
+                    >
+                      <Upload className="h-8 w-8 text-gray-400 mb-2" />
+                      <span className="text-sm text-gray-500">Add Room Image</span>
+                    </label>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>Amenities</Label>
-                  <div className="grid grid-cols-2 gap-2">
+                
+                {/* Room Amenities */}
+                <div className="mt-6 border-t pt-4">
+                  <h5 className="font-medium mb-3">Room Amenities</h5>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     {amenities.map((amenity) => (
                       <div key={amenity.id} className="flex items-center space-x-2">
                         <Checkbox
@@ -980,128 +1125,21 @@ export function AddPropertyForm() {
                   </div>
                 </div>
               </div>
-              
-              {/* Room Images */}
-              <div className="mt-4">
-                <div className="flex justify-between items-center mb-2">
-                  <h4 className="text-sm font-medium">Room Images</h4>
-                  <Button
-                    type="button"
-                    variant="neutral"
-                    size="sm"
-                    onClick={() => triggerRoomFileInput(index)}
-                    disabled={roomUploadingImages}
-                  >
-                    {roomUploadingImages && selectedRoomIndexForImage === index ? (
-                      <Spinner className="mr-2 h-3 w-3" />
-                    ) : (
-                      <Upload className="mr-2 h-3 w-3" />
-                    )}
-                    Add Image
-                  </Button>
-                </div>
-                
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {room.roomImages && room.roomImages.map((image, imageIndex) => (
-                    <div key={imageIndex} className="relative aspect-[4/3] bg-gray-100 rounded-md overflow-hidden">
-                      <img
-                        src={image.image_url}
-                        alt={`Room ${index + 1} image ${imageIndex + 1}`}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = "/placeholder-image.jpg";
-                        }}
-                      />
-                      <Button
-                        type="button"
-                        variant="neutral"
-                        size="icon"
-                        className="absolute top-1 right-1 h-6 w-6"
-                        onClick={() => removeRoomImage(index, imageIndex)}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-            </div>
-          ))}
-                </div>
-              </div>
-              
-              {/* Remove Room Button */}
-              <div className="mt-4 flex justify-end">
-                <Button
-                  type="button"
-                  variant="neutral"
-                  size="sm"
-                  onClick={() => removeRoom(index)}
-                >
-                  <Trash className="mr-2 h-4 w-4" />
-                  Remove Room
-                </Button>
-              </div>
-            </div>
-          ))}
+            ))
+          )}
           
-          {/* Add Room Button */}
-          <Button 
-            type="button" 
-            variant="neutral"
-            onClick={addRoom}
-            className="w-full"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add Room
-          </Button>
+          {/* Submit Button */}
+          <div className="mt-8 flex justify-end">
+            <Button
+              type="submit"
+              className="bg-[#B11E43] hover:bg-[#8f1836]"
+              disabled={loading}
+            >
+              {loading ? 'Creating Property...' : 'Create Property'}
+            </Button>
+          </div>
         </CardContent>
       </Card>
-
-      {/* Submit Button */}
-      <div className="flex justify-end gap-4">
-        <Button
-          type="button"
-          variant="neutral"
-          onClick={() => router.push('/admin/dashboard')}
-        >
-          Cancel
-        </Button>
-        <Button 
-          type="submit" 
-          variant="default"
-          disabled={loading || uploadingImages || roomUploadingImages}
-        >
-          {loading ? <Spinner className="mr-2 h-4 w-4" /> : null}
-          Create Property
-        </Button>
-      </div>
-
-      {/* Image Cropper Modal */}
-      {cropImage && (
-        <Modal onClose={() => setCropImage(null)}>
-          <div className="p-4">
-            <h3 className="font-medium text-lg mb-4">Crop Image</h3>
-            <ImageCropper
-              image={cropImage}
-              aspectRatio={4/3}
-              onCropComplete={handleCropComplete}
-              onCancel={() => setCropImage(null)}
-            />
-          </div>
-        </Modal>
-      )}
-
-      {/* Room Image Cropper Modal */}
-      {roomCropImage && (
-        <Modal onClose={() => setRoomCropImage(null)}>
-          <div className="p-4">
-            <h3 className="font-medium text-lg mb-4">Crop Room Image</h3>
-            <ImageCropper
-              image={roomCropImage}
-              aspectRatio={4/3}
-              onCropComplete={handleRoomCropComplete}
-              onCancel={() => setRoomCropImage(null)}
-            />
-          </div>
-        </Modal>
-      )}
     </form>
   )
 }

@@ -201,13 +201,6 @@ export default function Dashboard() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <PermissionGuard permission="property:view">
-                          <Button variant="neutral" size="icon" asChild>
-                            <Link href={`/admin/properties/${property.id}`}>
-                              <Eye className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                        </PermissionGuard>
                         
                         <PermissionGuard permission="property:update">
                           <Button variant="neutral" size="icon" asChild>

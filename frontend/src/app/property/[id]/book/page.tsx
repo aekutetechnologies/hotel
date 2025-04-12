@@ -516,16 +516,7 @@ export default function BookProperty() {
                 <div>
                   <label htmlFor="checkIn" className="block text-sm font-medium text-gray-700">Check-in Date</label>
                   <div className="relative mt-1">
-                    <Input
-                      type="date"
-                      id="checkIn"
-                      name="checkIn"
-                      value={booking.checkIn}
-                      onChange={handleInputChange}
-                      required
-                      className="opacity-0 absolute inset-0 w-full h-full cursor-pointer z-10"
-                    />
-                    <div className="flex items-center justify-between w-full pr-2 border rounded-md px-3 py-2">
+                    <div className="flex items-center justify-between w-full pr-2 border rounded-md px-3 py-2 bg-gray-100">
                       <span className="text-sm">{booking.checkIn ? format(parseISO(booking.checkIn), 'dd MMM yyyy') : 'Select date'}</span>
                       <CalendarDays className="h-4 w-4 text-gray-500" />
                     </div>
@@ -537,16 +528,7 @@ export default function BookProperty() {
                   <div>
                     <label htmlFor="checkOut" className="block text-sm font-medium text-gray-700">Check-out Date</label>
                     <div className="relative mt-1">
-                      <Input
-                        type="date"
-                        id="checkOut"
-                        name="checkOut"
-                        value={booking.checkOut}
-                        onChange={handleInputChange}
-                        required
-                        className="opacity-0 absolute inset-0 w-full h-full cursor-pointer z-10"
-                      />
-                      <div className="flex items-center justify-between w-full pr-2 border rounded-md px-3 py-2">
+                      <div className="flex items-center justify-between w-full pr-2 border rounded-md px-3 py-2 bg-gray-100">
                         <span className="text-sm">{booking.checkOut ? format(parseISO(booking.checkOut), 'dd MMM yyyy') : 'Select date'}</span>
                         <CalendarDays className="h-4 w-4 text-gray-500" />
                       </div>
@@ -567,7 +549,8 @@ export default function BookProperty() {
                       value={booking.checkInTime || ''}
                       onChange={handleInputChange}
                       required
-                      className="mt-1"
+                      disabled
+                      className="mt-1 bg-gray-100"
                     />
                   </div>
                   <div>
@@ -579,7 +562,8 @@ export default function BookProperty() {
                       value={booking.checkOutTime || ''}
                       onChange={handleInputChange}
                       required
-                      className="mt-1"
+                      disabled
+                      className="mt-1 bg-gray-100"
                     />
                   </div>
                 </div>
@@ -595,7 +579,8 @@ export default function BookProperty() {
                     value={booking.guests}
                     onChange={handleInputChange}
                     min="1"
-                    className="mt-1"
+                    disabled
+                    className="mt-1 bg-gray-100"
                   />
                 </div>
                 <div>
@@ -607,8 +592,8 @@ export default function BookProperty() {
                     value={booking.rooms}
                     onChange={handleInputChange}
                     min="1"
-                    className="mt-1"
-                    readOnly={selectedRoomDetails.length > 0}
+                    disabled
+                    className="mt-1 bg-gray-100"
                   />
                 </div>
               </div>
@@ -657,7 +642,8 @@ export default function BookProperty() {
                               variant="neutral" 
                               size="sm"
                               onClick={() => handleRoomQuantityChange(room.id, -1)}
-                              disabled={roomQty <= 0}
+                              disabled
+                              className="opacity-70"
                             >
                               -
                             </Button>
@@ -667,6 +653,8 @@ export default function BookProperty() {
                               variant="neutral" 
                               size="sm"
                               onClick={() => handleRoomQuantityChange(room.id, 1)}
+                              disabled
+                              className="opacity-70"
                             >
                               +
                             </Button>
@@ -694,14 +682,15 @@ export default function BookProperty() {
                           type="button"
                           onClick={() => setSelectedOffer(null)}
                           className="p-1"
+                          disabled
                         >
                           <X className="h-4 w-4 text-gray-500" />
                           <span className="sr-only">Remove offer</span>
                         </button>
                       </div>
                     ) : (
-                      <Select onValueChange={handleOfferChange}>
-                        <SelectTrigger>
+                      <Select onValueChange={handleOfferChange} disabled>
+                        <SelectTrigger className="bg-gray-100">
                           <SelectValue placeholder="Select an offer" />
                         </SelectTrigger>
                         <SelectContent>

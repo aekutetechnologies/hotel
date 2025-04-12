@@ -1,6 +1,6 @@
 "use client"
 
-import { LogOut, User, CalendarDays, ChevronDown, Heart } from 'lucide-react'
+import { LogOut, User, CalendarDays, ChevronDown, Heart, Settings } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils"
 import { useRef, useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { PermissionGuard } from './PermissionGuard'
 
 interface ProfileDropdownProps {
   onLogout: () => void
@@ -113,6 +114,14 @@ export function ProfileDropdown({ onLogout, userName }: ProfileDropdownProps) {
             <span>My Favorites</span>
           </DropdownMenuItem>
         </Link>
+        <PermissionGuard permission="admin:dashboard:view">
+          <Link href="/admin/dashboard" passHref>
+            <DropdownMenuItem className="cursor-pointer text-base rounded-md my-1 hover:bg-gray-50">
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Admin Dashboard</span>
+            </DropdownMenuItem>
+          </Link>
+        </PermissionGuard>
         <DropdownMenuSeparator className="my-2" />
         <DropdownMenuItem 
           className="cursor-pointer text-red-600 rounded-md my-1 hover:bg-red-50 focus:text-red-600 focus:bg-red-50 text-base" 

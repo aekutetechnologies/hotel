@@ -117,7 +117,7 @@ export function Header() {
         z-10
       ">
         <div className="container mx-auto px-4 flex justify-between items-center">
-          <Link href="/" className="flex items-center">
+          <Link href="/home?type=hotels" className="flex items-center">
             <Image 
               src="/logo.png" 
               alt="Hsquare Logo" 

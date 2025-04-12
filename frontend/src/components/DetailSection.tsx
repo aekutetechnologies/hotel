@@ -310,7 +310,7 @@ export function DetailSection({
               isLoggedIn={isLoggedIn}
               userName={userName}
               handleLogout={handleLogout}
-              handleLoginClick={() => handleLoginClick()}
+              handleLoginClick={handleLoginClick}
               setShowDetailSection={(section: string) => {
                 setShowDetailSection(section as "hotels" | "hostels" | null);
               }}

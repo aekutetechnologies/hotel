@@ -100,7 +100,7 @@ export default function CareersPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Navbar */}
+      {/* header */}
       <Header />
       
       {/* Main content */}

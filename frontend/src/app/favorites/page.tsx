@@ -3,11 +3,8 @@
 import { FavoriteProperties } from "@/components/favorite-properties"
 import { useEffect, useState, Suspense } from "react"
 import { useRouter } from "next/navigation"
-import Navbar from "@/components/Navbar"
 import Footer from "@/components/Footer"
 import { Header } from "@/components/Header"
-import { ChevronLeft } from "lucide-react"
-import Link from "next/link"
 
 export default function FavoritesPage() {
   const router = useRouter()

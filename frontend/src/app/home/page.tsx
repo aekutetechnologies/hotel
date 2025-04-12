@@ -3,6 +3,7 @@
 import { useSearchParams } from 'next/navigation';
 import { useState, useEffect, Suspense } from 'react';
 import { DetailSection } from '@/components/DetailSection';
+import { LoginDialog } from '@/components/LoginDialog';
 
 // Testimonial data - move from main page to here
 const hostelTestimonials = [
@@ -120,6 +121,12 @@ function HomeContent() {
   const handleLoginClick = () => {
     setIsLoginDialogOpen(true);
   };
+
+  const handleLoginSuccess = (name: string) => {
+    setIsLoggedIn(true);
+    setUserName(name);
+    setIsLoginDialogOpen(false);
+  };
   
   // Function to handle section changes within the DetailSection
   const setShowDetailSection = (section: "hotels" | "hostels" | null) => {
@@ -131,16 +138,24 @@ function HomeContent() {
   };
 
   return (
-    <DetailSection
-      sectionType={sectionType}
-      isLoggedIn={isLoggedIn}
-      userName={userName}
-      onClose={handleClose}
-      hotelTestimonials={hotelTestimonials}
-      hostelTestimonials={hostelTestimonials}
-      setShowDetailSection={setShowDetailSection}
-      handleLoginClick={handleLoginClick}
-    />
+    <>
+      <DetailSection
+        sectionType={sectionType}
+        isLoggedIn={isLoggedIn}
+        userName={userName}
+        onClose={handleClose}
+        hotelTestimonials={hotelTestimonials}
+        hostelTestimonials={hostelTestimonials}
+        setShowDetailSection={setShowDetailSection}
+        handleLoginClick={handleLoginClick}
+      />
+      
+      <LoginDialog 
+        isOpen={isLoginDialogOpen}
+        onClose={() => setIsLoginDialogOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
+      />
+    </>
   );
 }
 

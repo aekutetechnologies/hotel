@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LogIn } from "lucide-react";
+import { LogIn, Hotel, HomeIcon, ChevronRight } from "lucide-react";
 import { LoginDialog } from "@/components/LoginDialog";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { NewButton } from "@/components/ui/new-button";
@@ -180,11 +180,121 @@ export default function Home() {
             </nav>
           </motion.div>
 
-          {/* Home Hero Section */}
+          {/* Mobile navbar and selection */}
+          <motion.div
+            className="md:hidden fixed top-0 left-0 right-0 z-50"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <nav
+              className="mx-auto px-4 py-3 flex justify-between items-center bg-gradient-to-r from-slate-300 via-transparent to-slate-300 backdrop-blur-md shadow-lg w-full"
+            >
+              <div className="py-2">
+                <Logo />
+              </div>
+              {isLoggedIn ? (
+                <ProfileDropdown 
+                  userName={userName} 
+                  onLogout={handleLogout} 
+                />
+              ) : (
+                <NewButton
+                  variant="default"
+                  onClick={handleLoginClick}
+                  size="sm"
+                >
+                  <LogIn className="w-5 h-5 mr-2" />
+                  <span>Login</span>
+                </NewButton>
+              )}
+            </nav>
+          </motion.div>
+
+          {/* Mobile View Selection Cards */}
+          <div className="md:hidden flex flex-col items-center justify-center mt-24 px-4 py-8">
+            <motion.h1 
+              className="text-3xl font-bold text-center mb-8 text-[#A31C44]"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+            >
+              Where would you like to stay?
+            </motion.h1>
+            
+            <div className="w-full space-y-6">
+              {/* Hotels Card */}
+              <motion.div
+                className="w-full rounded-xl overflow-hidden shadow-lg cursor-pointer"
+                onClick={() => handleDiscover("hotels")}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.5 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <div className="relative h-48 w-full">
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/50 to-transparent z-10" />
+                  <img 
+                    src={hotelImages[0]} 
+                    alt="Hotel" 
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-0 left-0 right-0 bg-[#A31C44] text-white py-2 px-4 z-20">
+                    <h3 className="text-lg font-bold">Hotels</h3>
+                  </div>
+                </div>
+                <div className="p-4 bg-white">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-gray-700 mb-2">Luxury stays with premium amenities</p>
+                      <p className="text-xs text-gray-500">Perfect for business and leisure</p>
+                    </div>
+                    <ChevronRight className="w-6 h-6 text-[#A31C44]" />
+                  </div>
+                </div>
+              </motion.div>
+              
+              {/* Hostels Card */}
+              <motion.div
+                className="w-full rounded-xl overflow-hidden shadow-lg cursor-pointer"
+                onClick={() => handleDiscover("hostels")}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.5 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <div className="relative h-48 w-full">
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/50 to-transparent z-10" />
+                  <img 
+                    src={hostelImages[0]} 
+                    alt="Hostel" 
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-0 left-0 right-0 bg-[#454F61] text-white py-2 px-4 z-20">
+                    <h3 className="text-lg font-bold">Hostels</h3>
+                  </div>
+                </div>
+                <div className="p-4 bg-white">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-gray-700 mb-2">Affordable community living</p>
+                      <p className="text-xs text-gray-500">Ideal for students and backpackers</p>
+                    </div>
+                    <ChevronRight className="w-6 h-6 text-[#454F61]" />
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+
+          {/* Home Hero Section - Only visible on desktop */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
+            className="hidden md:block"
           >
             <HomeHero
               hotelImages={hotelImages}

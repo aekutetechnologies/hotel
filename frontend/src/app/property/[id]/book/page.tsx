@@ -507,7 +507,7 @@ export default function BookProperty() {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-grow container mx-auto px-4 py-8">
-        <Card className="max-w-2xl mx-auto">
+        <Card className="max-w-2xl mx-auto shadow-lg border border-gray-100 rounded-xl">
           <CardHeader>
             <CardTitle>Book Your Stay at {property.name}</CardTitle>
             <CardDescription>{property.location}</CardDescription>
@@ -519,7 +519,7 @@ export default function BookProperty() {
                 <div>
                   <label htmlFor="checkIn" className="block text-sm font-medium text-gray-700">Check-in Date</label>
                   <div className="relative mt-1">
-                    <div className="flex items-center justify-between w-full pr-2 border rounded-md px-3 py-2 bg-gray-100">
+                    <div className="flex items-center justify-between w-full pr-2 border border-gray-100 rounded-md px-3 py-2 bg-gray-50 shadow-sm">
                       <span className="text-sm">{booking.checkIn ? format(parseISO(booking.checkIn), 'dd MMM yyyy') : 'Select date'}</span>
                       <CalendarDays className="h-4 w-4 text-gray-500" />
                     </div>
@@ -531,7 +531,7 @@ export default function BookProperty() {
                   <div>
                     <label htmlFor="checkOut" className="block text-sm font-medium text-gray-700">Check-out Date</label>
                     <div className="relative mt-1">
-                      <div className="flex items-center justify-between w-full pr-2 border rounded-md px-3 py-2 bg-gray-100">
+                      <div className="flex items-center justify-between w-full pr-2 border border-gray-100 rounded-md px-3 py-2 bg-gray-50 shadow-sm">
                         <span className="text-sm">{booking.checkOut ? format(parseISO(booking.checkOut), 'dd MMM yyyy') : 'Select date'}</span>
                         <CalendarDays className="h-4 w-4 text-gray-500" />
                       </div>
@@ -553,7 +553,7 @@ export default function BookProperty() {
                       onChange={handleInputChange}
                       required
                       disabled
-                      className="mt-1 bg-gray-100"
+                      className="mt-1 bg-gray-50 border-gray-100 shadow-sm"
                     />
                   </div>
                   <div>
@@ -566,7 +566,7 @@ export default function BookProperty() {
                       onChange={handleInputChange}
                       required
                       disabled
-                      className="mt-1 bg-gray-100"
+                      className="mt-1 bg-gray-50 border-gray-100 shadow-sm"
                     />
                   </div>
                 </div>
@@ -583,7 +583,7 @@ export default function BookProperty() {
                     onChange={handleInputChange}
                     min="1"
                     disabled
-                    className="mt-1 bg-gray-100"
+                    className="mt-1 bg-gray-50 border-gray-100 shadow-sm"
                   />
                 </div>
                 <div>
@@ -596,7 +596,7 @@ export default function BookProperty() {
                     onChange={handleInputChange}
                     min="1"
                     disabled
-                    className="mt-1 bg-gray-100"
+                    className="mt-1 bg-gray-50 border-gray-100 shadow-sm"
                   />
                 </div>
               </div>
@@ -605,9 +605,9 @@ export default function BookProperty() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Booked Room Types</label>
                 {/* Display if rooms were selected on previous page */}
                 {selectedRoomDetails.length > 0 ? (
-                  <div className="space-y-4 border rounded-md p-4">
+                  <div className="space-y-4 border border-gray-100 rounded-md p-4 shadow-sm">
                     {selectedRoomDetails.map((room, index) => (
-                      <div key={room.id || index} className="flex justify-between items-center p-3 border rounded-lg">
+                      <div key={room.id || index} className="flex justify-between items-center p-3 border border-gray-100 rounded-lg shadow-sm bg-white">
                         <div>
                           <h3 className="font-medium">{room.name}</h3>
                           <div className="flex items-center text-sm text-gray-600">
@@ -622,12 +622,12 @@ export default function BookProperty() {
                     ))}
                   </div>
                 ) : (
-                  <div className="space-y-4 border rounded-md p-4">
+                  <div className="space-y-4 border border-gray-100 rounded-md p-4 shadow-sm">
                     {property?.rooms?.map((room) => {
                       const roomQty = selectedRoomQuantities[room.id] || 0;
                       
                       return (
-                        <div key={room.id} className="flex justify-between items-center p-3 border rounded-lg">
+                        <div key={room.id} className="flex justify-between items-center p-3 border border-gray-100 rounded-lg shadow-sm bg-white">
                           <div>
                             <h3 className="font-medium">{room.name || room.occupancyType}</h3>
                             <div className="flex items-center text-sm text-gray-600">
@@ -673,9 +673,9 @@ export default function BookProperty() {
               {property && (property as any).offers && (property as any).offers.length > 0 ? (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Apply Offer</label>
-                  <div className="border rounded-md p-4">
+                  <div className="border border-gray-100 rounded-md p-4 shadow-sm">
                     {selectedOffer ? (
-                      <div className="flex items-center justify-between p-2 border rounded-md">
+                      <div className="flex items-center justify-between p-2 border border-gray-100 rounded-md shadow-sm bg-white">
                         <div>
                           <p className="font-medium">{selectedOffer.code}</p>
                           <p className="text-sm text-gray-500">{selectedOffer.title}</p>
@@ -693,7 +693,7 @@ export default function BookProperty() {
                       </div>
                     ) : (
                       <Select onValueChange={handleOfferChange} disabled>
-                        <SelectTrigger className="bg-gray-100">
+                        <SelectTrigger className="bg-gray-50 border-gray-100 shadow-sm">
                           <SelectValue placeholder="Select an offer" />
                         </SelectTrigger>
                         <SelectContent>
@@ -714,7 +714,7 @@ export default function BookProperty() {
               ) : null}
 
               {/* Updated Price Breakdown */}
-              <div className="pt-4 border-t">
+              <div className="pt-4 border-t border-gray-100">
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm mb-2">
                     <span>Room charges</span>
@@ -742,9 +742,18 @@ export default function BookProperty() {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full bg-[#B11E43] hover:bg-[#8f1836] text-white">
-                Confirm Booking
-              </Button>
+              <div className="flex justify-between items-center space-x-4">
+                <Button 
+                  type="button" 
+                  className="w-full bg-white hover:bg-gray-50 text-gray-800 border border-gray-100 shadow-sm"
+                  onClick={() => router.back()}
+                >
+                  Modify Booking
+                </Button>
+                <Button type="submit" className="w-full bg-[#B11E43] hover:bg-[#8f1836] text-white shadow-md">
+                  Confirm Booking
+                </Button>
+              </div>
             </form>
           </CardContent>
         </Card>

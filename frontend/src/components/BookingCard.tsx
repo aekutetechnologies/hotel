@@ -152,7 +152,7 @@ export function BookingCard({
     const isToday = date && format(date, 'yyyy-MM-dd') === formattedToday
     
     if (isToday) {
-      // If today, only show future hours
+      // If today, only show future hours (current hour + 1 and later)
       if (forCheckout && date && checkOut && date.toDateString() === checkOut.toDateString()) {
         // For checkout on the same day as checkin, ensure times are after checkin time
         const checkinHour = parseInt(checkInTime, 10)
@@ -188,7 +188,7 @@ export function BookingCard({
   // Set default times if booking is for today and current time options aren't valid
   useEffect(() => {
     if (date && format(date, 'yyyy-MM-dd') === formattedToday) {
-      // If selected time is before current time, update it
+      // If selected time is before or equal to current time, update it
       const selectedCheckInHour = parseInt(checkInTime, 10)
       
       if (selectedCheckInHour <= currentHour) {
@@ -196,7 +196,7 @@ export function BookingCard({
         const nextHour = currentHour + 1
         setCheckInTime(nextHour.toString())
         
-        // Also update checkout time
+        // Also update checkout time to be at least 2 hours after checkin
         const newCheckoutHour = (nextHour + 2) % 24
         setCheckOutTime(newCheckoutHour.toString())
       }
@@ -415,7 +415,35 @@ export function BookingCard({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Check-in Time</Label>
-                <Select value={checkInTime} onValueChange={setCheckInTime}>
+                <Select 
+                  value={checkInTime} 
+                  onValueChange={(newValue) => {
+                    const newCheckInHour = parseInt(newValue, 10)
+                    
+                    // For today's bookings, validate against current time
+                    if (date && format(date, 'yyyy-MM-dd') === formattedToday) {
+                      if (newCheckInHour <= currentHour) {
+                        // Auto-adjust to next available hour
+                        const nextHour = currentHour + 1
+                        setCheckInTime(nextHour.toString())
+                        
+                        // Also update checkout time
+                        const newCheckoutHour = (nextHour + 2) % 24
+                        setCheckOutTime(newCheckoutHour.toString())
+                        return
+                      }
+                    }
+                    
+                    setCheckInTime(newValue)
+                    
+                    // If checkout time needs adjustment based on new checkin time
+                    if (parseInt(checkOutTime) <= newCheckInHour) {
+                      // Set checkout to be 2 hours after checkin
+                      const newCheckoutHour = (newCheckInHour + 2) % 24
+                      setCheckOutTime(newCheckoutHour.toString())
+                    }
+                  }}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select time">
                       {formatTime(parseInt(checkInTime))}
@@ -432,7 +460,35 @@ export function BookingCard({
               </div>
               <div>
                 <Label>Check-out Time</Label>
-                <Select value={checkOutTime} onValueChange={setCheckOutTime}>
+                <Select 
+                  value={checkOutTime} 
+                  onValueChange={(newValue) => {
+                    const newCheckOutHour = parseInt(newValue, 10)
+                    const checkInHour = parseInt(checkInTime, 10)
+                    
+                    // For today's bookings, validate against current time
+                    if (date && format(date, 'yyyy-MM-dd') === formattedToday) {
+                      if (newCheckOutHour <= currentHour) {
+                        // Auto-adjust to a valid time
+                        const validHour = Math.max(currentHour + 2, checkInHour + 2)
+                        setCheckOutTime(validHour.toString())
+                        return
+                      }
+                    }
+                    
+                    // Ensure checkout is after checkin on same day
+                    if (date && checkOut && date.toDateString() === checkOut.toDateString()) {
+                      if (newCheckOutHour <= checkInHour) {
+                        // Set checkout to be 2 hours after checkin
+                        const validCheckoutHour = (checkInHour + 2) % 24
+                        setCheckOutTime(validCheckoutHour.toString())
+                        return
+                      }
+                    }
+                    
+                    setCheckOutTime(newValue)
+                  }}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select time">
                       {formatTime(parseInt(checkOutTime))}

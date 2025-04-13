@@ -7,8 +7,9 @@ import Link from "next/link"
 import { toast } from "react-toastify"
 import { PropertyCard } from "@/components/PropertyCard"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, ReadonlyURLSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { format, addDays } from "date-fns"
 
 // The structure from the API for favorite properties
 interface FavoriteProperty {
@@ -24,7 +25,13 @@ export function FavoriteProperties() {
   const [favorites, setFavorites] = useState<FavoriteProperty[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const searchParams = useSearchParams()
+  const originalSearchParams = useSearchParams()
+
+  // Generate today and tomorrow dates in YYYY-MM-DD format
+  const today = new Date()
+  const tomorrow = addDays(today, 1)
+  const formattedToday = format(today, 'yyyy-MM-dd')
+  const formattedTomorrow = format(tomorrow, 'yyyy-MM-dd')
 
   useEffect(() => {
     const loadFavorites = async () => {
@@ -41,6 +48,36 @@ export function FavoriteProperties() {
 
     loadFavorites()
   }, [])
+
+  // Function to create a custom searchParams object for each property
+  const createCustomSearchParams = (property: any) => {
+    const defaultLocation = property.location?.split(',')[0] || 'Mumbai'
+    const propertyType = property.property_type === 'hostel' ? 'hostel' : 'hotel'
+    const bookingType = propertyType === 'hostel' ? 'monthly' : 'daily'
+    
+    // Create a query parameters object for property links
+    const paramObj = {
+      location: defaultLocation,
+      propertyType: propertyType,
+      bookingType: bookingType,
+      checkInDate: formattedToday,
+      checkOutDate: formattedTomorrow,
+      rooms: '1',
+      guests: '1'
+    }
+    
+    // Use Object.entries to create a compatible params object that can be treated as ReadonlyURLSearchParams
+    return {
+      get: (key: string) => paramObj[key as keyof typeof paramObj] || null,
+      getAll: (key: string) => [paramObj[key as keyof typeof paramObj] || ''],
+      has: (key: string) => key in paramObj,
+      entries: () => Object.entries(paramObj)[Symbol.iterator](),
+      keys: () => Object.keys(paramObj)[Symbol.iterator](),
+      values: () => Object.values(paramObj)[Symbol.iterator](),
+      forEach: (fn: any) => Object.entries(paramObj).forEach(([key, value]) => fn(value, key)),
+      toString: () => new URLSearchParams(paramObj).toString()
+    } as any as ReadonlyURLSearchParams;
+  }
 
   if (isLoading) {
     return (
@@ -111,16 +148,21 @@ export function FavoriteProperties() {
       </Card>
 
       <div className="space-y-6">
-        {favorites.map((favorite) => (
-          <Card key={favorite.id} className="overflow-hidden">
-            <CardContent className="p-0">
-              <PropertyCard 
-                property={favorite.property} 
-                searchParams={searchParams} 
-              />
-            </CardContent>
-          </Card>
-        ))}
+        {favorites.map((favorite) => {
+          // Create a custom searchParams for this property
+          const customParams = createCustomSearchParams(favorite.property);
+          
+          return (
+            <Card key={favorite.id} className="overflow-hidden">
+              <CardContent className="p-0">
+                <PropertyCard 
+                  property={favorite.property} 
+                  searchParams={customParams}
+                />
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   )

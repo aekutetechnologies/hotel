@@ -735,8 +735,8 @@ export default function BookProperty() {
                   
                   <Separator className="my-2" />
                   
-                  <div className="flex justify-between font-medium">
-                    <span>Total</span>
+                <div className="flex justify-between font-medium">
+                  <span>Total</span>
                     <span>₹{getFinalPrice().toFixed(2)}</span>
                   </div>
                 </div>
@@ -751,8 +751,8 @@ export default function BookProperty() {
                   Modify Booking
                 </Button>
                 <Button type="submit" className="w-full bg-[#B11E43] hover:bg-[#8f1836] text-white shadow-md">
-                  Confirm Booking
-                </Button>
+                Confirm Booking
+              </Button>
               </div>
             </form>
           </CardContent>

@@ -5,6 +5,7 @@ import { MapPin, CalendarDays, Clock, Bed, Users, Minus, Plus, Search, Calendar 
 import { useRouter, useSearchParams } from 'next/navigation'
 import { format, addDays, startOfTomorrow, addMonths, isValid, isBefore, parse, parseISO } from 'date-fns'
 import { fetchLocation } from '@/lib/api/fetchLocation'
+import { toast } from 'react-toastify'
 
 interface SearchFormProps {
   sectionType: "hotels" | "hostels"
@@ -206,7 +207,7 @@ export function SearchForm({ sectionType }: SearchFormProps) {
     e.preventDefault()
     
     if (!location) {
-      alert("Please enter a location")
+      toast.error("Please enter a location")
       return
     }
 
@@ -217,13 +218,13 @@ export function SearchForm({ sectionType }: SearchFormProps) {
     
     // Validate check-in date
     if (!checkIn) {
-      alert("Please select a check-in date")
+      toast.error("Please select a check-in date")
       return
     }
     
     const checkInDate = parseISO(checkIn)
     if (isBefore(checkInDate, todayStart)) {
-      alert("Check-in date cannot be in the past")
+      toast.error("Check-in date cannot be in the past")
       setCheckIn(format(now, 'yyyy-MM-dd'))
       return
     }
@@ -232,7 +233,7 @@ export function SearchForm({ sectionType }: SearchFormProps) {
     if ((bookingType === "day" || bookingType === "month") && checkOut) {
       const checkOutDate = parseISO(checkOut)
       if (isBefore(checkOutDate, checkInDate)) {
-        alert("Check-out date cannot be before check-in date")
+        toast.error("Check-out date cannot be before check-in date")
         setCheckOut(checkIn)
         return
       }
@@ -241,12 +242,12 @@ export function SearchForm({ sectionType }: SearchFormProps) {
     // Validate time for hourly bookings
     if (bookingType === "hour") {
       if (!checkInTime) {
-        alert("Please select a check-in time")
+        toast.error("Please select a check-in time")
         return
       }
       
       if (!checkOutTime) {
-        alert("Please select a check-out time")
+        toast.error("Please select a check-out time")
         return
       }
       
@@ -257,7 +258,7 @@ export function SearchForm({ sectionType }: SearchFormProps) {
         const currentMinute = now.getMinutes()
         
         if (checkInHour < currentHour || (checkInHour === currentHour && checkInMinute < currentMinute)) {
-          alert("Check-in time cannot be in the past")
+          toast.error("Check-in time cannot be in the past")
           return
         }
       }
@@ -265,7 +266,7 @@ export function SearchForm({ sectionType }: SearchFormProps) {
       // Validate checkout time is after checkin time on the same day
       if (checkIn === checkOut) {
         if (checkOutTime <= checkInTime) {
-          alert("Check-out time must be after check-in time")
+          toast.error("Check-out time must be after check-in time")
           return
         }
       }
@@ -293,6 +294,7 @@ export function SearchForm({ sectionType }: SearchFormProps) {
       if (checkOut) params.set('checkOutDate', checkOut)
       // Set months parameter for hostels
       params.set('months', months.toString())
+      params.set('rooms', rooms.toString())
     } else if (sectionType === "hotels") {
       // For hotels, set parameters based on booking type
       if (bookingType === "day") {
@@ -386,86 +388,118 @@ export function SearchForm({ sectionType }: SearchFormProps) {
     setCheckOut(newDate)
   }
 
-  // Helper function to get current time-based constraints
+  // Helper function to get current time constraints
   const getCurrentTimeConstraints = () => {
     const now = new Date()
     const currentHour = now.getHours()
     const currentMinute = now.getMinutes()
+    
+    // Format current time as HH:MM
     const currentTime = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`
-    const nextHour = currentHour + 1
+    
+    // Calculate next hour time (rounded up)
+    const nextHour = currentMinute > 0 ? currentHour + 1 : currentHour
     const nextHourTime = `${nextHour.toString().padStart(2, '0')}:00`
     
+    // Calculate two hours later for default checkout
+    const twoHoursLater = (nextHour + 2) % 24
+    const twoHoursLaterTime = `${twoHoursLater.toString().padStart(2, '0')}:00`
+    
     return {
-      currentHour,
-      currentMinute,
       currentTime,
-      nextHourTime
+      nextHourTime,
+      twoHoursLaterTime
     }
   }
 
-  // Update check-in time handler with improved validation
-  const handleCheckInTimeChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const newTime = e.target.value
-    const today = new Date()
-    const formattedToday = format(today, 'yyyy-MM-dd')
+  // Update check-in time handler with improved validation and toast notifications
+  const handleCheckInTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newCheckInTime = e.target.value
     
-    // If date is today, validate time is not in the past
-    if (checkIn === formattedToday) {
-      const { currentTime } = getCurrentTimeConstraints()
+    // Get current date and selected check-in date
+    const today = new Date()
+    const checkInDate = checkIn ? parseISO(checkIn) : today
+    const isCheckInToday = format(checkInDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd')
+    
+    // If check-in is today, validate against current time
+    if (isCheckInToday) {
+      const now = new Date()
+      const currentTimeString = format(now, 'HH:mm')
       
-      if (newTime <= currentTime) {
-        // If selected time is in the past, set to next hour
-        const { nextHourTime } = getCurrentTimeConstraints()
-        setCheckInTime(nextHourTime)
+      if (newCheckInTime < currentTimeString) {
+        toast.error("Check-in time cannot be earlier than the current time")
         
-        // Also update checkout time to be 2 hours later
-        const [hours] = nextHourTime.split(':').map(Number)
-        const newCheckoutHour = (hours + 2) % 24
-        setCheckOutTime(`${newCheckoutHour.toString().padStart(2, '0')}:00`)
+        // Calculate a valid check-in time (current time rounded to next 30 minutes)
+        const currentMinute = now.getMinutes()
+        const adjustedMinutes = currentMinute <= 30 ? 30 : 0
+        const adjustedHours = currentMinute <= 30 ? now.getHours() : (now.getHours() + 1) % 24
+        const adjustedCheckInTime = `${adjustedHours.toString().padStart(2, '0')}:${adjustedMinutes.toString().padStart(2, '0')}`
+        
+        setCheckInTime(adjustedCheckInTime)
         return
       }
     }
     
-    setCheckInTime(newTime)
+    // Set the new check-in time
+    setCheckInTime(newCheckInTime)
     
-    // If check-out is on the same day and time is earlier, adjust check-out time
-    if (checkOut === checkIn && checkOutTime && checkOutTime <= newTime) {
-      const [hours, minutes] = newTime.split(':').map(Number)
-      const newCheckOutHours = (hours + 2) % 24
-      setCheckOutTime(`${newCheckOutHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`)
+    // If check-in and check-out are on same day, ensure check-out is after check-in
+    if (checkIn === checkOut && newCheckInTime >= checkOutTime) {
+      // Auto-adjust the check-out time to be 2 hours after check-in
+      const [hours, minutes] = newCheckInTime.split(':').map(Number)
+      const adjustedHours = (hours + 2) % 24
+      const newCheckOutTime = `${adjustedHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
+      
+      toast.info(`Check-out time automatically adjusted to ${newCheckOutTime}`)
+      setCheckOutTime(newCheckOutTime)
     }
   }
   
-  // Update check-out time handler with improved validation
-  const handleCheckOutTimeChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const newTime = e.target.value
-    const today = new Date()
-    const formattedToday = format(today, 'yyyy-MM-dd')
+  // Update check-out time handler with improved validation and toast notifications
+  const handleCheckOutTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newCheckOutTime = e.target.value
     
-    // If on the same day, validate checkout time is after checkin time
-    if (checkIn === checkOut) {
-      if (newTime <= checkInTime) {
-        const [hours, minutes] = checkInTime.split(':').map(Number)
-        const newCheckOutHours = (hours + 2) % 24
-        setCheckOutTime(`${newCheckOutHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`)
-        return
-      }
+    // For hourly bookings, ensure proper validation
+    if (bookingType === "hour") {
+      // Get current date and time
+      const now = new Date()
+      const currentTimeString = format(now, 'HH:mm')
       
-      // Additional check if the date is today
-      if (checkIn === formattedToday) {
-        const { currentTime } = getCurrentTimeConstraints()
-        
-        if (newTime <= currentTime) {
-          // If selected time is in the past, use a time based on checkin time
-          const [hours, minutes] = checkInTime.split(':').map(Number)
-          const newCheckOutHours = (hours + 2) % 24
-          setCheckOutTime(`${newCheckOutHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`)
+      // Check if the checkout date is today
+      const checkOutDate = checkOut ? parseISO(checkOut) : now
+      const isCheckOutToday = format(checkOutDate, 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd')
+      
+      // If checkout is today, validate against current time
+      if (isCheckOutToday) {
+        if (newCheckOutTime < currentTimeString) {
+          toast.error("Check-out time cannot be earlier than the current time")
+          
+          // Calculate a valid checkout time (current time + 1 hour)
+          const adjustedHours = (now.getHours() + 1) % 24
+          const adjustedCheckOutTime = `${adjustedHours.toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
+          
+          setCheckOutTime(adjustedCheckOutTime)
           return
         }
       }
+      
+      // For hourly bookings, checkin and checkout dates are always the same
+      // So we need to ensure checkout time is after checkin time
+      if (newCheckOutTime <= checkInTime) {
+        toast.error("Check-out time must be after check-in time")
+        
+        // Calculate a valid checkout time (check-in + 2 hours)
+        const [hours, minutes] = checkInTime.split(':').map(Number)
+        const adjustedHours = (hours + 2) % 24
+        const adjustedCheckOutTime = `${adjustedHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
+        
+        setCheckOutTime(adjustedCheckOutTime)
+        return
+      }
     }
     
-    setCheckOutTime(newTime)
+    // Set the new check-out time
+    setCheckOutTime(newCheckOutTime)
   }
 
   // Handle booking type change with appropriate updates

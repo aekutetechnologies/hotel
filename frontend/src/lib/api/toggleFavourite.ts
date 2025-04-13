@@ -2,7 +2,7 @@ import { API_URL } from '../config'
 
 
 export async function toggleFavourite(propertyId: string, isFavourite: boolean) {
-  const response = await fetch(`${API_URL}/property/toggle-favourite/`, {
+  const response = await fetch(`${API_URL}property/toggle-favourite/`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

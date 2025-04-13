@@ -656,7 +656,6 @@ export function SearchResults() {
                   value={selectedSort}
                   onChange={(e) => setSelectedSort(e.target.value)}
                   className="border rounded-md px-3 py-1.5 text-sm border-gray-200 focus:border-[#B11E43] outline-none"
-                  whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   transition={{ duration: 0.2 }}
                 >

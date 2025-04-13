@@ -110,7 +110,7 @@ function HomeContent() {
   useEffect(() => {
     // Check if user is logged in from localStorage
     const storedName = localStorage.getItem("name");
-    const storedAccessToken = localStorage.getItem("access_token");
+    const storedAccessToken = localStorage.getItem("accessToken");
     
     if (storedName && storedAccessToken) {
       setIsLoggedIn(true);

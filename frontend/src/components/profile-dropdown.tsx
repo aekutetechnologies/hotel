@@ -58,7 +58,7 @@ export function ProfileDropdown({ onLogout, userName }: ProfileDropdownProps) {
           ref={triggerRef}
           variant="neutral" 
           size="sm" 
-          className="hover:bg-red-50 pl-2 pr-3"
+          className="hover:bg-red-50 pl-2 pr-3 border-none focus:ring-0 focus:ring-offset-0"
         >
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-full bg-red-600 flex items-center justify-center">
@@ -72,7 +72,7 @@ export function ProfileDropdown({ onLogout, userName }: ProfileDropdownProps) {
       <DropdownMenuContent 
         align="end" 
         alignOffset={0}
-        className="p-2 rounded-b-lg rounded-t-none border-t-0 shadow-lg mt-1" 
+        className="p-2 rounded-b-lg rounded-t-none border-t-0 shadow-lg mt-1 border-white" 
         style={{ 
           zIndex: 60,
           width: `${triggerWidth}px`,
@@ -81,6 +81,7 @@ export function ProfileDropdown({ onLogout, userName }: ProfileDropdownProps) {
           borderTopLeftRadius: 0,
           borderTopRightRadius: 0,
           borderTop: 'none',
+          borderColor: 'white',
           animation: 'dropdownSlide 150ms ease-out'
         }}
       >

@@ -389,7 +389,7 @@ export function BookingCard({
             <Popover>
               <PopoverTrigger asChild>
                 <Button
-                  variant="default"
+                  variant="neutral"
                   className={cn(
                     "w-full justify-start text-left font-normal",
                     !date && "text-muted-foreground"
@@ -454,7 +454,7 @@ export function BookingCard({
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
-                    variant="default"
+                    variant="neutral"
                     className={cn(
                       "w-full justify-start text-left font-normal",
                       !checkOut && "text-muted-foreground"
@@ -485,7 +485,7 @@ export function BookingCard({
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
-                    variant="default"
+                    variant="neutral"
                     className={cn(
                       "w-full justify-start text-left font-normal",
                       !checkOut && "text-muted-foreground"

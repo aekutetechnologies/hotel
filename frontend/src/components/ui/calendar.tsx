@@ -36,7 +36,7 @@ function Calendar({
         row: "flex w-full mt-2",
         cell: "relative p-0 text-center text-sm focus-within:relative focus-within:z-20",
         day: "h-8 w-8 p-0 font-normal flex items-center justify-center rounded-full hover:bg-gray-100",
-        day_selected: "bg-black text-white hover:bg-black hover:text-white",
+        day_selected: "bg-[#8F1837] text-white hover:bg-[#8F1837] hover:text-white",
         day_today: "border border-gray-200",
         day_disabled: "text-gray-300 opacity-50",
         day_hidden: "invisible",

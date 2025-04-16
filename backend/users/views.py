@@ -57,7 +57,10 @@ def verify_otp(request):
     }
     access_token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
 
+    print(user)
+
     user_permissions = UserHsPermission.objects.filter(user=user).values_list('permission_group__permissions__name', flat=True)
+    print(user_permissions)
     user_permissions_set = set(user_permissions)  # Convert to set for faster lookup
 
     return Response({'access_token': access_token, 'user_role': user_role, "name": user.name, "id": user.id, "permissions": user_permissions_set}, status=status.HTTP_200_OK)
@@ -101,9 +104,8 @@ def admin_profile(request, user_id):
 @api_view(['POST'])
 @custom_authentication_and_permissions()
 def assign_group_permission_to_user(request):
-    data = request.data.get('userId', [])
-    user_id = data.get('user_id')
-    group_id = data.get('group_id')
+    user_id = request.data.get('user_id')
+    group_id = request.data.get('group_id')
     if not user_id or not group_id:
         return Response({'error': 'User ID and Group ID are required'}, status=status.HTTP_400_BAD_REQUEST)
 

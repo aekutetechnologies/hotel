@@ -10,7 +10,8 @@ export async function fetchBookings(): Promise<Booking[]> {
   console.log("Fetching bookings")
   
   try {
-    return await apiGet<Booking[]>('booking/bookings/')
+    const userId = localStorage.getItem('userId')
+    return await apiGet<Booking[]>(`booking/bookings/user/?user_id=${userId}`)
   } catch (error) {
     // Error handling is already done in apiClient
     return []

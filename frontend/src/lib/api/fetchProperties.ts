@@ -8,7 +8,8 @@ import { Property } from '@/types/property'
  */
 export async function fetchProperties(): Promise<Property[]> {
   try {
-    return await apiGet<Property[]>('property/properties/')
+    const userId = localStorage.getItem('userId')
+    return await apiGet<Property[]>(`property/properties/?user=${userId}`)
   } catch (error) {
     // Error handling is already done in apiClient
     return []

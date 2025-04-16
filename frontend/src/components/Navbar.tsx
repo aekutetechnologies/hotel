@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CgDetailsMore } from "react-icons/cg";
 import { RxCross2 } from "react-icons/rx";
-import { ArrowRight, Facebook, Instagram, Linkedin, MessageCircle } from "lucide-react";
+import { ArrowRight, Facebook, Instagram, Linkedin, PhoneCall } from "lucide-react";
 import Image from "next/image";
 import { ProfileDropdown } from "./profile-dropdown";
 import { NewButton } from "./ui/new-button";
@@ -26,7 +26,7 @@ interface NavbarProps {
   isDetailPage?: boolean;
 }
 
-const whatsappLink = "https://api.whatsapp.com/send?phone=9090151524&text=I%20checked%20the%20website,%20and%20I%20have%20a%20few%20questions%20to%20ask"
+const phoneNumber = "+91-9090151524"
 
 const Navbar: React.FC<NavbarProps> = ({
   isLoggedIn,
@@ -174,9 +174,12 @@ const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         <div className="flex items-center gap-4">
-          <Link href={whatsappLink} target="_blank" rel="noopener noreferrer" className="hidden md:flex items-center gap-2 text-base text-gray-600 hover:text-gray-900">
-            <MessageCircle className="h-5 w-5 text-green-600" />
-            <span>9090151524</span>
+          <Link href={`tel:${phoneNumber.replace(/-/g, '')}`} className="hidden md:flex items-center gap-3">
+            <PhoneCall className="h-10 w-10 text-gray-600" />
+            <div className="flex flex-col items-start">
+              <span className="text-lg font-bold text-[#000F24]">{phoneNumber}</span>
+              <span className="text-sm text-gray-500">Call us to Book now</span>
+            </div>
           </Link>
           
           {isLoggedIn ? (
@@ -204,19 +207,19 @@ const Navbar: React.FC<NavbarProps> = ({
             transition={{ duration: 0.4 }}
           >
 
-            <div className="flex h-full mt-6">
+            <div className="flex h-full mt-6 flex-col md:flex-row">
               {/* Left Nav Panel */}
-              <div className="w-full md:w-1/2 flex flex-col justify-start pt-16 items-start pl-8 md:pl-16 lg:pl-24 gap-7">
+              <div className="w-full md:w-1/2 flex flex-col justify-start pt-8 md:pt-16 items-start pl-8 md:pl-16 lg:pl-24 gap-7">
                 {/* Switch to Hotel/Hostel */}
                 <div 
                   onClick={handleSwitchSection}
                   className={`flex items-center justify-between w-full md:w-3/4 cursor-pointer group transition-all duration-300 text-white
                     hover:translate-x-2`}
                 >
-                  <span className="text-4xl md:text-5xl font-bold">
+                  <span className="text-3xl md:text-4xl lg:text-5xl font-bold">
                     Switch to {currentSection === "hotel" ? "Hostel" : "Hotel"}
                   </span>
-                  <ArrowRight className="h-9 w-9 transition-transform group-hover:translate-x-1" />
+                  <ArrowRight className="h-7 w-7 md:h-8 md:w-8 lg:h-9 lg:w-9 transition-transform group-hover:translate-x-1" />
                 </div>
                 
                 {/* Locations */}
@@ -225,12 +228,12 @@ const Navbar: React.FC<NavbarProps> = ({
                   className={`flex items-center justify-between w-full md:w-3/4 cursor-pointer group transition-all duration-300 text-white
                     hover:translate-x-2 ${activeSubmenu === 'locations' ? 'translate-x-2' : ''}`}
                 >
-                  <span className="text-3xl md:text-4xl font-bold">Locations</span>
+                  <span className="text-2xl md:text-3xl lg:text-4xl font-bold">Locations</span>
                   <motion.div
                     animate={{ rotate: activeSubmenu === 'locations' ? 90 : 0 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <ArrowRight className="h-8 w-8 transition-transform group-hover:translate-x-1" />
+                    <ArrowRight className="h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 transition-transform group-hover:translate-x-1" />
                   </motion.div>
                 </div>
                 
@@ -240,12 +243,12 @@ const Navbar: React.FC<NavbarProps> = ({
                   className={`flex items-center justify-between w-full md:w-3/4 cursor-pointer group transition-all duration-300 text-white
                     hover:translate-x-2 ${activeSubmenu === 'offers' ? 'translate-x-2' : ''}`}
                 >
-                  <span className="text-3xl md:text-4xl font-bold">Offers</span>
+                  <span className="text-2xl md:text-3xl lg:text-4xl font-bold">Offers</span>
                   <motion.div
                     animate={{ rotate: activeSubmenu === 'offers' ? 90 : 0 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <ArrowRight className="h-8 w-8 transition-transform group-hover:translate-x-1" />
+                    <ArrowRight className="h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 transition-transform group-hover:translate-x-1" />
                   </motion.div>
                 </div>
                 
@@ -255,17 +258,17 @@ const Navbar: React.FC<NavbarProps> = ({
                   className={`flex items-center justify-between w-full md:w-3/4 cursor-pointer group transition-all duration-300 text-white
                     hover:translate-x-2 ${activeSubmenu === 'about' ? 'translate-x-2' : ''}`}
                 >
-                  <span className="text-3xl md:text-4xl font-bold">About hsquare</span>
+                  <span className="text-2xl md:text-3xl lg:text-4xl font-bold">About hsquare</span>
                   <motion.div
                     animate={{ rotate: activeSubmenu === 'about' ? 90 : 0 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <ArrowRight className="h-8 w-8 transition-transform group-hover:translate-x-1" />
+                    <ArrowRight className="h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 transition-transform group-hover:translate-x-1" />
                   </motion.div>
                 </div>
               </div>
               
-              {/* Right Content Panel */}
+              {/* Right Content Panel - Desktop */}
               <AnimatePresence mode="wait">
                 {activeSubmenu ? (
                   <motion.div
@@ -410,6 +413,148 @@ const Navbar: React.FC<NavbarProps> = ({
                   </motion.div>
                 )}
               </AnimatePresence>
+              
+              {/* Mobile Content Panel */}
+              <AnimatePresence>
+                {activeSubmenu && (
+                  <motion.div
+                    key={`mobile-${activeSubmenu}`}
+                    className="md:hidden w-full px-8 mt-6"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {/* Locations Content */}
+                    {activeSubmenu === 'locations' && (
+                      <div className="text-white">
+                        <h3 className="text-xl font-bold mb-4 border-b border-white/20 pb-2">Our Destinations</h3>
+                        {isLoadingLocations ? (
+                          <div className="flex items-center justify-center py-6">
+                            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
+                            <span className="ml-3">Loading locations...</span>
+                          </div>
+                        ) : locations && locations.length > 0 ? (
+                          <div className="grid grid-cols-1 gap-1 max-h-[calc(100vh-300px)] overflow-y-auto">
+                            {locations.map((location, index) => (
+                              <div 
+                                key={index} 
+                                className="text-lg py-2 px-2 hover:bg-white/10 rounded-lg cursor-pointer transition-all duration-300"
+                              >
+                                {location}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="py-4">
+                            No locations found. Please try again later.
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Offers Content */}
+                    {activeSubmenu === 'offers' && (
+                      <div className="text-white">
+                        <h3 className="text-xl font-bold mb-4 border-b border-white/20 pb-2">Special Offers</h3>
+                        {isLoadingOffers ? (
+                          <div className="flex items-center justify-center py-6">
+                            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
+                            <span className="ml-3">Loading offers...</span>
+                          </div>
+                        ) : offers && offers.length > 0 ? (
+                          <div className="grid grid-cols-1 gap-4 max-h-[calc(100vh-300px)] overflow-y-auto">
+                            {offers.map((offer, index) => (
+                              <div 
+                                key={index} 
+                                className="bg-white/10 rounded-lg p-4 hover:bg-white/20 transition-all duration-300"
+                              >
+                                <h3 className="text-lg font-bold mb-1">{offer.title}</h3>
+                                <p className="text-sm opacity-90">{offer.description}</p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="py-4">
+                            No special offers available at the moment.
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* About hsquare Content */}
+                    {activeSubmenu === 'about' && (
+                      <div className="text-white">
+                        <h3 className="text-xl font-bold mb-4 border-b border-white/20 pb-2">About hsquare</h3>
+                        <div className="grid grid-cols-1 gap-1 max-h-[calc(100vh-300px)] overflow-y-auto">
+                          <Link 
+                            href="/careers"
+                            className="text-lg py-2 px-2 hover:bg-white/10 rounded-lg cursor-pointer transition-all duration-300"
+                            onClick={() => setNavModal(false)}
+                          >
+                            Careers
+                          </Link>
+                          <a 
+                            href="mailto:booking@hsquareliving.com"
+                            className="text-lg py-2 px-2 hover:bg-white/10 rounded-lg cursor-pointer transition-all duration-300"
+                          >
+                            Contact Us
+                          </a>
+                          <Link 
+                            href="/terms-and-conditions"
+                            className="text-lg py-2 px-2 hover:bg-white/10 rounded-lg cursor-pointer transition-all duration-300"
+                            onClick={() => setNavModal(false)}
+                          >
+                            Terms & Conditions
+                          </Link>
+                          <Link 
+                            href="/cancellation-policy"
+                            className="text-lg py-2 px-2 hover:bg-white/10 rounded-lg cursor-pointer transition-all duration-300"
+                            onClick={() => setNavModal(false)}
+                          >
+                            Cancellation Policy
+                          </Link>
+                          <Link 
+                            href="/privacy-policy"
+                            className="text-lg py-2 px-2 hover:bg-white/10 rounded-lg cursor-pointer transition-all duration-300"
+                            onClick={() => setNavModal(false)}
+                          >
+                            Privacy Policy
+                          </Link>
+                          <div className="mt-4 py-2">
+                            <p className="text-base mb-3">Connect with us:</p>
+                            <div className="flex space-x-3">
+                              <a href="https://www.facebook.com/profile.php?id=100093746289256&mibextid=LQQJ4d" target="_blank" rel="noopener noreferrer" className="bg-white/20 hover:bg-white/40 p-2 rounded-full cursor-pointer transition-all">
+                                <Facebook className="h-5 w-5" />
+                              </a>
+                              <a href="https://www.instagram.com/hsquareliving/" target="_blank" rel="noopener noreferrer" className="bg-white/20 hover:bg-white/40 p-2 rounded-full cursor-pointer transition-all">
+                                <Instagram className="h-5 w-5" />
+                              </a>
+                              <a href="https://www.linkedin.com/company/hsquare-living/" target="_blank" rel="noopener noreferrer" className="bg-white/20 hover:bg-white/40 p-2 rounded-full cursor-pointer transition-all">
+                                <Linkedin className="h-5 w-5" />
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              
+              {/* Mobile Logo (when no submenu is active) */}
+              {!activeSubmenu && (
+                <div className="md:hidden mt-auto mb-12 flex justify-center w-full">
+                  <Image
+                    src="/white-travel.png"
+                    alt="Hsquare White travel"
+                    width={300}
+                    height={87}
+                    className="w-[min(75%,300px)] h-auto"
+                    priority
+                  />
+                </div>
+              )}
             </div>
           </motion.div>
         )}

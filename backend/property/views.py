@@ -15,7 +15,8 @@ from .models import (
     City,
     Country,
     State,
-    FavoriteProperty
+    FavoriteProperty,
+    UserProperty
 )
 from .serializers import (
     PropertySerializer,
@@ -37,6 +38,7 @@ from .serializers import (
     ReviewCreateSerializer
 )
 
+from users.models import HsUser
 from users.decorators import custom_authentication_and_permissions
 from django.shortcuts import get_object_or_404
 from backend.settings import WEBSITE_URL
@@ -191,7 +193,21 @@ def room_detail(request, pk):
 @custom_authentication_and_permissions(exempt_get_views=[r"^/api/property/properties/$"])
 def property_list(request):
     if request.method == "GET":
-        properties = Property.objects.all().distinct()
+        
+        if "user" in request.query_params:
+            user = request.query_params.get("user")
+            user = get_object_or_404(HsUser, id=user)
+        else:
+            user = request.user
+
+        user_properties = UserProperty.objects.filter(user=user, is_active=True)
+        print(user_properties)
+        if user_properties.exists():
+            user_property_ids = user_properties.values_list('property_id', flat=True)
+            properties = Property.objects.filter(id__in=user_property_ids)
+        else:
+            properties = Property.objects.all().distinct()
+
         query_params = request.GET
 
         # Extract filters
@@ -265,6 +281,137 @@ def property_list(request):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+@api_view(["GET"])
+@custom_authentication_and_permissions()
+def get_all_properties(request):
+    """
+    Get all properties.
+    """
+    try:
+        properties = Property.objects.all().distinct()
+        serializer = PropertyViewSerializer(properties, many=True, context={"request": request})
+        return Response(serializer.data)
+    except Exception as e:
+        return Response(
+            {"error": str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(["GET"])
+@custom_authentication_and_permissions()
+def get_user_properties(request):
+    """
+    Get the user's properties.
+    """
+    try:
+        user = request.user
+        user_properties = UserProperty.objects.filter(user=user, is_active=True).values_list('property_id', flat=True)
+        properties = Property.objects.filter(id__in=user_properties)
+        serializer = PropertyViewSerializer(properties, many=True)
+        return Response(serializer.data)
+    except Exception as e:
+        return Response(
+            {"error": str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(["POST"])
+@custom_authentication_and_permissions()
+def add_properties_to_user(request):
+    """
+    Update user's properties to match the provided list of property IDs.
+    Properties in the list will be added, properties not in the list will be removed.
+    Expects a JSON payload with:
+    - property_ids: List of property IDs that should be associated with the user
+    """
+    try:
+        property_ids = request.data.get("property_ids", [])
+        user_id = request.query_params.get("user_id")
+        if user_id:
+            try:    
+                user = get_object_or_404(HsUser, id=user_id)
+            except:
+                return Response(
+                    {"error": "User not found"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+        else:
+            user = request.user
+
+        if not isinstance(property_ids, list):
+            return Response(
+                {"error": "property_ids must be a list"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        # Convert property_ids to a set for faster lookup
+        property_ids_set = set(property_ids)
+        
+        # Get the user's current active properties
+        current_user_properties = UserProperty.objects.filter(
+            user=user,
+            is_active=True
+        )
+        current_property_ids = {up.property_id for up in current_user_properties}
+        
+        # Calculate properties to add and remove
+        property_ids_to_add = property_ids_set - current_property_ids
+        property_ids_to_remove = current_property_ids - property_ids_set
+        
+        # Add new properties
+        properties_added = 0
+        for property_id in property_ids_to_add:
+            try:
+                property_obj = Property.objects.get(id=property_id)
+                # Check if there's an inactive record to reactivate
+                user_property = UserProperty.objects.filter(
+                    user=user, 
+                    property=property_obj,
+                    is_active=False
+                ).first()
+                
+                if user_property:
+                    # Reactivate existing record
+                    user_property.is_active = True
+                    user_property.save()
+                else:
+                    # Create new record
+                    UserProperty.objects.create(
+                        user=user, 
+                        property=property_obj,
+                        is_active=True
+                    )
+                properties_added += 1
+            except Property.DoesNotExist:
+                # Skip non-existent properties
+                pass
+        
+        # Remove properties not in the list
+        properties_removed = 0
+        for property_id in property_ids_to_remove:
+            user_properties = UserProperty.objects.filter(
+                user=user, 
+                property_id=property_id,
+                is_active=True
+            )
+            for user_property in user_properties:
+                user_property.is_active = False
+                user_property.save()
+                properties_removed += 1
+                
+        return Response({
+            "message": "User properties updated successfully",
+            "properties_added": properties_added,
+            "properties_removed": properties_removed,
+            "total_active_properties": len(property_ids_set) - (properties_added - properties_removed)
+        }, status=status.HTTP_200_OK)
+            
+    except Exception as e:
+        return Response(
+            {"error": str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 @api_view(["GET", "PUT", "DELETE"])
 @custom_authentication_and_permissions(

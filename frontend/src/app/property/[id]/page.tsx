@@ -394,32 +394,41 @@ export default function PropertyDetails() {
       const currentRoom = updatedRooms.get(roomId);
       
       if (currentRoom) {
-        const newQuantity = Math.max(0, (currentRoom.quantity || 0) + increment);
-        updatedRooms.set(roomId, { ...currentRoom, quantity: newQuantity });
+        // Calculate new quantity with limits (0 minimum, 5 maximum)
+        const currentQuantity = currentRoom.quantity || 0;
+        const newQuantity = Math.max(0, Math.min(5, currentQuantity + increment));
+        
+        // Only proceed if there's an actual change
+        if (newQuantity !== currentQuantity) {
+          updatedRooms.set(roomId, { ...currentRoom, quantity: newQuantity });
+          
+          // Save updated selections to session storage
+          const roomSelectionsObject: Record<string, number> = {};
+          updatedRooms.forEach((room, id) => {
+            roomSelectionsObject[id] = room.quantity || 0;
+          });
+          sessionStorage.setItem(`roomSelections_${propertyId}`, JSON.stringify(roomSelectionsObject));
+          
+          // Calculate change in total rooms for URL update
+          const effectiveIncrement = newQuantity - currentQuantity;
+          
+          // Update the search params with the total selected rooms
+          const updatedTotalRooms = Array.from(updatedRooms.values())
+            .reduce((sum, room) => sum + (room.quantity || 0), 0);
+          
+          // Create new URLSearchParams object with current params
+          const newSearchParams = new URLSearchParams(searchParams.toString());
+          newSearchParams.set('rooms', Math.max(1, updatedTotalRooms).toString());
+          
+          // Update the URL without reloading the page
+          const url = new URL(window.location.href);
+          url.search = newSearchParams.toString();
+          window.history.pushState({}, '', url);
+        }
       }
-      
-      // Save updated selections to session storage
-      const roomSelectionsObject: Record<string, number> = {};
-      updatedRooms.forEach((room, id) => {
-        roomSelectionsObject[id] = room.quantity || 0;
-      });
-      sessionStorage.setItem(`roomSelections_${propertyId}`, JSON.stringify(roomSelectionsObject));
       
       return updatedRooms;
     });
-
-    // Update the search params with the total selected rooms
-    const updatedTotalRooms = Array.from(selectedRooms.values())
-      .reduce((sum, room) => sum + (room.quantity || 0), 0) + increment;
-    
-    // Create new URLSearchParams object with current params
-    const newSearchParams = new URLSearchParams(searchParams.toString());
-    newSearchParams.set('rooms', Math.max(1, updatedTotalRooms).toString());
-    
-    // Update the URL without reloading the page
-    const url = new URL(window.location.href);
-    url.search = newSearchParams.toString();
-    window.history.pushState({}, '', url);
   };
 
   // Calculate total selected rooms

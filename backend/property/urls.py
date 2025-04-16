@@ -28,5 +28,8 @@ urlpatterns = [
     path('toggle-favourite/', views.add_favorite_property, name='add-favorite-property'),
     path('favorite-properties/', views.get_favorite_properties, name='get-favorite-properties'),
     path('reviews/create/', views.create_review, name='create_review'),
+    path('all-properties/', views.get_all_properties, name='get-all-properties'),
+    path('user-properties/', views.get_user_properties, name='get-user-properties'),
+    path('add-properties-to-user/', views.add_properties_to_user, name='add-properties-to-user'),
 ]
 

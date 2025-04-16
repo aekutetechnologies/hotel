@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { NewButton } from "@/components/ui/new-button"
-import { Menu, X, LogIn, MessageCircle } from 'lucide-react'
+import { Menu, X, LogIn, PhoneCall } from 'lucide-react'
 import Image from "next/image"
 import Link from "next/link"
 import { LoginDialog } from "./LoginDialog"
@@ -21,7 +21,7 @@ export function Header() {
   const [userName, setUserName] = useState("")
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   
-  const whatsappLink = "https://api.whatsapp.com/send?phone=9090151524&text=I%20checked%20the%20website,%20and%20I%20have%20a%20few%20questions%20to%20ask"
+  const phoneNumber = "+91-9090151524"
 
   const handleLoginSuccess = (name: string) => {
     setUserName(name)
@@ -131,9 +131,12 @@ export function Header() {
 
           {/* Desktop menu */}
           <div className="hidden md:flex items-center gap-8">
-            <Link href={whatsappLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-base text-gray-600 hover:text-gray-900">
-              <MessageCircle className="h-5 w-5 text-green-600" />
-              <span>9090151524</span>
+            <Link href={`tel:${phoneNumber.replace(/-/g, '')}`} className="flex items-center gap-3">
+              <PhoneCall className="h-10 w-10 text-gray-600" />
+              <div className="flex flex-col items-start">
+                <span className="text-lg font-bold text-[#000F24]">{phoneNumber}</span>
+                <span className="text-sm text-gray-500">Call us to Book now</span>
+              </div>
             </Link>
 
             <div className="relative">
@@ -187,14 +190,15 @@ export function Header() {
             
             <div className="container mx-auto px-4 flex flex-col items-center gap-6">
               <Link 
-                href={whatsappLink} 
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-base py-3 border-b border-gray-100 w-full justify-center text-gray-600 hover:text-gray-900"
+                href={`tel:${phoneNumber.replace(/-/g, '')}`}
+                className="flex items-center gap-3 py-3 border-b border-gray-100 w-full justify-center"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                <MessageCircle className="h-5 w-5 text-green-600" />
-                <span>+91 9090151524</span>
+                <PhoneCall className="h-8 w-8 text-gray-600" />
+                <div className="flex flex-col items-start">
+                  <span className="text-lg font-bold text-[#000F24]">{phoneNumber}</span>
+                  <span className="text-sm text-gray-500">Call us to Book now</span>
+                </div>
               </Link>
 
               <div className="w-full flex justify-center py-3">

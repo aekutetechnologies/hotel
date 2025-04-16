@@ -147,6 +147,17 @@ class Property(models.Model):
     def __str__(self):
         return self.name
 
+class UserProperty(models.Model):
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(HsUser, on_delete=models.CASCADE)
+    property = models.ForeignKey(Property, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.user.mobile} - {self.property.name}"
+
 class ReviewImage(models.Model):
     id = models.AutoField(primary_key=True)
     image = models.ImageField(upload_to='review_images/')

@@ -1,8 +1,8 @@
-import { apiPut } from './apiClient'
+import { apiPost } from './apiClient'
 
 interface UpdateUserRoleParams {
-  userId: number | string;
-  groupId: number | string;
+  user_id: number | string;
+  group_id: number | string;
 }
 
 /**
@@ -12,10 +12,10 @@ interface UpdateUserRoleParams {
  * @returns Promise with update result
  */
 export async function updateUserRole(params: UpdateUserRoleParams) {
-  const { userId, groupId } = params
+  const { user_id, group_id } = params
   
   try {
-    return await apiPut(`users/${userId}/group/`, { group: groupId })
+    return await apiPost(`users/profile/assign-permissions/`, { user_id: user_id, group_id: group_id })
   } catch (error) {
     // Error handling is already done in apiClient
     throw error

@@ -215,7 +215,7 @@ const SocialSection = ({ type = "hotel" }: socialSectionProps) => {
         <div className="w-full md:w-1/3 flex flex-col mt-0 items-center gap-5 justify-evenly">
           {/* Replace the images with animated "Why Love Hsquare" section */}
           <motion.div 
-            className="w-full p-6 rounded-xl flex flex-col items-center relative overflow-hidden"
+            className="w-full px-8 py-10 rounded-xl flex flex-col items-center relative overflow-visible"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -254,128 +254,108 @@ const SocialSection = ({ type = "hotel" }: socialSectionProps) => {
             
             {/* Heading with character animation */}
             <motion.div 
-              className="overflow-hidden relative mb-6"
+              className="overflow-visible relative mb-8 px-6 w-full"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <div className="flex items-center justify-center gap-2 mb-2">
-                {/* "Why" Text */}
-                <motion.div className="text-5xl font-bold">
-                  {"Why".split("").map((char, index) => (
-                    <motion.span
-                      key={index}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ 
-                        duration: 0.3, 
-                        delay: index * 0.05,
-                        ease: "easeOut"
-                      }}
-                      className="inline-block"
-                    >
-                      {char}
-                    </motion.span>
-                  ))}
-                </motion.div>
-                
-                {/* Heart Animation (smaller size) */}
-                <motion.div 
-                  className="relative w-16 h-16 mx-1"
-                  initial={{ y: 0 }}
-                  animate={{ y: [0, -5, 0] }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    repeatType: "reverse",
-                    ease: "easeInOut"
-                  }}
-                >
-                  <motion.div
-                    className="absolute w-full h-full"
-                    style={{ 
-                      filter: `drop-shadow(0 0 8px ${accentColor}66)`,
-                      zIndex: 0,
-                    }}
-                    animate={{
-                      scale: [1, 1.2, 1],
-                      opacity: [0.4, 0.8, 0.4]
-                    }}
+              <div className="flex flex-wrap items-center justify-center whitespace-nowrap overflow-visible mx-auto max-w-full">
+                {/* Combined "Why" and "Hsquare" text in one container to prevent separation */}
+                <div className="inline-flex items-center justify-center flex-nowrap overflow-visible px-4 py-3 mx-auto max-w-full">
+                  {/* "Why" Text */}
+                  <motion.div className="text-3xl sm:text-4xl md:text-5xl font-bold overflow-visible">
+                    {"Why".split("").map((char, index) => (
+                      <motion.span
+                        key={index}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ 
+                          duration: 0.3, 
+                          delay: index * 0.05,
+                          ease: "easeOut"
+                        }}
+                        className="inline-block overflow-visible px-[1px]"
+                      >
+                        {char}
+                      </motion.span>
+                    ))}
+                  </motion.div>
+                  
+                  {/* Heart Animation (smaller size) */}
+                  <motion.div 
+                    className="relative w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 mx-2 flex-shrink-0"
+                    initial={{ y: 0 }}
+                    animate={{ y: [0, -5, 0] }}
                     transition={{
-                      duration: 2.5,
+                      duration: 3,
                       repeat: Infinity,
-                      repeatType: "reverse"
+                      repeatType: "reverse",
+                      ease: "easeInOut"
                     }}
                   >
-                    <svg viewBox="0 0 100 100" className="w-full h-full">
+                    <motion.div
+                      className="absolute w-full h-full"
+                      style={{ 
+                        filter: `drop-shadow(0 0 8px ${accentColor}66)`,
+                        zIndex: 0,
+                      }}
+                      animate={{
+                        scale: [1, 1.2, 1],
+                        opacity: [0.4, 0.8, 0.4]
+                      }}
+                      transition={{
+                        duration: 2.5,
+                        repeat: Infinity,
+                        repeatType: "reverse"
+                      }}
+                    >
+                      <svg viewBox="0 0 100 100" className="w-full h-full">
+                        <motion.path
+                          d="M50 30C35 10 10 20 10 40C10 75 50 90 50 90C50 90 90 75 90 40C90 20 65 10 50 30Z"
+                          fill={`${accentColor}44`}
+                        />
+                      </svg>
+                    </motion.div>
+                    
+                    <svg viewBox="0 0 100 100" className="w-full h-full absolute inset-0">
                       <motion.path
                         d="M50 30C35 10 10 20 10 40C10 75 50 90 50 90C50 90 90 75 90 40C90 20 65 10 50 30Z"
-                        fill={`${accentColor}44`}
+                        fill="none"
+                        stroke={accentColor}
+                        strokeWidth="3"
+                        initial={{ pathLength: 0 }}
+                        animate={{ pathLength: 1 }}
+                        transition={{ 
+                          duration: 1.5, 
+                          ease: "easeInOut", 
+                          repeat: Infinity,
+                          repeatType: "reverse",
+                          repeatDelay: 0.5
+                        }}
                       />
                     </svg>
                   </motion.div>
                   
-                  <svg viewBox="0 0 100 100" className="w-full h-full absolute inset-0">
-                    <motion.path
-                      d="M50 30C35 10 10 20 10 40C10 75 50 90 50 90C50 90 90 75 90 40C90 20 65 10 50 30Z"
-                      fill="none"
-                      stroke={accentColor}
-                      strokeWidth="3"
-                      initial={{ pathLength: 0 }}
-                      animate={{ pathLength: 1 }}
-                      transition={{ 
-                        duration: 1.5, 
-                        ease: "easeInOut", 
-                        repeat: Infinity,
-                        repeatType: "reverse",
-                        repeatDelay: 0.5
-                      }}
-                    />
-                  </svg>
-                </motion.div>
-                
-                {/* "Hsquare" Text */}
-                <motion.div className="text-5xl font-bold">
-                  {"Hsquare".split("").map((char, index) => (
-                    <motion.span
-                      key={index}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ 
-                        duration: 0.3, 
-                        delay: 0.5 + (index * 0.05),
-                        ease: "easeOut"
-                      }}
-                      className="inline-block"
-                    >
-                      {char}
-                    </motion.span>
-                  ))}
-                </motion.div>
+                  {/* "Hsquare" Text */}
+                  <motion.div className="text-3xl sm:text-4xl md:text-5xl font-bold overflow-visible">
+                    {"Hsquare".split("").map((char, index) => (
+                      <motion.span
+                        key={index}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ 
+                          duration: 0.3, 
+                          delay: 0.5 + (index * 0.05),
+                          ease: "easeOut"
+                        }}
+                        className="inline-block overflow-visible px-[1px]"
+                      >
+                        {char}
+                      </motion.span>
+                    ))}
+                  </motion.div>
+                </div>
               </div>
-              
-              {/* <motion.div
-                className="text-4xl font-bold text-center"
-                style={{ color: accentColor }}
-              >
-                {(type === "hotel" ? "Hotels" : "Hostels").split("").map((char, index) => (
-                  <motion.span
-                    key={index}
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ 
-                      duration: 0.3, 
-                      delay: 0.8 + (index * 0.05),
-                      type: "spring",
-                      stiffness: 200,
-                      damping: 10
-                    }}
-                    className="inline-block"
-                  >
-                    {char}
-                  </motion.span>
-                ))}
-              </motion.div> */}
             </motion.div>
             
             {/* Animated Feature Cards */}

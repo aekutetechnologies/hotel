@@ -385,7 +385,7 @@ export default function Offers() {
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" onClick={() => {
+                            <Button variant="neutral" size="icon" onClick={() => {
                               setSelectedOffer(offer)
                               setIsEditModalOpen(true)
                             }}>
@@ -403,7 +403,7 @@ export default function Offers() {
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" onClick={() => {
+                            <Button variant="neutral" size="icon" onClick={() => {
                               handleImageUploadClick(offer)
                             }}>
                               <Upload className="h-4 w-4" />

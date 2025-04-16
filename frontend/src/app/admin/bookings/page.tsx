@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Search, Plus, Edit, FileText, Eye, Trash2, Upload } from 'lucide-react'
+import { Search, Plus, Edit, FileText, Eye, Trash2, Upload, Calendar, Filter, X } from 'lucide-react'
 import Link from 'next/link'
 import { BookingModal } from '@/components/BookingModal'
 import { DocumentModal } from '@/components/DocumentModal'
@@ -30,6 +30,13 @@ import { toast } from 'react-toastify'
 import { Spinner } from '@/components/ui/spinner'
 import { uploadBookingDoc } from '@/lib/api/uploadBookingDoc'
 import { GenericModal } from '@/components/GenericModal'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { format } from 'date-fns'
+import { Calendar as CalendarComponent } from '@/components/ui/calendar'
 
 import { listBookingDoc } from '@/lib/api/listBookingdoc'
 import { deleteBookingDoc } from '@/lib/api/deleteBookingDoc'
@@ -141,6 +148,17 @@ export default function Bookings() {
   const [isLoadingDocuments, setIsLoadingDocuments] = useState(false)
   const [properties, setProperties] = useState<Property[]>([])
   const [users, setUsers] = useState<User[]>([])
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 15
+  
+  // Search and filter state
+  const [searchTerm, setSearchTerm] = useState('')
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined)
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined)
+  const [openStartDate, setOpenStartDate] = useState(false)
+  const [openEndDate, setOpenEndDate] = useState(false)
 
   const getBookingsData = useCallback(async () => {
     console.log("Fetching bookings data...")
@@ -305,14 +323,175 @@ export default function Bookings() {
     }
   }
 
+  // Function to filter bookings based on search term and date range
+  const filteredBookings = bookings.filter(booking => {
+    // Search term filter
+    const searchTermLower = searchTerm.toLowerCase()
+    const guestMatch = booking.user && typeof booking.user === 'object' && 
+      (booking.user.name?.toLowerCase().includes(searchTermLower) || 
+       booking.user.mobile?.toLowerCase().includes(searchTermLower) ||
+       booking.user.email?.toLowerCase().includes(searchTermLower))
+    
+    const paymentTypeMatch = booking.payment_type?.toLowerCase().includes(searchTermLower)
+    const bookingTypeMatch = booking.booking_type?.toLowerCase().includes(searchTermLower)
+    const propertyMatch = booking.property && typeof booking.property === 'object' && 
+      booking.property.name?.toLowerCase().includes(searchTermLower)
+    
+    const matchesSearch = !searchTerm || guestMatch || paymentTypeMatch || bookingTypeMatch || propertyMatch
+    
+    // Date range filter
+    let matchesDateRange = true
+    
+    if (startDate) {
+      const checkinDate = new Date(booking.checkin_date)
+      matchesDateRange = matchesDateRange && checkinDate >= startDate
+    }
+    
+    if (endDate) {
+      const checkoutDate = new Date(booking.checkout_date)
+      matchesDateRange = matchesDateRange && checkoutDate <= endDate
+    }
+    
+    return matchesSearch && matchesDateRange
+  })
+  
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredBookings.length / itemsPerPage)
+  const shouldShowPagination = filteredBookings.length > itemsPerPage
+  
+  const paginatedBookings = shouldShowPagination 
+    ? filteredBookings.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+    : filteredBookings
+  
+  // Generate page numbers for pagination display
+  const generatePageNumbers = () => {
+    const pageNumbers = []
+    const maxVisiblePages = 5
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i)
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pageNumbers.push(i)
+        }
+        pageNumbers.push('ellipsis')
+        pageNumbers.push(totalPages)
+      } else if (currentPage >= totalPages - 2) {
+        pageNumbers.push(1)
+        pageNumbers.push('ellipsis')
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pageNumbers.push(i)
+        }
+      } else {
+        pageNumbers.push(1)
+        pageNumbers.push('ellipsis')
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pageNumbers.push(i)
+        }
+        pageNumbers.push('ellipsis')
+        pageNumbers.push(totalPages)
+      }
+    }
+    
+    return pageNumbers
+  }
+  
+  // Reset current page when search or filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, startDate, endDate])
+
+  const clearFilters = () => {
+    setSearchTerm('')
+    setStartDate(undefined)
+    setEndDate(undefined)
+  }
+
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl">
       <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-2xl font-bold">Bookings</h1>
-        <Button variant="default" onClick={() => setIsAddModalOpen(true)}>
+        <Button variant="neutral" onClick={() => setIsAddModalOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Add New Booking
         </Button>
+      </div>
+
+      <div className="mb-6 grid grid-cols-1 md:grid-cols-12 gap-4">
+        {/* Search Box */}
+        <div className="relative md:col-span-5">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <Input
+            type="text"
+            placeholder="Search by guest, payment type, booking type..."
+            className="pl-10"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        
+        {/* Date Filters */}
+        <div className="flex space-x-2 md:col-span-6">
+          {/* Start Date */}
+          <div className="flex-1">
+            <Popover open={openStartDate} onOpenChange={setOpenStartDate}>
+              <PopoverTrigger asChild>
+                <Button variant="neutral" className="w-full justify-start text-left font-normal">
+                  <Calendar className="mr-2 h-4 w-4" />
+                  {startDate ? format(startDate, 'PPP') : 'Start date'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarComponent
+                  mode="single"
+                  selected={startDate}
+                  onSelect={(date) => {
+                    setStartDate(date)
+                    setOpenStartDate(false)
+                  }}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+          
+          {/* End Date */}
+          <div className="flex-1">
+            <Popover open={openEndDate} onOpenChange={setOpenEndDate}>
+              <PopoverTrigger asChild>
+                <Button variant="neutral" className="w-full justify-start text-left font-normal">
+                  <Calendar className="mr-2 h-4 w-4" />
+                  {endDate ? format(endDate, 'PPP') : 'End date'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarComponent
+                  mode="single"
+                  selected={endDate}
+                  onSelect={(date) => {
+                    setEndDate(date)
+                    setOpenEndDate(false)
+                  }}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+          
+          {/* Clear Filters */}
+          <Button 
+            variant="neutral" 
+            size="icon"
+            onClick={clearFilters}
+            disabled={!searchTerm && !startDate && !endDate}
+            className="ml-2"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-x-auto">
@@ -337,8 +516,14 @@ export default function Bookings() {
                   <Spinner />
                 </TableCell>
               </TableRow>
+            ) : paginatedBookings.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={9} className="text-center py-6 text-gray-500">
+                  No bookings found
+                </TableCell>
+              </TableRow>
             ) : (
-              bookings.map((booking) => (
+              paginatedBookings.map((booking) => (
                 <TableRow key={booking.id}>
                   <TableCell className="font-medium">
                     {booking.property && typeof booking.property === 'object' ? booking.property.name : ''}
@@ -391,6 +576,53 @@ export default function Bookings() {
           </TableBody>
         </Table>
       </div>
+      
+      {/* Pagination */}
+      {shouldShowPagination && (
+        <Pagination className="mt-8">
+          <PaginationContent>
+            <PaginationItem>
+              {currentPage === 1 ? (
+                <span className="opacity-50">
+                  <PaginationPrevious size="default" />
+                </span>
+              ) : (
+                <PaginationPrevious 
+                  size="default"
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))} 
+                />
+              )}
+            </PaginationItem>
+            {generatePageNumbers().map((pageNumber, index) => (
+              <PaginationItem key={index}>
+                {pageNumber === 'ellipsis' ? (
+                  <PaginationEllipsis />
+                ) : (
+                  <PaginationLink
+                    size="default"
+                    onClick={() => setCurrentPage(pageNumber as number)}
+                    isActive={currentPage === pageNumber}
+                  >
+                    {pageNumber}
+                  </PaginationLink>
+                )}
+              </PaginationItem>
+            ))}
+            <PaginationItem>
+              {currentPage === totalPages ? (
+                <span className="opacity-50">
+                  <PaginationNext size="default" />
+                </span>
+              ) : (
+                <PaginationNext 
+                  size="default"
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))} 
+                />
+              )}
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      )}
 
       <BookingModal
         isOpen={isAddModalOpen}

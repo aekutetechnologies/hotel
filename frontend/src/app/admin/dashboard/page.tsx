@@ -168,7 +168,7 @@ export default function Dashboard() {
             <p className="text-lg text-gray-600 mb-4">No properties found</p>
             <PermissionGuard permission="property:create">
               <Link href="/admin/properties/new">
-                <Button variant="default">
+                <Button variant="neutral">
                   Add your first property
                 </Button>
               </Link>

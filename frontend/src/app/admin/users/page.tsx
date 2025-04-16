@@ -60,6 +60,10 @@ export default function Users() {
   const fetchUsersData = useCallback(async () => {
     // Don't fetch if no permission
     if (!isLoaded || !can('admin:user:view')) return
+
+    console.log('Fetching users data...')
+    console.log('isLoaded', isLoaded)
+    console.log('can', can)
     
     setIsLoadingUsers(true)
     try {

@@ -6,8 +6,8 @@ from .serializers import BookingSerializer, BookingUserViewSerializer, BookingVi
 from users.decorators import custom_authentication_and_permissions
 from django.shortcuts import get_object_or_404
 from property.serializers import PropertyViewSerializer
-from users.models import HsUser
-
+from users.models import HsUser, UserHsPermission
+from property.models import UserProperty
 @api_view(['GET', 'POST'])
 @custom_authentication_and_permissions()
 def booking_list(request):
@@ -91,11 +91,20 @@ def booking_list_by_user(request):
         Response: A list of booking objects with serialized property details.
     """
     user_id = request.query_params.get("user_id")
+    print(user_id)
     if user_id:
         user = get_object_or_404(HsUser, id=user_id)
     else:
         user = request.user
-    bookings = Booking.objects.filter(user=user).order_by('-created_at')
+
+    is_admin = UserHsPermission.objects.filter(user=user, permission_group__name="admin").exists()
+    print(is_admin)
+    if is_admin:
+        bookings = Booking.objects.all().order_by('-created_at')
+    else:
+        user_properties = UserProperty.objects.filter(user=user, is_active=True).values_list('property_id', flat=True)
+        print(user_properties)
+        bookings = Booking.objects.filter(property__in=user_properties).order_by('-created_at')
     serializer = BookingUserViewSerializer(bookings, many=True)
     return Response(serializer.data)
 

@@ -137,7 +137,7 @@ export default function UserRoles() {
                   <TableCell>{GroupRole.is_active ? 'Active' : 'Inactive'}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => {
+                      <Button variant="neutral" size="icon" onClick={() => {
                         setSelectedGroupRole(GroupRole)
                         setIsEditModalOpen(true)
                       }}>

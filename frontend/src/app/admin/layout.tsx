@@ -65,7 +65,7 @@ export default function AdminLayout({
       {/* Mobile sidebar */}
       <div className="lg:hidden">
         <Button
-          variant="ghost"
+          variant="neutral"
           className="fixed top-4 left-4 z-40"
           onClick={() => setSidebarOpen(!sidebarOpen)}
         >
@@ -106,7 +106,7 @@ export default function AdminLayout({
           </div>
         </nav>
         <div className="absolute bottom-0 w-full p-4 border-t">
-          <Button variant="ghost" className="w-full justify-start text-red-600" onClick={handleLogout}>
+          <Button variant="neutral" className="w-full justify-start text-red-600" onClick={handleLogout}>
             <LogOut className="mr-3 h-5 w-5" />
             Logout
           </Button>

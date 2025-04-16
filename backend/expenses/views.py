@@ -10,13 +10,24 @@ from django.conf import settings
 from users.decorators import custom_authentication_and_permissions
 from django.shortcuts import get_object_or_404
 from property.models import Property
+from users.models import HsUser, UserHsPermission
 
 
 @api_view(['GET', 'POST'])
 @custom_authentication_and_permissions()
 def expense(request):
     if request.method == 'GET':
-        expenses = Expense.objects.filter(user=request.user)
+        user_id = request.query_params.get("user_id")
+        if user_id:
+            user = get_object_or_404(HsUser, id=user_id)
+        else:
+            user = request.user
+
+        is_admin = UserHsPermission.objects.filter(user=user, permission_group__name="admin").exists()
+        if is_admin:
+            expenses = Expense.objects.all()
+        else:
+            expenses = Expense.objects.filter(user=user)
         serializer = ExpenseViewSerializer(expenses, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

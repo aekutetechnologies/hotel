@@ -3,7 +3,7 @@ import re
 from functools import wraps
 from rest_framework.response import Response
 from rest_framework import status
-from .models import HsUser, UserHsPermission
+from users.models import HsUser, UserHsPermission
 from django.conf import settings
 from jwt.exceptions import InvalidSignatureError, ExpiredSignatureError, DecodeError
 

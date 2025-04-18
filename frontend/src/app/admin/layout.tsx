@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Building2, CalendarCheck, CircleDollarSign, Users, Tag, Menu, X, LogOut, UserRound } from 'lucide-react'
+import { Building2, CalendarCheck, CircleDollarSign, Users, Tag, Menu, X, LogOut, UserRound, Home } from 'lucide-react'
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ProtectedRoute } from '@/components/ProtectedRoute'
@@ -32,7 +32,8 @@ export default function AdminLayout({
   }, [])
 
   const navigation: NavItem[] = [
-    { name: 'Properties', href: '/admin/dashboard', icon: Building2, permissions: ['admin:dashboard:view', 'property:view'] },
+    { name: 'Dashboard', href: '/admin/dashboard', icon: Home, permissions: ['admin:dashboard:view'] },
+    { name: 'Properties', href: '/admin/properties', icon: Building2, permissions: ['admin:dashboard:view', 'property:view'] },
     { name: 'Bookings', href: '/admin/bookings', icon: CalendarCheck, permissions: ['booking:view'] },
     { name: 'Expenses', href: '/admin/expenses', icon: CircleDollarSign, permissions: ['admin:expense:view'] },
     { name: 'Users', href: '/admin/users', icon: Users, permissions: ['admin:user:view'] },

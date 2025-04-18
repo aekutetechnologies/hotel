@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'booking',
     'expenses',
     'offer',
+    'stats',
     'whitenoise',
 ]
 

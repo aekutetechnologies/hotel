@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Search, Plus, Edit, FileText, Eye, Trash2, Upload, Calendar, Filter, X } from 'lucide-react'
+import { Search, Plus, Edit, FileText, Eye, Trash2, Upload, Calendar, Filter, X, Info } from 'lucide-react'
 import Link from 'next/link'
 import { BookingModal } from '@/components/BookingModal'
 import { DocumentModal } from '@/components/DocumentModal'
@@ -37,6 +37,12 @@ import {
 } from "@/components/ui/popover"
 import { format } from 'date-fns'
 import { Calendar as CalendarComponent } from '@/components/ui/calendar'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 import { listBookingDoc } from '@/lib/api/listBookingdoc'
 import { deleteBookingDoc } from '@/lib/api/deleteBookingDoc'
@@ -62,10 +68,12 @@ interface BookingProperty {
   images: Array<{
     image: string;
   }>;
-  rooms: Array<{
+  rooms?: Array<{
     id: number;
     name: string;
   }>;
+  location?: string;
+  property_type?: string;
 }
 
 interface BookingUser {
@@ -79,16 +87,22 @@ export interface Booking {
   id: number;
   property: number | BookingProperty | null;
   room: number;
-  price: number;
-  discount: number;
+  price: string;
+  discount: string;
   booking_type: string;
   status: string;
   payment_type: string;
   checkin_date: string;
   checkout_date: string;
+  checkin_time?: string;
+  checkout_time?: string;
   created_at: string;
   updated_at: string;
   user?: number | BookingUser | null;
+  number_of_guests?: number;
+  number_of_rooms?: number;
+  booking_room_types?: Array<BookingRoomType>;
+  booking_time?: string;
 }
 
 // Interface for the book property API params
@@ -134,6 +148,11 @@ interface BookingData {
   [key: string]: unknown
 }
 
+// Add interface for booking room types
+interface BookingRoomType {
+  [key: string]: number;
+}
+
 export default function Bookings() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -159,6 +178,8 @@ export default function Bookings() {
   const [endDate, setEndDate] = useState<Date | undefined>(undefined)
   const [openStartDate, setOpenStartDate] = useState(false)
   const [openEndDate, setOpenEndDate] = useState(false)
+  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false)
+  const [bookingDetails, setBookingDetails] = useState<Booking | null>(null)
 
   const getBookingsData = useCallback(async () => {
     console.log("Fetching bookings data...")
@@ -333,23 +354,35 @@ export default function Bookings() {
        booking.user.email?.toLowerCase().includes(searchTermLower))
     
     const paymentTypeMatch = booking.payment_type?.toLowerCase().includes(searchTermLower)
-    const bookingTypeMatch = booking.booking_type?.toLowerCase().includes(searchTermLower)
+    const bookingTimeMatch = booking.booking_time?.toLowerCase().includes(searchTermLower)
     const propertyMatch = booking.property && typeof booking.property === 'object' && 
       booking.property.name?.toLowerCase().includes(searchTermLower)
     
-    const matchesSearch = !searchTerm || guestMatch || paymentTypeMatch || bookingTypeMatch || propertyMatch
+    const matchesSearch = !searchTerm || guestMatch || paymentTypeMatch || bookingTimeMatch || propertyMatch
     
     // Date range filter
     let matchesDateRange = true
     
     if (startDate) {
-      const checkinDate = new Date(booking.checkin_date)
-      matchesDateRange = matchesDateRange && checkinDate >= startDate
+      // Convert to local date strings for consistent comparison
+      const checkinDateStr = booking.checkin_date
+      const checkinDateLocal = new Date(checkinDateStr)
+      // Reset hours to ensure we're comparing dates only
+      checkinDateLocal.setHours(0, 0, 0, 0)
+      const startDateLocal = new Date(startDate)
+      startDateLocal.setHours(0, 0, 0, 0)
+      matchesDateRange = matchesDateRange && checkinDateLocal >= startDateLocal
     }
     
     if (endDate) {
-      const checkoutDate = new Date(booking.checkout_date)
-      matchesDateRange = matchesDateRange && checkoutDate <= endDate
+      // Convert to local date strings for consistent comparison
+      const checkoutDateStr = booking.checkout_date
+      const checkoutDateLocal = new Date(checkoutDateStr)
+      // Reset hours to ensure we're comparing dates only
+      checkoutDateLocal.setHours(0, 0, 0, 0)
+      const endDateLocal = new Date(endDate)
+      endDateLocal.setHours(0, 0, 0, 0)
+      matchesDateRange = matchesDateRange && checkoutDateLocal <= endDateLocal
     }
     
     return matchesSearch && matchesDateRange
@@ -410,14 +443,53 @@ export default function Bookings() {
     setEndDate(undefined)
   }
 
+  // Function to render the booking room types
+  const renderBookingRoomTypes = (roomTypes: Array<BookingRoomType> | undefined) => {
+    if (!roomTypes || roomTypes.length === 0) return "No room types data";
+    
+    return (
+      <div className="space-y-2">
+        {roomTypes.map((roomType, index) => {
+          const roomId = Object.keys(roomType)[0];
+          const quantity = roomType[roomId];
+          
+          // Find room details from property
+          let roomName = `Room ${roomId}`;
+          if (bookingDetails?.property && typeof bookingDetails.property === 'object' && bookingDetails.property.rooms) {
+            const room = bookingDetails.property.rooms.find(r => r.id.toString() === roomId);
+            if (room) {
+              roomName = room.name || roomName;
+            }
+          }
+          
+          return (
+            <div key={index} className="flex justify-between items-center border-b pb-2">
+              <span>{roomName}</span>
+              <span>× {quantity}</span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl">
       <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-2xl font-bold">Bookings</h1>
-        <Button variant="neutral" onClick={() => setIsAddModalOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add New Booking
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="neutral" onClick={() => setIsAddModalOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add New Booking
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Create a new booking</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       <div className="mb-6 grid grid-cols-1 md:grid-cols-12 gap-4">
@@ -426,7 +498,7 @@ export default function Bookings() {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <Input
             type="text"
-            placeholder="Search by guest, payment type, booking type..."
+            placeholder="Search by guest, payment type, booking time..."
             className="pl-10"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -482,15 +554,24 @@ export default function Bookings() {
           </div>
           
           {/* Clear Filters */}
-          <Button 
-            variant="neutral" 
-            size="icon"
-            onClick={clearFilters}
-            disabled={!searchTerm && !startDate && !endDate}
-            className="ml-2"
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="neutral" 
+                  size="icon"
+                  onClick={clearFilters}
+                  disabled={!searchTerm && !startDate && !endDate}
+                  className="ml-2"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Clear all filters</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
 
@@ -500,11 +581,11 @@ export default function Bookings() {
             <TableRow>
               <TableHead>Property</TableHead>
               <TableHead>Guest</TableHead>
+              <TableHead>Created At</TableHead>
               <TableHead>Check-in</TableHead>
-              <TableHead>Check-out</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Amount</TableHead>
-              <TableHead>Booking Type</TableHead>
+              <TableHead>Booking Time</TableHead>
               <TableHead>Payment Method</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -531,8 +612,8 @@ export default function Bookings() {
                   <TableCell>
                     {booking.user && typeof booking.user === 'object' ? booking.user.mobile : ''}
                   </TableCell>
-                  <TableCell>{booking.checkin_date}</TableCell>
-                  <TableCell>{booking.checkout_date}</TableCell>
+                  <TableCell>{format(new Date(booking.created_at), 'dd MMM yyyy')}</TableCell>
+                  <TableCell>{format(new Date(booking.checkin_date), 'dd MMM yyyy')}</TableCell>
                   <TableCell>
                     <select
                       value={booking.status}
@@ -543,31 +624,76 @@ export default function Bookings() {
                       <option value="pending">Pending</option>
                       <option value="cancelled">Cancelled</option>
                       <option value="completed">Completed</option>
+                      <option value="checked_out">Checked Out</option>
+                      <option value="checked_in">Checked In</option>
+                      <option value="no_show">No Show</option>
                     </select>
                   </TableCell>
                   <TableCell>₹{booking.price}</TableCell>
-                  <TableCell>{booking.booking_type}</TableCell>
+                  <TableCell>{booking.booking_time}</TableCell>
                   <TableCell>{booking.payment_type}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="neutral" size="icon" onClick={() => {
-                        setSelectedBooking(booking)
-                        setIsEditModalOpen(true)
-                      }}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="neutral" size="icon" onClick={() => {
-                        setSelectedBooking(booking)
-                        setIsDocumentModalOpen(true)
-                      }}>
-                        <Upload className="h-4 w-4" />
-                      </Button>
-                      <Button variant="neutral" size="icon" onClick={() => {
-                        setSelectedBooking(booking)
-                        setIsDocumentListModalOpen(true)
-                      }}>
-                        <FileText className="h-4 w-4" />
-                      </Button>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="neutral" size="icon" onClick={() => {
+                              setSelectedBooking(booking)
+                              setIsEditModalOpen(true)
+                            }}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Edit booking</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="neutral" size="icon" onClick={() => {
+                              setSelectedBooking(booking)
+                              setIsDocumentModalOpen(true)
+                            }}>
+                              <Upload className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Upload documents</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="neutral" size="icon" onClick={() => {
+                              setSelectedBooking(booking)
+                              setIsDocumentListModalOpen(true)
+                            }}>
+                              <FileText className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>View documents</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="neutral" size="icon" onClick={() => {
+                              setBookingDetails(booking)
+                              setIsInfoModalOpen(true)
+                            }}>
+                              <Info className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>View detailed information</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -705,6 +831,89 @@ export default function Bookings() {
                 ))}
               </div>
             )}
+          </div>
+        </GenericModal>
+      )}
+
+      {/* Add Booking Details Modal */}
+      {bookingDetails && (
+        <GenericModal
+          isOpen={isInfoModalOpen}
+          onClose={() => {
+            setIsInfoModalOpen(false)
+            setBookingDetails(null)
+          }}
+          title="Booking Details"
+          description={`Detailed information for Booking #${bookingDetails.id}`}
+        >
+          <div className="max-h-[70vh] overflow-y-auto p-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold">Property Information</h3>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <p><span className="font-medium">Name:</span> {bookingDetails.property && typeof bookingDetails.property === 'object' ? bookingDetails.property.name : 'N/A'}</p>
+                    <p><span className="font-medium">Location:</span> {bookingDetails.property && typeof bookingDetails.property === 'object' && bookingDetails.property.location ? bookingDetails.property.location : 'N/A'}</p>
+                    <p><span className="font-medium">Type:</span> {bookingDetails.property && typeof bookingDetails.property === 'object' && bookingDetails.property.property_type ? bookingDetails.property.property_type : 'N/A'}</p>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-semibold">Guest Information</h3>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <p><span className="font-medium">Name:</span> {bookingDetails.user && typeof bookingDetails.user === 'object' ? bookingDetails.user.name : 'N/A'}</p>
+                    <p><span className="font-medium">Email:</span> {bookingDetails.user && typeof bookingDetails.user === 'object' ? bookingDetails.user.email : 'N/A'}</p>
+                    <p><span className="font-medium">Mobile:</span> {bookingDetails.user && typeof bookingDetails.user === 'object' ? bookingDetails.user.mobile : 'N/A'}</p>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-semibold">Room Details</h3>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <p><span className="font-medium">Number of Rooms:</span> {bookingDetails.number_of_rooms || 'N/A'}</p>
+                    <p><span className="font-medium">Number of Guests:</span> {bookingDetails.number_of_guests || 'N/A'}</p>
+                    
+                    {bookingDetails.booking_room_types && (
+                      <div>
+                        <p className="font-medium mt-2 mb-1">Rooms Booked:</p>
+                        {renderBookingRoomTypes(bookingDetails.booking_room_types)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold">Booking Information</h3>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <p><span className="font-medium">Booking Type:</span> {bookingDetails.booking_type}</p>
+                    <p><span className="font-medium">Booking Time:</span> {bookingDetails.booking_time}</p>
+                    <p><span className="font-medium">Status:</span> {bookingDetails.status}</p>
+                    <p><span className="font-medium">Payment Method:</span> {bookingDetails.payment_type}</p>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-semibold">Date & Time</h3>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <p><span className="font-medium">Check-in Date:</span> {bookingDetails.checkin_date}</p>
+                    <p><span className="font-medium">Check-out Date:</span> {bookingDetails.checkout_date}</p>
+                    <p><span className="font-medium">Check-in Time:</span> {bookingDetails.checkin_time}</p>
+                    <p><span className="font-medium">Check-out Time:</span> {bookingDetails.checkout_time}</p>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-semibold">Payment Information</h3>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <p><span className="font-medium">Price:</span> ₹{bookingDetails.price}</p>
+                    <p><span className="font-medium">Discount:</span> ₹{bookingDetails.discount}</p>
+                    <p><span className="font-medium">Total:</span> ₹{parseFloat(bookingDetails.price) - parseFloat(bookingDetails.discount || '0')}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </GenericModal>
       )}

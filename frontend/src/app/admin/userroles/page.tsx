@@ -21,6 +21,12 @@ import { Permission, PermissionData } from '@/types/permission'
 import { GroupRoleModal } from '@/components/GroupRoleModal'
 import { createGroupRole } from '@/lib/api/createGroupRole'
 import { updateGroupRole } from '@/lib/api/updateGroupRole'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 export default function UserRoles() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -87,10 +93,19 @@ export default function UserRoles() {
     <div>
       <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-2xl font-bold">User Roles</h1>
-        <Button className="bg-[#B11E43] hover:bg-[#8f1836]" onClick={() => setIsAddModalOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add New User Role
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button className="bg-[#B11E43] hover:bg-[#8f1836]" onClick={() => setIsAddModalOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add New User Role
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Create a new user role</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       <div className="mb-6">
@@ -137,12 +152,21 @@ export default function UserRoles() {
                   <TableCell>{GroupRole.is_active ? 'Active' : 'Inactive'}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="neutral" size="icon" onClick={() => {
-                        setSelectedGroupRole(GroupRole)
-                        setIsEditModalOpen(true)
-                      }}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="neutral" size="icon" onClick={() => {
+                              setSelectedGroupRole(GroupRole)
+                              setIsEditModalOpen(true)
+                            }}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Edit user role</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                   </TableCell>
                 </TableRow>

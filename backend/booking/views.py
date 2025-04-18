@@ -98,9 +98,12 @@ def booking_list_by_user(request):
         user = request.user
 
     is_admin = UserHsPermission.objects.filter(user=user, permission_group__name="admin").exists()
-    print(is_admin)
+    is_customer = UserHsPermission.objects.filter(user=user, permission_group__name="customer").exists()
+    
     if is_admin:
         bookings = Booking.objects.all().order_by('-created_at')
+    elif is_customer:
+        bookings = Booking.objects.filter(user=user).order_by('-created_at')
     else:
         user_properties = UserProperty.objects.filter(user=user, is_active=True).values_list('property_id', flat=True)
         print(user_properties)

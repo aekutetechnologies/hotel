@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Link from 'next/link'
 import { Button } from "./ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -47,6 +47,45 @@ interface BookingCardProps {
   searchParams: ReturnType<typeof useSearchParams>
 }
 
+// Create a wrapper for Calendar that handles auto-closing properly
+function CalendarWithAutoClose({
+  selected,
+  onSelect,
+  ...props
+}: {
+  selected: Date | undefined;
+  onSelect: (date: Date | undefined) => void;
+  [key: string]: any;
+}) {
+  const handleSelect = (date: Date | undefined) => {
+    // Call the provided onSelect
+    onSelect(date);
+    
+    // Auto-close the popover after selection
+    if (date) {
+      setTimeout(() => {
+        // Find and close the popover
+        const openPopover = document.querySelector('[data-state="open"][data-radix-popper-content-wrapper]');
+        if (openPopover) {
+          const popoverTrigger = document.activeElement as HTMLElement;
+          if (popoverTrigger && popoverTrigger.click) {
+            popoverTrigger.click();
+          }
+        }
+      }, 10);
+    }
+  };
+
+  return (
+    <Calendar
+      mode="single"
+      selected={selected}
+      onSelect={handleSelect}
+      {...props}
+    />
+  );
+}
+
 export function BookingCard({
   bookingType, 
   property, 
@@ -60,8 +99,18 @@ export function BookingCard({
   selectedRoomsCount: initialSelectedRoomsCount,
   searchParams
 }: BookingCardProps) {
-  const [date, setDate] = useState<Date | undefined>(initialCheckInDate)
-  const [checkOut, setCheckOutDate] = useState<Date | undefined>(initialCheckOutDate)
+  const parseLocalDate = (dateStr: string | null) => {
+    if (!dateStr) return undefined;
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  };
+  
+  const [date, setDate] = useState<Date | undefined>(
+    parseLocalDate(searchParams.get('checkInDate')) || initialCheckInDate
+  );
+  const [checkOut, setCheckOutDate] = useState<Date | undefined>(
+    parseLocalDate(searchParams.get('checkOutDate')) || initialCheckOutDate
+  );
   
   // Extract hour from time strings (HH:MM format) or use defaults
   const extractHourFromTimeString = (timeString: string | null): string => {
@@ -84,11 +133,13 @@ export function BookingCard({
     ((parseInt(extractHourFromTimeString(initialCheckInTime) || "12") + 2) % 24).toString()
   );
   
-  const [guests, setGuests] = useState(initialSelectedGuests|| 1)
-  const [rooms, setRooms] = useState(initialSelectedRoomsCount || 1)
+  const [guests, setGuests] = useState(initialSelectedGuests || 1)
   const [months, setMonths] = useState(initialMonths)
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null)
   
+  // Check if this is a hostel property
+  const isHostel = property?.property_type === 'hostel'
+
   // When selectedRoomMap changes, update the URL to match
   useEffect(() => {
     if (property && property.id) {
@@ -106,44 +157,102 @@ export function BookingCard({
       }
     }
   }, [selectedRoomMap, property]);
-  
-  // Sync rooms state with props when selectedRoomsCount changes
-  useEffect(() => {
-    if (initialSelectedRoomsCount && initialSelectedRoomsCount !== rooms) {
-      setRooms(initialSelectedRoomsCount);
-    }
-  }, [initialSelectedRoomsCount]);
-
-  // Update URL search parameters when rooms or guests change
-  useEffect(() => {
-    const updateSearchParams = () => {
-      const newSearchParams = new URLSearchParams(searchParams.toString());
-      newSearchParams.set('rooms', rooms.toString());
-      newSearchParams.set('guests', guests.toString());
-      
-      // Only update URL if we're in the browser
-      if (typeof window !== 'undefined') {
-        const url = new URL(window.location.href);
-        url.search = newSearchParams.toString();
-        window.history.pushState({}, '', url);
-      }
-    };
-
-    // Only update when the values actually change (not on initial render)
-    if (rooms !== initialSelectedRoomsCount || guests !== initialSelectedGuests) {
-      updateSearchParams();
-    }
-  }, [rooms, guests, searchParams]);
-
-  // Check if this is a hostel property
-  const isHostel = property?.property_type === 'hostel'
-
-  const hours = Array.from({ length: 24 }, (_, i) => i)
 
   // Get today's date in YYYY-MM-DD format for date restrictions
   const today = new Date()
   const formattedToday = format(today, 'yyyy-MM-dd')
   const currentHour = today.getHours()
+  
+  // Get room count directly from search params instead of using state
+  const getRoomCountFromSearchParams = useCallback(() => {
+    const roomsParam = searchParams.get('rooms');
+    // Use the total from selectedRoomMap as fallback
+    if (!roomsParam) {
+      const totalFromMap = Array.from(selectedRoomMap.values())
+        .reduce((sum, room) => sum + (room.quantity || 0), 0);
+      return totalFromMap > 0 ? totalFromMap : (initialSelectedRoomsCount || 1);
+    }
+    return parseInt(roomsParam, 10);
+  }, [searchParams, selectedRoomMap, initialSelectedRoomsCount]);
+
+  // Update guests in URL immediately on change
+  const handleGuestsChange = useCallback((value: number) => {
+    const newSearchParams = new URLSearchParams(searchParams.toString());
+    newSearchParams.set('guests', value.toString());
+    
+    const url = new URL(window.location.href);
+    url.search = newSearchParams.toString();
+    window.history.pushState({}, '', url);
+    
+    setGuests(value);
+  }, [searchParams]);
+
+  // Sync rooms state with props when selectedRoomsCount changes
+  useEffect(() => {
+    // Don't update local state from initialSelectedRoomsCount anymore
+    // Instead check if guests exceeds the maximum allowed (3 per room)
+    const currentRooms = getRoomCountFromSearchParams();
+    if (!isHostel && guests > currentRooms * 3) {
+      // If guests exceeds maximum allowed, update it to the maximum
+      const maxGuests = currentRooms * 3;
+      handleGuestsChange(maxGuests);
+    }
+  }, [initialSelectedRoomsCount, isHostel, guests, handleGuestsChange, searchParams]);
+
+  // Listen for changes in room selections from the property page
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === `roomSelections_${property.id}` && e.newValue) {
+        try {
+          const savedSelections = JSON.parse(e.newValue);
+          const totalRooms = Object.values(savedSelections).reduce((sum: number, quantity: any) => sum + (Number(quantity) || 0), 0);
+          
+          // Update search params directly without changing local state
+          const currentRooms = getRoomCountFromSearchParams();
+          if (totalRooms !== currentRooms) {
+            const newSearchParams = new URLSearchParams(searchParams.toString());
+            newSearchParams.set('rooms', totalRooms.toString());
+            
+            // If not a hostel, enforce the 3 guests per room rule
+            if (!isHostel && guests > totalRooms * 3) {
+              const maxGuests = totalRooms * 3;
+              newSearchParams.set('guests', maxGuests.toString());
+              handleGuestsChange(maxGuests);
+            }
+            
+            const url = new URL(window.location.href);
+            url.search = newSearchParams.toString();
+            window.history.pushState({}, '', url);
+          }
+        } catch (err) {
+          console.error("Error parsing room selections from storage:", err);
+        }
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [property.id, searchParams, isHostel, guests, handleGuestsChange]);
+
+  // Function to update rooms in URL and enforce guest limits
+  const handleRoomsChange = useCallback((value: number) => {
+    console.log("handleRoomsChange", value);
+    // Only update the search params, not the local state
+    const newSearchParams = new URLSearchParams(searchParams.toString());
+    newSearchParams.set('rooms', value.toString());
+    
+    // If not a hostel, enforce the 3 guests per room rule
+    if (!isHostel && guests > value * 3) {
+      const maxGuests = value * 3;
+      handleGuestsChange(maxGuests);
+    }
+    
+    const url = new URL(window.location.href);
+    url.search = newSearchParams.toString();
+    window.history.pushState({}, '', url);
+  }, [searchParams, isHostel, guests, handleGuestsChange]);
+
+  const hours = Array.from({ length: 24 }, (_, i) => i)
   
   // Filter available hours based on current time when date is today
   const getAvailableHours = (forCheckout = false) => {
@@ -351,11 +460,93 @@ export function BookingCard({
       checkIn: date,
       checkOut,
       months,
-      rooms,
+      rooms: getRoomCountFromSearchParams(),
       priceLabel: getPriceLabel(),
       calculatedPrice: totalPrice
     });
-  }, [bookingType, isHostel, selectedRoomMap, date, checkOut, months, rooms, totalPrice]);
+  }, [bookingType, isHostel, selectedRoomMap, date, checkOut, months, getRoomCountFromSearchParams, totalPrice]);
+
+  // Add a function to update the URL search parameters for dates and times
+  const updateDateTimeSearchParams = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    
+    const newSearchParams = new URLSearchParams(searchParams.toString());
+    
+    // Update date parameters
+    if (date) {
+      newSearchParams.set('checkInDate', format(date, 'yyyy-MM-dd'));
+    }
+    
+    if (checkOut) {
+      newSearchParams.set('checkOutDate', format(checkOut, 'yyyy-MM-dd'));
+    }
+    
+    // Update time parameters for hourly bookings
+    if (bookingType === 'hourly') {
+      if (checkInTime) {
+        newSearchParams.set('checkInTime', `${checkInTime}:00`);
+      }
+      
+      if (checkOutTime) {
+        newSearchParams.set('checkOutTime', `${checkOutTime}:00`);
+      }
+    }
+    
+    // Update URL without page reload
+    const url = new URL(window.location.href);
+    url.search = newSearchParams.toString();
+    window.history.pushState({}, '', url);
+  }, [date, checkOut, checkInTime, checkOutTime, bookingType, searchParams]);
+
+  // Function to close popover
+  const closePopover = useCallback(() => {
+    // Find all open popovers and close them
+    document.querySelectorAll('[data-state="open"]').forEach(popover => {
+      const button = popover.querySelector('button[aria-expanded="true"]');
+      if (button) {
+        (button as HTMLElement).click();
+      }
+    });
+  }, []);
+  
+  // Update URL search params immediately using the selected date
+  const handleDateChange = (newDate: Date | undefined) => {
+    if (!newDate) return;
+    
+    // Update search params with selected date immediately
+    const newSearchParams = new URLSearchParams(searchParams.toString());
+    newSearchParams.set('checkInDate', format(newDate, 'yyyy-MM-dd'));
+    
+    // Update URL before state change
+    const url = new URL(window.location.href);
+    url.search = newSearchParams.toString();
+    window.history.pushState({}, '', url);
+    
+    // Now update state
+    setDate(newDate);
+    
+    // Close the popover
+    closePopover();
+  };
+
+  const handleCheckOutDateChange = (newDate: Date | undefined) => {
+    if (!newDate) return;
+    
+    // Update search params with selected date immediately
+    const newSearchParams = new URLSearchParams(searchParams.toString());
+    newSearchParams.set('checkOutDate', format(newDate, 'yyyy-MM-dd'));
+    
+    // Update URL before state change
+    const url = new URL(window.location.href);
+    url.search = newSearchParams.toString();
+    window.history.pushState({}, '', url);
+    
+    // Now update state
+    setCheckOutDate(newDate);
+    
+    // Close the popover
+    closePopover();
+  };
 
   return (
     <Card className="w-[380px] bg-white shadow-lg">
@@ -400,12 +591,11 @@ export function BookingCard({
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
+                <CalendarWithAutoClose
                   selected={date}
-                  onSelect={setDate}
+                  onSelect={handleDateChange}
                   initialFocus
-                  disabled={(date) => date < new Date(formattedToday)}
+                  disabled={(date: Date) => date < new Date(formattedToday)}
                 />
               </PopoverContent>
             </Popover>
@@ -430,6 +620,9 @@ export function BookingCard({
                         // Also update checkout time
                         const newCheckoutHour = (nextHour + 2) % 24
                         setCheckOutTime(newCheckoutHour.toString())
+                        
+                        // Update search parameters with the updated time
+                        setTimeout(() => updateDateTimeSearchParams(), 0);
                         return
                       }
                     }
@@ -442,6 +635,9 @@ export function BookingCard({
                       const newCheckoutHour = (newCheckInHour + 2) % 24
                       setCheckOutTime(newCheckoutHour.toString())
                     }
+                    
+                    // Update search parameters with the new time
+                    setTimeout(() => updateDateTimeSearchParams(), 0);
                   }}
                 >
                   <SelectTrigger>
@@ -472,6 +668,9 @@ export function BookingCard({
                         // Auto-adjust to a valid time
                         const validHour = Math.max(currentHour + 2, checkInHour + 2)
                         setCheckOutTime(validHour.toString())
+                        
+                        // Update search parameters with the updated time
+                        setTimeout(() => updateDateTimeSearchParams(), 0);
                         return
                       }
                     }
@@ -482,11 +681,17 @@ export function BookingCard({
                         // Set checkout to be 2 hours after checkin
                         const validCheckoutHour = (checkInHour + 2) % 24
                         setCheckOutTime(validCheckoutHour.toString())
+                        
+                        // Update search parameters with the updated time
+                        setTimeout(() => updateDateTimeSearchParams(), 0);
                         return
                       }
                     }
                     
                     setCheckOutTime(newValue)
+                    
+                    // Update search parameters with the new time
+                    setTimeout(() => updateDateTimeSearchParams(), 0);
                   }}
                 >
                   <SelectTrigger>
@@ -521,16 +726,17 @@ export function BookingCard({
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
+                  <CalendarWithAutoClose
                     selected={checkOut}
-                    onSelect={setCheckOutDate}
+                    onSelect={handleCheckOutDateChange}
                     initialFocus
-                    disabled={(calDate) => {
+                    disabled={(calDate: Date) => {
                       // Disable dates before checkin date or today
                       if (!date) return calDate < new Date(formattedToday);
                       return calDate < new Date(formattedToday) || calDate < date;
                     }}
+                    // Set the default month to the check-in date month if it's in the future
+                    defaultMonth={date && date > new Date() ? date : undefined}
                   />
                 </PopoverContent>
               </Popover>
@@ -552,31 +758,30 @@ export function BookingCard({
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
+                  <CalendarWithAutoClose
                     selected={checkOut}
-                    onSelect={setCheckOutDate}
+                    onSelect={handleCheckOutDateChange}
                     initialFocus
-                    disabled={(date) => {
+                    disabled={(date: Date) => {
                       // Disable dates before checkin date or today
                       return date < new Date(formattedToday) || (date && date < new Date(formattedToday))
                     }}
+                    // Set the default month to the check-in date month if it's in the future
+                    defaultMonth={date && date > new Date() ? date : undefined}
                   />
                 </PopoverContent>
               </Popover>
             </div>
-          ) /* Don't show checkout date for monthly bookings */}
+          )}
 
-
-          
           <div className="grid grid-cols-2 gap-4">            
               <>
                 <div>
                   <Label>Number of Rooms</Label>
                   <Input 
                     type="number" 
-                    value={rooms}
-                    onChange={(e) => setRooms(parseInt(e.target.value) || 1)}
+                    value={getRoomCountFromSearchParams()}
+                    onChange={(e) => handleRoomsChange(parseInt(e.target.value) || 1)}
                     min={1}
                     className="mt-1 bg-gray-100"
                     disabled
@@ -591,15 +796,15 @@ export function BookingCard({
                       onChange={(e) => {
                         const newValue = parseInt(e.target.value) || 1;
                         // For hotel properties, cap at 3 guests per room
-                        if (!isHostel && rooms > 0) {
-                          const maxGuests = rooms * 3;
-                          setGuests(Math.min(newValue, maxGuests));
+                        if (!isHostel) {
+                          const maxGuests = getRoomCountFromSearchParams() * 3;
+                          handleGuestsChange(Math.min(newValue, maxGuests));
                         } else {
-                          setGuests(newValue);
+                          handleGuestsChange(newValue);
                         }
                       }}
                       min={1}
-                      max={!isHostel ? rooms * 3 : undefined}
+                      max={!isHostel ? getRoomCountFromSearchParams() * 3 : undefined}
                       className="mt-1"
                     />
                     {!isHostel && (
@@ -618,7 +823,19 @@ export function BookingCard({
               <Input 
                 type="number" 
                 value={months}
-                onChange={(e) => setMonths(parseInt(e.target.value) || 1)}
+                onChange={(e) => {
+                  const newValue = parseInt(e.target.value) || 1;
+                  
+                  // Update search params with selected months immediately
+                  const newSearchParams = new URLSearchParams(searchParams.toString());
+                  newSearchParams.set('months', newValue.toString());
+                  
+                  const url = new URL(window.location.href);
+                  url.search = newSearchParams.toString();
+                  window.history.pushState({}, '', url);
+                  
+                  setMonths(newValue);
+                }}
                 min={1}
                 max={12}
                 className="mt-1"

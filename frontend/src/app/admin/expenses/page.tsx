@@ -25,6 +25,12 @@ import { createExpense } from '@/lib/api/createExpense'
 import { fetchExpenses } from '@/lib/api/fetchExpenses'
 import { fetchProperties } from '@/lib/api/fetchProperties'
 import { type Property } from '@/types/property'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 export default function Expenses() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -140,10 +146,19 @@ export default function Expenses() {
     <div>
       <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-2xl font-bold">Expenses</h1>
-        <Button className="bg-[#B11E43] hover:bg-[#8f1836]" onClick={() => setIsAddModalOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add New Expense
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button className="bg-[#B11E43] hover:bg-[#8f1836]" onClick={() => setIsAddModalOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add New Expense
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Create a new expense record</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       <div className="mb-6">
@@ -205,18 +220,36 @@ export default function Expenses() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="neutral" size="icon" onClick={() => {
-                        setSelectedExpense(expense)
-                        setIsEditModalOpen(true)
-                      }}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="neutral" size="icon" onClick={() => {
-                        setSelectedExpense(expense)
-                        setIsDocumentModalOpen(true)
-                      }}>
-                        <FileText className="h-4 w-4" />
-                      </Button>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="neutral" size="icon" onClick={() => {
+                              setSelectedExpense(expense)
+                              setIsEditModalOpen(true)
+                            }}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Edit expense</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="neutral" size="icon" onClick={() => {
+                              setSelectedExpense(expense)
+                              setIsDocumentModalOpen(true)
+                            }}>
+                              <FileText className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Upload document</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                   </TableCell>
                 </TableRow>

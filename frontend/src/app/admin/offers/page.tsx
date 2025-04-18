@@ -307,21 +307,39 @@ export default function Offers() {
       <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-2xl font-bold">Offers</h1>
         <div className="flex gap-2">
-          <Button 
-            variant="neutral" 
-            onClick={() => {
-              console.log('Manual refresh clicked')
-              offersLoadedRef.current = false
-              loadOffers()
-            }}
-          >
-            Refresh Offers
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="neutral" 
+                  onClick={() => {
+                    console.log('Manual refresh clicked')
+                    offersLoadedRef.current = false
+                    loadOffers()
+                  }}
+                >
+                  Refresh Offers
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Reload all offers from server</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <PermissionGuard permissions={['admin:offer:create']} requireAll={false}>
-            <Button className="bg-[#B11E43] hover:bg-[#8f1836]" onClick={() => setIsAddModalOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add New Offer
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button className="bg-[#B11E43] hover:bg-[#8f1836]" onClick={() => setIsAddModalOpen(true)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add New Offer
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Create a new offer</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </PermissionGuard>
         </div>
       </div>
@@ -364,14 +382,23 @@ export default function Offers() {
                 <TableCell>{new Date(offer.offer_end_date).toLocaleDateString('en-CA')}</TableCell>
                 <TableCell>
                   <PermissionGuard permissions={['admin:offer:update']} requireAll={false}>
-                    <select
-                      value={offer.is_active ? 'Active' : 'Inactive'}
-                      onChange={(e) => handleStatusChange(offer.id, e.target.value === 'Active' ? 'Active' : 'Inactive')}
-                      className="border rounded px-2 py-1"
-                    >
-                      <option value="Active">Active</option>
-                      <option value="Inactive">Inactive</option>
-                    </select>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <select
+                            value={offer.is_active ? 'Active' : 'Inactive'}
+                            onChange={(e) => handleStatusChange(offer.id, e.target.value === 'Active' ? 'Active' : 'Inactive')}
+                            className="border rounded px-2 py-1"
+                          >
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                          </select>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Change offer status</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </PermissionGuard>
                   {!can('admin:offer:update') && (
                     <span className={`px-2 py-1 rounded text-xs ${offer.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>

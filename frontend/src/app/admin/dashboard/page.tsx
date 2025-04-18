@@ -1,75 +1,66 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useEffect, useCallback } from 'react'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { 
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { Building2, CalendarCheck, CircleDollarSign, Users, Plus, Search, Edit, Eye, Trash2 } from 'lucide-react'
-import { fetchProperties } from '@/lib/api/fetchProperties'
+  Building2, 
+  CalendarCheck, 
+  CircleDollarSign, 
+  Users, 
+  Hotel, 
+  Home, 
+  ArrowUp, 
+  ArrowDown, 
+  Calendar, 
+  CreditCard, 
+  ShoppingBag, 
+  UserPlus 
+} from 'lucide-react'
 import { toast } from 'react-toastify'
 import { Spinner } from '@/components/ui/spinner'
-import { PermissionGuard } from '@/components/PermissionGuard'
 import { usePermissions } from '@/hooks/usePermissions'
-import { Permission } from '@/lib/permissions'
-import { Property } from '@/types/property'
-
-// Helper type for property image display
-interface DisplayImage {
-  id: number;
-  url: string;
-}
+import { fetchDashboardStats, DashboardStats } from '@/lib/api/fetchDashboardStats'
+import { fetchPropertyOccupancyStats, PropertyOccupancyStat } from '@/lib/api/fetchPropertyOccupancyStats'
 
 export default function Dashboard() {
-  const [searchTerm, setSearchTerm] = useState('')
-  const [properties, setProperties] = useState<Property[]>([])
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null)
+  const [propertyOccupancyStats, setPropertyOccupancyStats] = useState<PropertyOccupancyStat[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const { can, isLoaded } = usePermissions()
 
-  const dashboardStats = {
-    activeBookings: 10,
-    monthlyRevenue: 10000,
-    occupancyRate: 50
-  }
-  
-  useEffect(() => {
-    // Only fetch properties once when component is mounted and permissions are loaded
-    async function loadProperties() {
-      if (!isLoaded || !can('property:view')) return
+  const fetchStats = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      const stats = await fetchDashboardStats()
+      setDashboardStats(stats)
       
       try {
-        setIsLoading(true)
-        const data = await fetchProperties()
-        setProperties(data || [])
-      } catch (error: any) {
-        console.error('Error fetching properties:', error)
-        toast.error(`Failed to load properties: ${error.message || 'Unknown error'}`)
-      } finally {
-        setIsLoading(false)
+        // Also fetch property occupancy stats
+        const occupancyStats = await fetchPropertyOccupancyStats()
+        setPropertyOccupancyStats(occupancyStats)
+      } catch (occupancyError: any) {
+        console.error('Error fetching property occupancy stats:', occupancyError)
       }
+    } catch (error: any) {
+      console.error('Error fetching dashboard stats:', error)
+      toast.error(`Failed to load dashboard statistics: ${error.message || 'Unknown error'}`)
+    } finally {
+      setIsLoading(false)
     }
+  }, [])
 
-    loadProperties()
-  }, [isLoaded]) // Only depend on isLoaded, not on can which might change more often
+  useEffect(() => {
+    if (isLoaded) {
+      fetchStats()
+    }
+  }, [isLoaded, fetchStats])
 
-  const filteredProperties = properties.filter(property =>
-    property.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    property.location.toLowerCase().includes(searchTerm.toLowerCase())
-  )
-
-  // Helper function to get image URL
-  const getImageUrl = (property: Property): string => {
-    return property.images && property.images.length > 0 
-      ? (property.images[0].image || property.images[0].image_url || '/placeholder.jpg')
-      : '/placeholder.jpg';
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center p-12">
+        <Spinner className="h-12 w-12" />
+      </div>
+    )
   }
 
   if (!isLoaded) {
@@ -80,8 +71,8 @@ export default function Dashboard() {
     )
   }
 
-  // If no permission to view properties
-  if (!can('property:view')) {
+  // If no permission to view dashboard
+  if (!can('admin:dashboard:view')) {
     return (
       <div className="p-8 text-center">
         <h2 className="text-xl font-bold text-gray-700 mb-4">Access Denied</h2>
@@ -91,138 +82,313 @@ export default function Dashboard() {
   }
 
   return (
-    <div>
-      {/* Stats Overview */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Properties</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{properties.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Bookings</CardTitle>
-            <CalendarCheck className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{dashboardStats.activeBookings}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
-            <CircleDollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₹{dashboardStats.monthlyRevenue.toLocaleString()}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Occupancy Rate</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{dashboardStats.occupancyRate}%</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Properties Section */}
+    <div className="container mx-auto px-4 py-6 max-w-7xl">
       <div className="mb-8">
-        <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <h2 className="text-2xl font-bold">Properties</h2>
-          <PermissionGuard permission="property:create">
-            <Link href="/admin/properties/new">
-              <Button variant="neutral">
-                <Plus className="mr-2 h-4 w-4" />
-                Add New Property
-              </Button>
-            </Link>
-          </PermissionGuard>
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <p className="text-gray-600">Welcome to your hotel management dashboard</p>
+      </div>
+      
+      {/* Properties Stats */}
+      <div className="mb-8">
+        <h2 className="text-xl font-bold mb-4">Properties Overview</h2>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Hotels</CardTitle>
+              <Hotel className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{dashboardStats?.total_hotels || 0}</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Hostels</CardTitle>
+              <Home className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{dashboardStats?.total_hostels || 0}</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Properties</CardTitle>
+              <Building2 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{(dashboardStats?.total_hotels || 0) + (dashboardStats?.total_hostels || 0)}</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Occupancy Rate</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{dashboardStats?.occupancy_percentage || 0}%</div>
+              <p className="text-xs text-muted-foreground">Average across all properties</p>
+            </CardContent>
+          </Card>
         </div>
-
-        <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <Input
-              type="search"
-              placeholder="Search properties..."
-              className="pl-10"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+      </div>
+      
+      {/* Sales and Booking Stats */}
+      <div className="mb-8">
+        <h2 className="text-xl font-bold mb-4">Sales & Bookings</h2>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Today's Revenue</CardTitle>
+              <CircleDollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">₹{dashboardStats?.sales.today.total.toLocaleString() || 0}</div>
+              <div className="flex items-center pt-1">
+                <span className="text-xs text-muted-foreground">
+                  From {dashboardStats?.sales.today.confirmed || 0} confirmed bookings
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">₹{dashboardStats?.sales.month.total.toLocaleString() || 0}</div>
+              <div className="flex items-center pt-1">
+                <span className="text-xs text-muted-foreground">
+                  From {(dashboardStats?.sales.month.confirmed || 0) + (dashboardStats?.sales.month.completed || 0)} bookings
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Bookings</CardTitle>
+              <CalendarCheck className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{dashboardStats?.sales.today.confirmed || 0}</div>
+              <div className="flex items-center pt-1">
+                <span className="text-xs text-muted-foreground">
+                  {dashboardStats?.sales.today.pending || 0} pending bookings
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pending Bookings</CardTitle>
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{dashboardStats?.sales.month.pending || 0}</div>
+              <div className="flex items-center pt-1">
+                <span className="text-xs text-muted-foreground">
+                  This month
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+      
+      {/* Expenses Stats */}
+      <div className="mb-8">
+        <h2 className="text-xl font-bold mb-4">Expenses</h2>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Today's Expenses</CardTitle>
+              <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">₹{dashboardStats?.expenses.today.toLocaleString() || 0}</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Monthly Expenses</CardTitle>
+              <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">₹{dashboardStats?.expenses.month.toLocaleString() || 0}</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Net Revenue (Today)</CardTitle>
+              <ArrowUp className={`h-4 w-4 ${(dashboardStats?.sales.today.total || 0) - (dashboardStats?.expenses.today || 0) >= 0 ? 'text-green-500' : 'text-red-500'}`} />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">₹{((dashboardStats?.sales.today.total || 0) - (dashboardStats?.expenses.today || 0)).toLocaleString()}</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Net Revenue (Month)</CardTitle>
+              <ArrowUp className={`h-4 w-4 ${(dashboardStats?.sales.month.total || 0) - (dashboardStats?.expenses.month || 0) >= 0 ? 'text-green-500' : 'text-red-500'}`} />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">₹{((dashboardStats?.sales.month.total || 0) - (dashboardStats?.expenses.month || 0)).toLocaleString()}</div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+      
+      {/* User Stats - Only show for admins */}
+      {can('admin:user:view') && (
+        <div className="mb-8">
+          <h2 className="text-xl font-bold mb-4">User Statistics</h2>
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{dashboardStats?.users.total || 0}</div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">New Users Today</CardTitle>
+                <UserPlus className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{dashboardStats?.users.new_today || 0}</div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">New Users This Month</CardTitle>
+                <UserPlus className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{dashboardStats?.users.new_month || 0}</div>
+              </CardContent>
+            </Card>
           </div>
         </div>
-
-        {isLoading ? (
-          <div className="flex justify-center p-12">
-            <Spinner className="h-12 w-12" />
+      )}
+      
+      {/* Property Occupancy Section */}
+      {propertyOccupancyStats.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-xl font-bold mb-4">Property Occupancy</h2>
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="px-6 py-3 text-left font-medium text-gray-500">Property</th>
+                    <th className="px-6 py-3 text-left font-medium text-gray-500">Type</th>
+                    <th className="px-6 py-3 text-left font-medium text-gray-500">Total Rooms</th>
+                    <th className="px-6 py-3 text-left font-medium text-gray-500">Occupied</th>
+                    <th className="px-6 py-3 text-left font-medium text-gray-500">Occupancy %</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {propertyOccupancyStats.map((property) => (
+                    <tr key={property.property_id} className="border-b border-gray-200 hover:bg-gray-50">
+                      <td className="px-6 py-4 font-medium">{property.property_name}</td>
+                      <td className="px-6 py-4 capitalize">{property.property_type}</td>
+                      <td className="px-6 py-4">{property.total_rooms}</td>
+                      <td className="px-6 py-4">{property.occupied_rooms}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center">
+                          <span className={`mr-2 ${property.occupancy_percentage > 70 ? 'text-green-600' : property.occupancy_percentage > 30 ? 'text-yellow-600' : 'text-red-600'}`}>
+                            {property.occupancy_percentage}%
+                          </span>
+                          <div className="w-24 bg-gray-200 rounded-full h-2.5">
+                            <div 
+                              className={`h-2.5 rounded-full ${property.occupancy_percentage > 70 ? 'bg-green-600' : property.occupancy_percentage > 30 ? 'bg-yellow-500' : 'bg-red-600'}`}
+                              style={{ width: `${property.occupancy_percentage}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        ) : filteredProperties.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center">
-            <p className="text-lg text-gray-600 mb-4">No properties found</p>
-            <PermissionGuard permission="property:create">
-              <Link href="/admin/properties/new">
-                <Button variant="neutral">
-                  Add your first property
-                </Button>
-              </Link>
-            </PermissionGuard>
-          </div>
-        ) : (
-          <div className="bg-white rounded-lg shadow">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Rooms</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredProperties.map((property) => (
-                  <TableRow key={property.id}>
-                    <TableCell className="font-medium">{property.name}</TableCell>
-                    <TableCell>{property.location}</TableCell>
-                    <TableCell>{property.property_type || "N/A"}</TableCell>
-                    <TableCell>{property.rooms?.length || 0}</TableCell>
-                    <TableCell>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${property.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {property.is_active ? 'Active' : 'Inactive'}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        
-                        <PermissionGuard permission="property:update">
-                          <Button variant="neutral" size="icon" asChild>
-                            <Link href={`/admin/properties/${property.id}/edit`}>
-                              <Edit className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                        </PermissionGuard>
-                        
-                        <PermissionGuard permission="property:delete">
-                          <Button variant="neutral" size="icon" className="text-red-600">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </PermissionGuard>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+        </div>
+      )}
+      
+      {/* Additional dashboard sections can be added here */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Bookings</CardTitle>
+            <CardDescription>
+              Summary of recent booking activity
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Confirmed:</span>
+                <span>{dashboardStats?.sales.today.confirmed || 0} today</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Completed:</span>
+                <span>{dashboardStats?.sales.today.completed || 0} today</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Cancelled:</span>
+                <span>{dashboardStats?.sales.today.cancelled || 0} today</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Pending:</span>
+                <span>{dashboardStats?.sales.today.pending || 0} today</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Monthly Performance</CardTitle>
+            <CardDescription>
+              Overview of monthly booking performance
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Confirmed:</span>
+                <span>{dashboardStats?.sales.month.confirmed || 0} bookings</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Completed:</span>
+                <span>{dashboardStats?.sales.month.completed || 0} bookings</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Cancelled:</span>
+                <span>{dashboardStats?.sales.month.cancelled || 0} bookings</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Pending:</span>
+                <span>{dashboardStats?.sales.month.pending || 0} bookings</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

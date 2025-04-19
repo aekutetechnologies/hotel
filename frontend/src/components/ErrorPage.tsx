@@ -75,7 +75,7 @@ export function ErrorPage({
             )}
             
             {showHomeButton && (
-              <Link href="/" passHref>
+              <Link href="/home?section=hotels" passHref>
                 <NewButton 
                   variant="neutral"
                   className="flex items-center justify-center"

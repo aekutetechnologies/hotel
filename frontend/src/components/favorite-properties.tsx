@@ -120,7 +120,7 @@ export function FavoriteProperties() {
         </CardHeader>
         <CardContent className="text-center">
           <p className="text-gray-500 mb-6">Start exploring properties and add them to your favorites!</p>
-          <Link href="/">
+          <Link href="/home?section=hotels">
             <Button className="bg-[#B11E43] hover:bg-[#8f1836] text-white">
               Explore Properties
             </Button>

@@ -309,7 +309,60 @@ export function AddPropertyForm() {
         return
       }
 
-      const imageFile = new File([croppedImageBlob], "cropped_image.webp", { type: "image/webp" })
+      let finalBlob = croppedImageBlob
+      
+      // Compress image if size exceeds 1MB (1048576 bytes)
+      if (croppedImageBlob.size > 1048576) {
+        console.log(`Image size (${croppedImageBlob.size / 1048576}MB) exceeds 1MB, compressing...`)
+        toast.info("Compressing large image...")
+        
+        // Create an image element to draw to canvas
+        const img = new Image()
+        const blobUrl = URL.createObjectURL(croppedImageBlob)
+        
+        // Wait for image to load
+        await new Promise((resolve, reject) => {
+          img.onload = resolve
+          img.onerror = reject
+          img.src = blobUrl
+        })
+        
+        // Create canvas for compression
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d')
+        
+        // Calculate new dimensions (maintain aspect ratio)
+        let { width, height } = img
+        const aspectRatio = width / height
+        
+        // Target dimensions for compression
+        // Start with 80% of original dimensions and adjust if needed
+        width = Math.round(width * 0.8)
+        height = Math.round(height * 0.8)
+        
+        // Set canvas dimensions
+        canvas.width = width
+        canvas.height = height
+        
+        // Draw image to canvas with new dimensions
+        ctx?.drawImage(img, 0, 0, width, height)
+        
+        // Convert to blob with reduced quality
+        finalBlob = await new Promise<Blob>((resolve) => {
+          canvas.toBlob(
+            (blob) => resolve(blob as Blob),
+            'image/webp',
+            0.7 // Quality factor (0-1)
+          )
+        })
+        
+        // Clean up URL object
+        URL.revokeObjectURL(blobUrl)
+        
+        console.log(`Compressed image size: ${finalBlob.size / 1048576}MB`)
+      }
+
+      const imageFile = new File([finalBlob], "cropped_image.webp", { type: "image/webp" })
       const uploadResult = await uploadImage(imageFile)
       if (uploadResult && uploadResult.id) {
         setImages((prevImages) => [
@@ -339,7 +392,60 @@ export function AddPropertyForm() {
         return;
       }
 
-      const imageFile = new File([croppedImageBlob], "room_cropped_image.webp", { type: "image/webp" });
+      let finalBlob = croppedImageBlob;
+      
+      // Compress image if size exceeds 1MB (1048576 bytes)
+      if (croppedImageBlob.size > 1048576) {
+        console.log(`Room image size (${croppedImageBlob.size / 1048576}MB) exceeds 1MB, compressing...`)
+        toast.info("Compressing large image...")
+        
+        // Create an image element to draw to canvas
+        const img = new Image()
+        const blobUrl = URL.createObjectURL(croppedImageBlob)
+        
+        // Wait for image to load
+        await new Promise((resolve, reject) => {
+          img.onload = resolve
+          img.onerror = reject
+          img.src = blobUrl
+        })
+        
+        // Create canvas for compression
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d')
+        
+        // Calculate new dimensions (maintain aspect ratio)
+        let { width, height } = img
+        const aspectRatio = width / height
+        
+        // Target dimensions for compression
+        // Start with 80% of original dimensions and adjust if needed
+        width = Math.round(width * 0.8)
+        height = Math.round(height * 0.8)
+        
+        // Set canvas dimensions
+        canvas.width = width
+        canvas.height = height
+        
+        // Draw image to canvas with new dimensions
+        ctx?.drawImage(img, 0, 0, width, height)
+        
+        // Convert to blob with reduced quality
+        finalBlob = await new Promise<Blob>((resolve) => {
+          canvas.toBlob(
+            (blob) => resolve(blob as Blob),
+            'image/webp',
+            0.7 // Quality factor (0-1)
+          )
+        })
+        
+        // Clean up URL object
+        URL.revokeObjectURL(blobUrl)
+        
+        console.log(`Compressed room image size: ${finalBlob.size / 1048576}MB`)
+      }
+
+      const imageFile = new File([finalBlob], "room_cropped_image.webp", { type: "image/webp" });
       console.log(`Created File object: ${imageFile.name}, type: ${imageFile.type}, size: ${imageFile.size}`);
       
       console.log('Calling uploadRoomImage...');

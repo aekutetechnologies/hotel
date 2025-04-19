@@ -44,7 +44,8 @@ def verify_otp(request):
     user, created = HsUser.objects.get_or_create(mobile=mobile)
     
     if created:
-        user_role = 'admin'
+        user_role = 'customer'
+        UserHsPermission.objects.create(user=user, permission_group=HsPermissionGroup.objects.get(name='customer'))
     else:
         user_role = user.user_role
     

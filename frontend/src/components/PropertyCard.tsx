@@ -72,12 +72,12 @@ export function PropertyCard({ property, searchParams }: PropertyCardProps) {
     if (isHostel) {
       // Check if we're using monthly rate
       if (property.rooms && property.rooms.some(room => room.monthly_rate && parseFloat(room.monthly_rate) > 0)) {
-        return '/month';
+        return ' per month';
       } else {
-        return bookingType === 'hourly' ? '/hour' : '/night';
+        return bookingType === 'hourly' ? ' per hour' : ' per night';
       }
     } else {
-      return bookingType === 'hourly' ? '/hour' : '/night';
+      return bookingType === 'hourly' ? ' per hour' : ' per night';
     }
   };
 

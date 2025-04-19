@@ -14,14 +14,23 @@ class BookingViewSerializer(serializers.ModelSerializer):
 
 class UserViewSerializer(serializers.ModelSerializer):
     bookings = serializers.SerializerMethodField()
+    user_group = serializers.SerializerMethodField()
 
     class Meta:
         model = HsUser
-        fields = ['id', 'name', 'email', 'mobile', 'created_at', 'is_active', 'user_role', 'bookings']
+        fields = ['id', 'name', 'email', 'mobile', 'created_at', 'is_active', 'user_role', 'bookings', 'user_group']
 
     def get_bookings(self, obj):
         bookings = Booking.objects.filter(user=obj)
         return BookingViewSerializer(bookings, many=True).data
+    
+    def get_user_group(self, obj):
+        print(obj)
+        try:
+            user_group = UserHsPermission.objects.get(user=obj)
+            return user_group.permission_group.name
+        except UserHsPermission.DoesNotExist:
+            return None
 
 
 class HsPermissionSerializer(serializers.ModelSerializer):

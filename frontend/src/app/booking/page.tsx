@@ -519,7 +519,7 @@ export default function BookingPage() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Link href="/">
+                <Link href="/home?section=hotels">
                   <Button className="bg-[#B11E43] hover:bg-[#8f1836] text-white px-6 py-2 flex items-center gap-2">
                     <PackageSearch className="w-5 h-5" />
                     Explore Hotels

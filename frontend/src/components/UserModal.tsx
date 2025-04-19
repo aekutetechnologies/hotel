@@ -73,10 +73,10 @@ export function UserModal({ isOpen, onClose, onSubmit, title, initialData }: Use
             />
           </div>
           <div>
-            <Label htmlFor="phone">Phone</Label>
+            <Label htmlFor="mobile">Phone</Label>
             <Input
-              id="phone"
-              name="phone"
+              id="mobile"
+              name="mobile"
               value={user.mobile}
               onChange={handleChange}
               required

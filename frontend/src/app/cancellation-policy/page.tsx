@@ -38,7 +38,7 @@ export default function RefundPolicyPage() {
       {/* Main content */}
       <main className="flex-1 bg-gray-50 py-8">
         <div className="container mx-auto px-4">
-          <Link href="/" className="flex items-center text-gray-600 hover:text-[#A31C44] mb-6">
+          <Link href="/home?section=hotels" className="flex items-center text-gray-600 hover:text-[#A31C44] mb-6">
             <ChevronLeft className="h-4 w-4 mr-1" />
             Back to Home
           </Link>

@@ -19,7 +19,7 @@ export function AccessDenied() {
           </Link>
         </Button>
         <Button variant="neutral" asChild>
-          <Link href="/">
+          <Link href="/home?section=hotels">
             Back to Home
           </Link>
         </Button>

@@ -152,7 +152,7 @@ def booking_document_view(request, pk):
     elif request.method == 'DELETE':
         booking_document = BookingDocument.objects.get(id=pk)
         booking_document.delete()
-        return Response({'message': 'Booking document deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+        return Response({'message': 'Booking document deleted successfully.'}, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])

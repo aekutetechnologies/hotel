@@ -140,7 +140,7 @@ export function UserBookings() {
         <Card>
           <CardContent className="py-8 text-center">
             <p className="text-gray-500">You don't have any bookings yet.</p>
-            <Link href="/" className="block mt-4">
+            <Link href="/home?section=hotels" className="block mt-4">
               <Button variant="default" className="bg-[#B11E43] hover:bg-[#8f1836] text-white">
                 Explore Properties
               </Button>

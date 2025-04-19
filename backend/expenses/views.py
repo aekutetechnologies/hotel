@@ -109,19 +109,24 @@ def expense_document(request):
         # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response({'message': 'Expense document uploaded successfully.'}, status=status.HTTP_201_CREATED)
     
-@api_view(['GET', 'POST'])
+@api_view(['GET', 'POST', 'DELETE'])
 @custom_authentication_and_permissions()
 def expense_document_upload(request, pk):
-    expense = get_object_or_404(Expense, id=pk)
 
     if request.method == 'GET':
+        expense = get_object_or_404(Expense, id=pk)
         documents = ExpenseDocument.objects.filter(expense=expense)
         serializer = ExpenseDocumentViewSerializer(documents, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     elif request.method == 'POST':
+        expense = get_object_or_404(Expense, id=pk)
         user = request.user
         serializer = ExpenseDocumentSerializer(data={'expense': expense.id, 'document': request.FILES['document'], 'user': user.id})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == 'DELETE':
+        document = get_object_or_404(ExpenseDocument, id=pk)
+        document.delete()
+        return Response({'message': 'Document deleted successfully'}, status=status.HTTP_200_OK)

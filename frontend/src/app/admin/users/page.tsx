@@ -299,10 +299,9 @@ export default function Users() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Phone</TableHead>
-              {/* <TableHead>Bookings</TableHead> */}
+              <TableHead>User Group</TableHead>
               <TableHead>Joined Date</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -324,10 +323,9 @@ export default function Users() {
             ) : (
               paginatedUsers.map((user) => (
                 <TableRow key={user.id}>
-                  <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>{user.mobile}</TableCell>
-                  {/* <TableCell>{user.bookings}</TableCell> */}
+                  <TableCell>{user.user_group}</TableCell>
                   <TableCell>{new Date(user.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</TableCell>
                   <TableCell>
                     <PermissionGuard permissions={['admin:user:view']} requireAll={false}>

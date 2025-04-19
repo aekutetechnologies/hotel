@@ -8,7 +8,7 @@ import { apiDelete } from './apiClient'
  */
 export async function deleteBookingDoc(documentId: string) {
   try {
-    return await apiDelete(`booking/documents/${documentId}/`)
+    return await apiDelete(`booking/bookings/documents/${documentId}/`)
   } catch (error) {
     // Error handling is already done in apiClient
     throw error

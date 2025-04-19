@@ -215,6 +215,35 @@ export default function BookProperty() {
   const calculateTotalPrice = () => {
     let total = 0;
     
+    // Calculate duration of stay based on booking type
+    let duration = 1;
+    if (booking.checkIn && booking.bookingType !== 'monthly') {
+      if (booking.bookingType === 'hourly' && booking.checkInTime && booking.checkOutTime) {
+        // For hourly bookings, calculate hours between checkInTime and checkOutTime
+        const checkInHour = parseInt(booking.checkInTime.split(':')[0], 10);
+        const checkOutHour = parseInt(booking.checkOutTime.split(':')[0], 10);
+        
+        // Handle case where checkout time is on the next day
+        duration = checkOutHour > checkInHour 
+          ? checkOutHour - checkInHour 
+          : (24 - checkInHour) + checkOutHour;
+      } else if (booking.bookingType === 'daily' && booking.checkIn && booking.checkOut) {
+        // For daily bookings, calculate days between checkIn and checkOut
+        const checkInDate = new Date(booking.checkIn);
+        const checkOutDate = new Date(booking.checkOut);
+        const diffTime = Math.abs(checkOutDate.getTime() - checkInDate.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        duration = Math.max(1, diffDays); // At least 1 day
+      }
+    } else if (booking.bookingType === 'monthly') {
+      // For monthly bookings, use the specified number of months
+      const checkInDate = new Date(booking.checkIn);
+        const checkOutDate = new Date(booking.checkOut);
+        const diffTime = Math.abs(checkOutDate.getTime() - checkInDate.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        duration = Math.floor(Math.max(1, diffDays) / 30);
+    }
+    
     if (property && property.rooms && Array.isArray(property.rooms)) {
       property.rooms.forEach((room: any) => {
         const quantity = selectedRoomQuantities[room.id] || 0;
@@ -222,15 +251,24 @@ export default function BookProperty() {
           if (property.property_type === 'hotel') {
             const basePrice = booking.bookingType === 'hourly' 
               ? parseFloat(room.hourly_rate || '0') 
-              : parseFloat(room.daily_rate || '0');
-              const discount = parseFloat(room.discount || '0');
-              const discountedPrice = basePrice * (1 - (discount / 100));
-              total += quantity * discountedPrice;
+              : booking.bookingType === 'monthly'
+                ? parseFloat(room.monthly_rate || '0')
+                : parseFloat(room.daily_rate || '0');
+            
+            const discount = parseFloat(room.discount || '0');
+            const discountedPrice = basePrice * (1 - (discount / 100));
+            
+            // Apply duration to the price calculation
+            total += quantity * discountedPrice * duration;
           } else {
+            // For hostels with monthly pricing
             const basePrice = parseFloat(room.monthly_rate || '0');
             const discount = parseFloat(room.discount || '0');
             const discountedPrice = basePrice * (1 - (discount / 100));
-            total += quantity * discountedPrice * parseInt(booking.guests, 10);
+            
+            // For hostels, multiply by guests for shared rooms and by duration (months)
+            const guests = parseInt(booking.guests, 10) || 1;
+            total += quantity * discountedPrice * duration * (property.property_type === 'hostel' ? guests : 1);
           }
         }
       });
@@ -477,8 +515,13 @@ export default function BookProperty() {
       const userName = localStorage.getItem('name')
       
       console.log('Login successful:', { name, userId })
+      
+      // Close the dialog and refresh the page to load with authenticated state
+      setShowSignIn(false)
+      window.location.reload()
+    } else {
+      setShowSignIn(false)
     }
-    setShowSignIn(false)
   }
 
   if (!property) {
@@ -494,23 +537,6 @@ export default function BookProperty() {
   }
 
   return (
-    <>
-    {!isLoggedIn ? (
-      <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8">
-        <p className="text-center mb-4 text-base sm:text-lg">Please sign in to continue your booking</p>
-        <Button
-          className="bg-[#B11E43] text-white hover:bg-[#8f1836] w-full sm:w-auto"
-          onClick={() => setShowSignIn(true)}
-        >
-          Sign In to Book
-        </Button>
-        <LoginDialog 
-          isOpen={showSignIn}
-          onClose={() => setShowSignIn(false)}
-          onLoginSuccess={handleLoginSuccess}
-        />
-      </div>
-    ) : ( // Conditionally render booking form based on login
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-grow container mx-auto px-4 py-8">
@@ -757,18 +783,37 @@ export default function BookProperty() {
                 >
                   Modify Booking
                 </Button>
-                <Button type="submit" className="w-full bg-[#B11E43] hover:bg-[#8f1836] text-white shadow-md">
-                Confirm Booking
-              </Button>
+                
+                {isLoggedIn ? (
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-[#B11E43] hover:bg-[#8f1836] text-white shadow-md"
+                  >
+                    Confirm Booking
+                  </Button>
+                ) : (
+                  <Button 
+                    type="button" 
+                    className="w-full bg-[#B11E43] hover:bg-[#8f1836] text-white shadow-md"
+                    onClick={() => setShowSignIn(true)}
+                  >
+                    Sign in to Book
+                  </Button>
+                )}
               </div>
             </form>
           </CardContent>
         </Card>
       </main>
       <Footer sectionType="hotels" />
+      
+      {/* Login dialog */}
+      <LoginDialog 
+        isOpen={showSignIn}
+        onClose={() => setShowSignIn(false)}
+        onLoginSuccess={handleLoginSuccess}
+      />
     </div>
-    )}
-    </>
   )
 }
 

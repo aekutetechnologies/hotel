@@ -341,8 +341,17 @@ export function BookingCard({
       const newCheckoutDate = new Date(date);
       newCheckoutDate.setMonth(newCheckoutDate.getMonth() + months);
       setCheckOutDate(newCheckoutDate);
+      
+      // Update search params with the new checkout date
+      const newSearchParams = new URLSearchParams(searchParams.toString());
+      newSearchParams.set('checkOutDate', format(newCheckoutDate, 'yyyy-MM-dd'));
+      
+      // Update URL without page reload
+      const url = new URL(window.location.href);
+      url.search = newSearchParams.toString();
+      window.history.pushState({}, '', url);
     }
-  }, [date, months, bookingType]);
+  }, [date, months, bookingType, searchParams]);
 
   // Debug logs to help troubleshoot time values
   useEffect(() => {
@@ -566,13 +575,13 @@ export function BookingCard({
   };
 
   return (
-    <Card className="w-[380px] bg-white shadow-lg">
+    <Card className="w-full bg-white shadow-lg">
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
             <div className="flex items-baseline gap-2">
               <span className="text-2xl font-bold">₹{bookingType === 'hourly' ? Math.round(hourlyDiscountPrice()) : Math.round(discountedPrice)}</span>
-              <span className="text-sm text-gray-500">{getPriceLabel()}</span>
+              {/* <span className="text-sm text-gray-500">{getPriceLabel()}</span> */}
               {averageDiscount > 0 && (
                 <>
                   <span className="text-gray-500 line-through">
@@ -626,35 +635,63 @@ export function BookingCard({
                   value={checkInTime} 
                   onValueChange={(newValue) => {
                     const newCheckInHour = parseInt(newValue, 10)
+                    const formattedCheckInTime = `${newCheckInHour.toString().padStart(2, '0')}:00`
                     
                     // For today's bookings, validate against current time
                     if (date && format(date, 'yyyy-MM-dd') === formattedToday) {
                       if (newCheckInHour <= currentHour) {
                         // Auto-adjust to next available hour
                         const nextHour = currentHour + 1
-                        setCheckInTime(nextHour.toString())
+                        const formattedNextHour = `${nextHour.toString().padStart(2, '0')}:00`
                         
-                        // Also update checkout time
+                        // Also calculate adjusted checkout time
                         const newCheckoutHour = (nextHour + 2) % 24
-                        setCheckOutTime(newCheckoutHour.toString())
+                        const formattedCheckoutHour = `${newCheckoutHour.toString().padStart(2, '0')}:00`
                         
-                        // Update search parameters with the updated time
-                        setTimeout(() => updateDateTimeSearchParams(), 0);
+                        // Immediately update search params with properly formatted times
+                        const newSearchParams = new URLSearchParams(searchParams.toString())
+                        newSearchParams.set('checkInTime', formattedNextHour)
+                        newSearchParams.set('checkOutTime', formattedCheckoutHour)
+                        
+                        // Update URL
+                        const url = new URL(window.location.href)
+                        url.search = newSearchParams.toString()
+                        window.history.pushState({}, '', url)
+                        
+                        // Now update state
+                        setCheckInTime(nextHour.toString())
+                        setCheckOutTime(newCheckoutHour.toString())
                         return
                       }
                     }
                     
-                    setCheckInTime(newValue)
-                    
                     // If checkout time needs adjustment based on new checkin time
-                    if (parseInt(checkOutTime) <= newCheckInHour) {
+                    let adjustedCheckOutTime = checkOutTime
+                    const currentCheckOutHour = parseInt(checkOutTime, 10)
+                    
+                    if (currentCheckOutHour <= newCheckInHour) {
                       // Set checkout to be 2 hours after checkin
-                      const newCheckoutHour = (newCheckInHour + 2) % 24
-                      setCheckOutTime(newCheckoutHour.toString())
+                      adjustedCheckOutTime = ((newCheckInHour + 2) % 24).toString()
                     }
                     
-                    // Update search parameters with the new time
-                    setTimeout(() => updateDateTimeSearchParams(), 0);
+                    // Format the checkout time
+                    const formattedCheckOutTime = `${adjustedCheckOutTime.padStart(2, '0')}:00`
+                    
+                    // Immediately update search params with properly formatted times
+                    const newSearchParams = new URLSearchParams(searchParams.toString())
+                    newSearchParams.set('checkInTime', formattedCheckInTime)
+                    newSearchParams.set('checkOutTime', formattedCheckOutTime)
+                    
+                    // Update URL
+                    const url = new URL(window.location.href)
+                    url.search = newSearchParams.toString()
+                    window.history.pushState({}, '', url)
+                    
+                    // Now update state
+                    setCheckInTime(newValue)
+                    if (adjustedCheckOutTime !== checkOutTime) {
+                      setCheckOutTime(adjustedCheckOutTime)
+                    }
                   }}
                 >
                   <SelectTrigger>
@@ -678,16 +715,26 @@ export function BookingCard({
                   onValueChange={(newValue) => {
                     const newCheckOutHour = parseInt(newValue, 10)
                     const checkInHour = parseInt(checkInTime, 10)
+                    const formattedCheckOutTime = `${newCheckOutHour.toString().padStart(2, '0')}:00`
                     
                     // For today's bookings, validate against current time
                     if (date && format(date, 'yyyy-MM-dd') === formattedToday) {
                       if (newCheckOutHour <= currentHour) {
                         // Auto-adjust to a valid time
                         const validHour = Math.max(currentHour + 2, checkInHour + 2)
-                        setCheckOutTime(validHour.toString())
+                        const formattedValidHour = `${validHour.toString().padStart(2, '0')}:00`
                         
-                        // Update search parameters with the updated time
-                        setTimeout(() => updateDateTimeSearchParams(), 0);
+                        // Immediately update search params with properly formatted time
+                        const newSearchParams = new URLSearchParams(searchParams.toString())
+                        newSearchParams.set('checkOutTime', formattedValidHour)
+                        
+                        // Update URL
+                        const url = new URL(window.location.href)
+                        url.search = newSearchParams.toString()
+                        window.history.pushState({}, '', url)
+                        
+                        // Now update state
+                        setCheckOutTime(validHour.toString())
                         return
                       }
                     }
@@ -697,18 +744,34 @@ export function BookingCard({
                       if (newCheckOutHour <= checkInHour) {
                         // Set checkout to be 2 hours after checkin
                         const validCheckoutHour = (checkInHour + 2) % 24
-                        setCheckOutTime(validCheckoutHour.toString())
+                        const formattedValidHour = `${validCheckoutHour.toString().padStart(2, '0')}:00`
                         
-                        // Update search parameters with the updated time
-                        setTimeout(() => updateDateTimeSearchParams(), 0);
+                        // Immediately update search params with properly formatted time
+                        const newSearchParams = new URLSearchParams(searchParams.toString())
+                        newSearchParams.set('checkOutTime', formattedValidHour)
+                        
+                        // Update URL
+                        const url = new URL(window.location.href)
+                        url.search = newSearchParams.toString()
+                        window.history.pushState({}, '', url)
+                        
+                        // Now update state
+                        setCheckOutTime(validCheckoutHour.toString())
                         return
                       }
                     }
                     
-                    setCheckOutTime(newValue)
+                    // Immediately update search params with properly formatted time
+                    const newSearchParams = new URLSearchParams(searchParams.toString())
+                    newSearchParams.set('checkOutTime', formattedCheckOutTime)
                     
-                    // Update search parameters with the new time
-                    setTimeout(() => updateDateTimeSearchParams(), 0);
+                    // Update URL
+                    const url = new URL(window.location.href)
+                    url.search = newSearchParams.toString()
+                    window.history.pushState({}, '', url)
+                    
+                    // Now update state
+                    setCheckOutTime(newValue)
                   }}
                 >
                   <SelectTrigger>
@@ -761,33 +824,20 @@ export function BookingCard({
           ) : (
             <div>
               <Label>Auto Check-out Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="neutral"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !checkOut && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarDays className="mr-2 h-4 w-4" />
-                    {checkOut ? format(checkOut, "PPP") : <span>Pick a date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <CalendarWithAutoClose
-                    selected={checkOut}
-                    onSelect={handleCheckOutDateChange}
-                    initialFocus
-                    disabled={(date: Date) => {
-                      // Disable dates before checkin date or today
-                      return date < new Date(formattedToday) || (date && date < new Date(formattedToday))
-                    }}
-                    // Set the default month to the check-in date month if it's in the future
-                    defaultMonth={date && date > new Date() ? date : undefined}
-                  />
-                </PopoverContent>
-              </Popover>
+              <Button
+                variant="neutral"
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !checkOut && "text-muted-foreground"
+                )}
+                disabled
+              >
+                <CalendarDays className="mr-2 h-4 w-4" />
+                {checkOut ? format(checkOut, "PPP") : <span>Date not set</span>}
+              </Button>
+              <div className="text-xs text-gray-500 mt-1">
+                Auto-calculated based on check-in date and number of months
+              </div>
             </div>
           )}
 
@@ -853,11 +903,29 @@ export function BookingCard({
                   const newSearchParams = new URLSearchParams(searchParams.toString());
                   newSearchParams.set('months', newValue.toString());
                   
+                  // Update URL
                   const url = new URL(window.location.href);
                   url.search = newSearchParams.toString();
                   window.history.pushState({}, '', url);
                   
+                  // Update local state
                   setMonths(newValue);
+                  
+                  // Immediately update checkout date when months change
+                  if (date) {
+                    const newCheckoutDate = new Date(date);
+                    newCheckoutDate.setMonth(newCheckoutDate.getMonth() + newValue);
+                    
+                    // Update checkout date in search params
+                    newSearchParams.set('checkOutDate', format(newCheckoutDate, 'yyyy-MM-dd'));
+                    
+                    // Update URL again with the new checkout date
+                    url.search = newSearchParams.toString();
+                    window.history.pushState({}, '', url);
+                    
+                    // Update checkout date state
+                    setCheckOutDate(newCheckoutDate);
+                  }
                 }}
                 min={1}
                 max={12}

@@ -975,7 +975,7 @@ export default function PropertyDetails() {
 
           {/* Right Column - Booking Card */}
           <div className="lg:col-span-1">
-            <div className="lg:sticky lg:top-4">
+            <div className="lg:sticky lg:top-4 w-full">
               <BookingCard
                 bookingType={bookingType}
                 property={property}

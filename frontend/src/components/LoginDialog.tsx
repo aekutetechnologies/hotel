@@ -121,13 +121,13 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
         localStorage.setItem('role', response.user_role)
         localStorage.setItem('userId', String(response.id))
         localStorage.setItem('name', response.name)
+        localStorage.setItem('permissions', String(response.permissions))
 
         const profileResponse = await getProfile()
         if (!profileResponse.name || !profileResponse.email) {
           setView('userInfo')
           return;
         }
-        localStorage.setItem('permissions', String(response.permissions))
         onLoginSuccess(response.name)
         onClose()
         resetDialogState()

@@ -4,6 +4,7 @@ export interface User {
   email: string;
   mobile: string;
   bookings: number;
+  user_group: string;
   created_at: string;
   is_active: boolean;
 } 

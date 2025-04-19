@@ -101,7 +101,26 @@ def expense_document(request):
         serializer = ExpenseDocumentViewSerializer(documents, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     elif request.method == 'POST':
-        serializer = ExpenseDocumentSerializer(data=request.data)
+
+        # serializer = ExpenseDocumentSerializer(data=request.data)
+        # if serializer.is_valid():
+        #     serializer.save()
+        #     return Response(serializer.data, status=status.HTTP_201_CREATED)
+        # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'message': 'Expense document uploaded successfully.'}, status=status.HTTP_201_CREATED)
+    
+@api_view(['GET', 'POST'])
+@custom_authentication_and_permissions()
+def expense_document_upload(request, pk):
+    expense = get_object_or_404(Expense, id=pk)
+
+    if request.method == 'GET':
+        documents = ExpenseDocument.objects.filter(expense=expense)
+        serializer = ExpenseDocumentViewSerializer(documents, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    elif request.method == 'POST':
+        user = request.user
+        serializer = ExpenseDocumentSerializer(data={'expense': expense.id, 'document': request.FILES['document'], 'user': user.id})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)

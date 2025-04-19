@@ -1,5 +1,5 @@
 import { apiClient } from './apiClient'
-import { type ExpenseDocument } from '@/types/expense'
+import { type UserDocument } from '@/types/user'
 
 interface UploadResponse {
   success: boolean
@@ -15,13 +15,13 @@ interface UploadResponse {
  * @param formData FormData containing the document file and expense ID
  * @returns Promise with upload status and document data
  */
-export async function uploadExpenseDoc(formData: FormData): Promise<UploadResponse> {
+export async function uploadUserDoc(formData: FormData): Promise<UploadResponse> {
   try {
-    const expenseId = formData.get('expense_id')?.toString() || ''
+    const userId = formData.get('user_id')?.toString() || ''
     
     // When using FormData, let the browser set the Content-Type header automatically
-    const data = await apiClient<ExpenseDocument>(
-      `expenses/expense-document/${expenseId}/`,
+    const data = await apiClient<UserDocument>(
+      `users/user-document/${userId}/`,
       {
         method: 'POST',
         body: formData,

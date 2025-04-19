@@ -27,13 +27,19 @@ class ExpenseDocumentSerializer(serializers.ModelSerializer):
         model = ExpenseDocument
         fields = '__all__'
 
+    def create(self, validated_data):
+        print(validated_data)
+        expense_document = ExpenseDocument.objects.create(**validated_data)
+        expense_document.save()
+        return expense_document
+
 
 class ExpenseDocumentViewSerializer(serializers.ModelSerializer):
     document = serializers.SerializerMethodField()
 
     class Meta:
         model = ExpenseDocument
-        fields = ['id', 'document']
-
+        fields = '__all__'
+    
     def get_document(self, obj):
-        return f"{settings.MEDIA_URL}{obj.document.url}"
+        return settings.WEBSITE_URL + obj.document.url

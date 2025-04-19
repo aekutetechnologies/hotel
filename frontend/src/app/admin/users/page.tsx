@@ -11,9 +11,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Search, Plus, Edit, FileText, User as UserIcon, House } from 'lucide-react'
+import { Search, Plus, Edit, FileText, User as UserIcon, House, Upload, Trash2 } from 'lucide-react'
 import { UserModal } from '@/components/UserModal'
 import { DocumentModal } from '@/components/DocumentModal'
+import { GenericModal } from '@/components/GenericModal'
 import { UserPropertiesModal } from '@/components/UserPropertiesModal'
 import {
   Pagination,
@@ -27,9 +28,12 @@ import {
 import { fetchUsers } from '@/lib/api/fetchUsers'
 import { toast } from 'react-toastify'
 import { Spinner } from '@/components/ui/spinner'
-import { type User } from '@/types/user'
+import { type User, type UserDocument } from '@/types/user'
 import { fetchGroupRoles } from '@/lib/api/fetchGroupRoles'
 import { updateUserRole } from '@/lib/api/updateUserRole'
+import { listUserDoc } from '@/lib/api/listUserDocs'
+import { uploadUserDoc } from '@/lib/api/uploadUserDocument'
+import { deleteUserDoc } from '@/lib/api/deleteUserDoc'
 import { UserGroupModal } from '@/components/UserGroupModal'
 import { GroupRole } from '@/types/groupRole'
 import {
@@ -47,11 +51,15 @@ export default function Users() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDocumentModalOpen, setIsDocumentModalOpen] = useState(false)
+  const [isDocumentListModalOpen, setIsDocumentListModalOpen] = useState(false)
   const [isPropertiesModalOpen, setIsPropertiesModalOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [users, setUsers] = useState<User[]>([])
   const [isLoadingUsers, setIsLoadingUsers] = useState(false)
+  const [isLoadingDocuments, setIsLoadingDocuments] = useState(false)
+  const [isLoadingUpload, setIsLoadingUpload] = useState(false)
+  const [documents, setDocuments] = useState<UserDocument[]>([])
   const [isUserRoleModalOpen, setIsUserRoleModalOpen] = useState(false)
   const [groups, setGroups] = useState<GroupRole[]>([])
   const itemsPerPage = 15
@@ -106,6 +114,26 @@ export default function Users() {
   useEffect(() => {
     fetchUsersData()
   }, [fetchUsersData])
+  
+  const fetchDocuments = useCallback(async (userId: number) => {
+    setIsLoadingDocuments(true)
+    try {
+      const fetchedDocuments = await listUserDoc(userId.toString())
+      setDocuments(fetchedDocuments)
+    } catch (error: any) {
+      console.error('Error fetching documents:', error)
+      toast.error(`Failed to fetch documents: ${error.message}`)
+      setDocuments([])
+    } finally {
+      setIsLoadingDocuments(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (isDocumentListModalOpen && selectedUser) {
+      fetchDocuments(selectedUser.id)
+    }
+  }, [isDocumentListModalOpen, selectedUser, fetchDocuments])
 
   const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -168,9 +196,40 @@ export default function Users() {
     console.log(`Changing status of user ${userId} to ${newStatus}`)
   }
 
-  const handleDocumentUpload = (userId: any, file: any) => {
-    console.log(`Uploading document for user ${userId}:`, file)
-    setIsDocumentModalOpen(false)
+  const handleDocumentUpload = async (userId: number, file: File) => {
+    setIsLoadingUpload(true)
+    try {
+      const formData = new FormData();
+      formData.append('document', file);
+      formData.append('user_id', userId.toString());
+
+      const response = await uploadUserDoc(formData);
+      if (response.success) {
+        toast.success('Document uploaded successfully!')
+        setIsDocumentModalOpen(false)
+        fetchUsersData() // Refresh data after upload
+      } else {
+        toast.error('Failed to upload document.');
+      }
+    } catch (error: any) {
+      console.error('Document upload failed:', error);
+      toast.error(error.message || 'Failed to upload document.');
+    } finally {
+      setIsLoadingUpload(false)
+    }
+  }
+
+  const handleDeleteDocument = async (documentId: number) => {
+    try {
+      await deleteUserDoc(documentId.toString())
+      toast.success('Document deleted successfully!')
+      if (selectedUser) {
+        fetchDocuments(selectedUser.id)
+      }
+    } catch (error: any) {
+      console.error('Error deleting document:', error)
+      toast.error(`Failed to delete document: ${error.message}`)
+    }
   }
 
   const handleUserRoleSubmit = async (userId: any, groupId: any) => {
@@ -333,11 +392,29 @@ export default function Users() {
                                 setSelectedUser(user)
                                 setIsDocumentModalOpen(true)
                               }}>
+                                <Upload className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Upload document</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </PermissionGuard>
+
+                      <PermissionGuard permissions={['admin:user:view']} requireAll={false}>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="neutral" size="icon" onClick={() => {
+                                setSelectedUser(user)
+                                setIsDocumentListModalOpen(true)
+                              }}>
                                 <FileText className="h-4 w-4" />
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>Manage documents</p>
+                              <p>View documents</p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
@@ -441,6 +518,59 @@ export default function Users() {
           onUpload={(file) => handleDocumentUpload(selectedUser.id, file)}
           title="Upload Document"
         />
+      )}
+
+      {selectedUser && (
+        <GenericModal
+          isOpen={isDocumentListModalOpen}
+          onClose={() => {
+            setIsDocumentListModalOpen(false)
+            setDocuments([])
+          }}
+          title="User Documents"
+          description={`Documents for user ${selectedUser.name}`}
+        >
+          <div className="max-h-[60vh] overflow-y-auto">
+            {isLoadingDocuments ? (
+              <div className="text-center py-4">
+                <Spinner />
+              </div>
+            ) : documents.length === 0 ? (
+              <p className="text-gray-500 text-center">No documents found for this user</p>
+            ) : (
+              <div className="space-y-4">
+                {documents.map((document) => (
+                  <div key={document.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <FileText className="h-5 w-5 text-gray-600" />
+                      <div>
+                        <p className="font-medium">{document.document.split('/').pop()}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={document.document}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-md"
+                      >
+                        View
+                      </a>
+                      <Button
+                        variant="neutral"
+                        size="icon"
+                        onClick={() => handleDeleteDocument(document.id)}
+                        className="text-red-600 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </GenericModal>
       )}
 
       {selectedUser && (

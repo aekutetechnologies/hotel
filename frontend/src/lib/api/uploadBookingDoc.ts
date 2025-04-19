@@ -16,10 +16,8 @@ export async function uploadBookingDoc(bookingId: string, bookingDoc: File): Pro
     // Custom API call for FormData
     return await apiClient(`booking/bookings/${bookingId}/documents/`, {
       method: 'POST',
-      headers: {
-        // Don't set Content-Type for FormData - browser will set it with boundary
-      },
-      body: formData
+      body: formData,
+      isFormData: true // Use FormData flag to prevent Content-Type header and JSON.stringify
     })
   } catch (error) {
     // Error handling is already done in apiClient

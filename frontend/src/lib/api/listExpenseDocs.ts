@@ -9,7 +9,7 @@ import { type ExpenseDocument } from '@/types/expense'
  */
 export async function listExpenseDoc(expenseId: string): Promise<ExpenseDocument[]> {
   try {
-    return await apiGet<ExpenseDocument[]>(`expenses/expense/${expenseId}/documents/`)
+    return await apiGet<ExpenseDocument[]>(`expenses/expense-document/${expenseId}/`)
   } catch (error) {
     // Error handling is already done in apiClient
     return []

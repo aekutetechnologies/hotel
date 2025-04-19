@@ -35,7 +35,7 @@ def offer_detail(request, pk):
         serializer = OfferViewSerializer(offer)
         return Response(serializer.data)
     elif request.method == 'PUT':
-        serializer = OfferSerializer(offer, data=request.data)
+        serializer = OfferSerializer(offer, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)

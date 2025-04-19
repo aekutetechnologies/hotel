@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -62,6 +62,7 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
   const [selectedProperty, setSelectedProperty] = useState<ExtendedProperty | null>(null)
   const [selectedRooms, setSelectedRooms] = useState<Map<string, any>>(new Map())
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null)
+  const checkOutInputRef = useRef<HTMLInputElement>(null)
 
   const [booking, setBooking] = useState<{
     propertyName: string
@@ -264,14 +265,56 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
       (sum, room) => sum + (room.quantity || 0), 0
     )
     
+    // Adjust guest count based on room count and property type
+    const isHostelProperty = selectedProperty?.property_type === 'hostel'
+    const maxGuestsPerRoom = isHostelProperty ? 1 : 3
+    const totalMaxGuests = totalRooms * maxGuestsPerRoom
+    
+    // Calculate new guest count, ensuring it doesn't exceed room capacity
+    // When decreasing rooms, cap guests to new room capacity
+    const currentGuests = parseInt(booking.guests, 10) || 0
+    const newGuestCount = Math.min(currentGuests, totalMaxGuests)
+    
     // Force price recalculation by updating booking state
     setBooking(prev => {
       const newBooking = { 
         ...prev, 
-        numberOfRooms: totalRooms 
+        numberOfRooms: totalRooms,
+        guests: totalMaxGuests > 0 ? newGuestCount.toString() : '1' // Ensure min 1 guest
       }
       return newBooking
     })
+  }
+  
+  // Add a function to handle guest count changes with validation
+  const handleGuestChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target
+    const isHostelProperty = selectedProperty?.property_type === 'hostel'
+    const maxGuestsPerRoom = isHostelProperty ? 1 : 3
+    const totalRooms = booking.numberOfRooms || 0
+    const maxGuests = totalRooms * maxGuestsPerRoom
+    
+    // Parse input value, default to 1 if invalid
+    let guestCount = parseInt(value, 10)
+    if (isNaN(guestCount) || guestCount < 1) {
+      guestCount = 1
+    }
+    
+    // Ensure guest count doesn't exceed capacity
+    const validatedGuestCount = Math.min(guestCount, maxGuests)
+    
+    // Auto-increase rooms if needed
+    let updatedRoomCount = totalRooms
+    if (guestCount > maxGuests && guestCount <= 100) { // Set a reasonable upper limit
+      // Calculate how many rooms we need for the requested guests
+      updatedRoomCount = Math.ceil(guestCount / maxGuestsPerRoom)
+    }
+    
+    setBooking(prev => ({
+      ...prev,
+      guests: validatedGuestCount.toString(),
+      numberOfRooms: Math.max(updatedRoomCount, totalRooms) // Never decrease rooms here
+    }))
   }
   
   const formatTime = (hour: number | string) => {
@@ -483,6 +526,82 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
     }
   }, [selectedProperty, initialData, selectedOffer]);
 
+  // Function to handle date changes with proper validation
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    
+    if (name === 'checkIn') {
+      const newCheckInDate = value
+      
+      // For monthly booking, set checkout date to be after selected months
+      if (booking.bookingTime === 'monthly' && booking.months > 0) {
+        const checkInDate = new Date(newCheckInDate)
+        const checkOutDate = new Date(checkInDate)
+        checkOutDate.setMonth(checkOutDate.getMonth() + booking.months)
+        
+        setBooking(prev => ({
+          ...prev,
+          checkIn: newCheckInDate,
+          checkOut: checkOutDate.toISOString().split('T')[0]
+        }))
+      } else {
+        // For non-monthly bookings, set checkout to at least the next day
+        const checkInDate = new Date(newCheckInDate)
+        if (booking.bookingTime !== 'hourly') {
+          // For daily bookings, set checkout to next day by default
+          const checkOutDate = new Date(checkInDate)
+          checkOutDate.setDate(checkOutDate.getDate() + 1)
+          
+          setBooking(prev => ({
+            ...prev,
+            checkIn: newCheckInDate,
+            checkOut: checkOutDate.toISOString().split('T')[0]
+          }))
+        } else {
+          // For hourly bookings, keep same day
+          setBooking(prev => ({
+            ...prev,
+            checkIn: newCheckInDate,
+            checkOut: newCheckInDate
+          }))
+        }
+      }
+    } else {
+      // For checkout date, just update the value
+      handleChange(e)
+    }
+  }
+
+  // Get today as ISO string (YYYY-MM-DD)
+  const today = new Date().toISOString().split('T')[0]
+  
+  // Function to adjust checkout date when booking time or months changes
+  useEffect(() => {
+    if (booking.checkIn && booking.bookingTime) {
+      const checkInDate = new Date(booking.checkIn)
+      
+      if (booking.bookingTime === 'monthly' && booking.months > 0) {
+        // Calculate checkout based on number of months
+        const checkOutDate = new Date(checkInDate)
+        checkOutDate.setMonth(checkOutDate.getMonth() + booking.months)
+        
+        setBooking(prev => ({
+          ...prev,
+          checkOut: checkOutDate.toISOString().split('T')[0]
+        }))
+      } else if (booking.bookingTime === 'daily' && booking.checkIn === booking.checkOut) {
+        // For daily booking, ensure checkout is at least next day
+        const checkOutDate = new Date(checkInDate)
+        checkOutDate.setDate(checkOutDate.getDate() + 1)
+        
+        setBooking(prev => ({
+          ...prev,
+          checkOut: checkOutDate.toISOString().split('T')[0]
+        }))
+      }
+    }
+  }, [booking.bookingTime, booking.months, booking.checkIn])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
@@ -645,7 +764,8 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
                     type="date"
                     className="opacity-0 absolute inset-0 w-full h-full cursor-pointer z-10"
                     value={booking.checkIn}
-                    onChange={handleChange}
+                    onChange={handleDateChange}
+                    min={today}
                     required
                   />
                   <div className="flex items-center justify-between w-full pr-2 border rounded-md px-3 py-2">
@@ -661,11 +781,11 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
                     id="checkOut"
                     name="checkOut"
                     type="date"
+                    ref={checkOutInputRef}
                     className="opacity-0 absolute inset-0 w-full h-full cursor-pointer z-10"
                     value={booking.checkOut}
-                    onChange={(e) => {
-                      handleChange(e)
-                    }}
+                    onChange={handleChange}
+                    min={booking.checkIn || today}
                     required
                   />
                   <div className="flex items-center justify-between w-full pr-2 border rounded-md px-3 py-2">
@@ -733,9 +853,7 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
                   name="months"
                   type="number" 
                   value={booking.months}
-                  onChange={(e) => {
-                    handleChange(e)
-                  }}
+                  onChange={handleChange}
                   min={1}
                   max={12}
                   className="mt-1"
@@ -750,13 +868,19 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
                 name="guests"
                 type="number"
                 value={booking.guests}
-                onChange={handleChange}
+                onChange={handleGuestChange}
                 min="1"
+                max={booking.numberOfRooms * (isHostel ? 1 : 3)}
                 required
               />
-              {!isHostel && selectedProperty && (
-                <p className="text-xs text-gray-500 mt-1">Maximum 3 guests per room</p>
-              )}
+              <p className="text-xs text-gray-500 mt-1">
+                {isHostel ? 
+                  'Maximum 1 guest per room' : 
+                  'Maximum 3 guests per room'} 
+                ({booking.numberOfRooms > 0 ? 
+                  `Current capacity: ${booking.numberOfRooms * (isHostel ? 1 : 3)} guests` : 
+                  'Select rooms to increase capacity'})
+              </p>
             </div>
             
             {/* Room Selection */}

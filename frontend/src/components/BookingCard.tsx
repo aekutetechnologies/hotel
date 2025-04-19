@@ -403,6 +403,8 @@ export function BookingCard({
           duration = 1;
         }
 
+        console.log("duration", duration, basePrice, quantity, bookingType)
+
         roomPrice = basePrice * duration * quantity;
       }
       
@@ -413,7 +415,6 @@ export function BookingCard({
   }
 
   const totalPrice = calculatePrice()
-  const taxes = totalPrice * 0.18 // 18% GST
   
   // Calculate average discount from all selected rooms
   const calculateAverageDiscount = () => {
@@ -432,7 +433,23 @@ export function BookingCard({
   };
   
   const averageDiscount = calculateAverageDiscount();
+  const hourlyDiscountPrice = () => {
+    const selectedRooms = Array.from(selectedRoomMap.values()).filter(room => room.quantity > 0);
+    if (selectedRooms.length === 0) return 0;
+
+    let totalPrice = 0;
+
+    for (const room of selectedRooms) {
+      const discount = room.discount ? parseFloat(String(room.discount)) : 0;
+      totalPrice += room.hourly_rate - (room.hourly_rate * discount / 100);
+    }
+
+    return totalPrice;
+  }
+    
+    
   const discountedPrice = totalPrice - (totalPrice * averageDiscount / 100)
+  const taxes = discountedPrice * 0.18 // 18% GST
   
   // Safely handle offer discount
   const offerDiscount = selectedOffer ? (totalPrice * parseFloat(selectedOffer.offer.discount_percentage)) / 100 : 0
@@ -554,7 +571,7 @@ export function BookingCard({
         <div className="flex justify-between items-start">
           <div>
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold">₹{Math.round(discountedPrice)}</span>
+              <span className="text-2xl font-bold">₹{bookingType === 'hourly' ? Math.round(hourlyDiscountPrice()) : Math.round(discountedPrice)}</span>
               <span className="text-sm text-gray-500">{getPriceLabel()}</span>
               {averageDiscount > 0 && (
                 <>
@@ -800,7 +817,8 @@ export function BookingCard({
                           const maxGuests = getRoomCountFromSearchParams() * 3;
                           handleGuestsChange(Math.min(newValue, maxGuests));
                         } else {
-                          handleGuestsChange(newValue);
+                          const maxGuests = getRoomCountFromSearchParams() * 1;
+                          handleGuestsChange(Math.min(newValue, maxGuests));
                         }
                       }}
                       min={1}
@@ -810,6 +828,11 @@ export function BookingCard({
                     {!isHostel && (
                       <div className="absolute left-0 -bottom-5 text-xs text-gray-500">
                         Max 3 guests per room
+                      </div>
+                    )}
+                    {isHostel && (
+                      <div className="absolute left-0 -bottom-5 text-xs text-gray-500">
+                        Max 1 guests per room
                       </div>
                     )}
                   </div>
@@ -927,23 +950,29 @@ export function BookingCard({
             <div className="flex justify-between">
               <span>Room Charges</span>
               <span>₹{bookingType === 'monthly' 
-                ? (totalPrice * months).toFixed(2)
+                ? (totalPrice * months * guests).toFixed(2)
                 : totalPrice.toFixed(2)}</span>
             </div>
             {averageDiscount > 0 && (
               <div className="flex justify-between text-green-600">
                 <span>Discount</span>
-                <span>-₹{(totalPrice * averageDiscount / 100 * months).toFixed(2)}</span>
+                <span>-₹{bookingType === 'monthly' 
+                  ? (totalPrice * averageDiscount / 100 * months * guests).toFixed(2)
+                  : (totalPrice * averageDiscount / 100).toFixed(2)}</span>
               </div>
             )}
             <div className="flex justify-between">
               <span>Taxes</span>
-              <span>₹{(taxes * months).toFixed(2)}</span>
+              <span>₹{bookingType === 'monthly' 
+                ? (taxes * months * guests).toFixed(2)
+                : taxes.toFixed(2)}</span>
             </div>
             <Separator />
             <div className="flex justify-between font-semibold">
               <span>Total Price</span>
-              <span>₹{(finalPrice * months).toFixed(2)}</span>
+              <span>₹{bookingType === 'monthly' 
+                ? (finalPrice * months * guests).toFixed(2)
+                : finalPrice.toFixed(2)}</span>
             </div>
           </div>
         </div>

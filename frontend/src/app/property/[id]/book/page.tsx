@@ -219,12 +219,19 @@ export default function BookProperty() {
       property.rooms.forEach((room: any) => {
         const quantity = selectedRoomQuantities[room.id] || 0;
         if (quantity > 0) {
-          const basePrice = booking.bookingType === 'hourly' 
-            ? parseFloat(room.hourly_rate || '0') 
-            : parseFloat(room.daily_rate || '0');
-          const discount = parseFloat(room.discount || '0');
-          const discountedPrice = basePrice * (1 - (discount / 100));
-          total += quantity * discountedPrice;
+          if (property.property_type === 'hotel') {
+            const basePrice = booking.bookingType === 'hourly' 
+              ? parseFloat(room.hourly_rate || '0') 
+              : parseFloat(room.daily_rate || '0');
+              const discount = parseFloat(room.discount || '0');
+              const discountedPrice = basePrice * (1 - (discount / 100));
+              total += quantity * discountedPrice;
+          } else {
+            const basePrice = parseFloat(room.monthly_rate || '0');
+            const discount = parseFloat(room.discount || '0');
+            const discountedPrice = basePrice * (1 - (discount / 100));
+            total += quantity * discountedPrice * parseInt(booking.guests, 10);
+          }
         }
       });
     }

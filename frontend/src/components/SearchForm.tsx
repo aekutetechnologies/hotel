@@ -186,7 +186,7 @@ export function SearchForm({ sectionType }: SearchFormProps) {
       const maxGuests = rooms * 3;
       setGuests((prev) => prev < maxGuests ? prev + 1 : maxGuests);
     } else {
-      setGuests((prev) => prev < 10 ? prev + 1 : 10);
+      setGuests((prev) => prev < 1 ? prev + 1 : 1);
     }
   }
   
@@ -756,8 +756,12 @@ export function SearchForm({ sectionType }: SearchFormProps) {
 
         {/* Guests */}
         <div className="flex items-center flex-1 min-w-full md:min-w-[80px] p-2 border-b md:border-b-0 md:border-r border-gray-200 relative group">
-          <div className="flex flex-col flex-grow">
-            <label className="text-xs text-gray-500 font-medium">
+          <div className="flex flex-col flex-grow" >
+            <label className={`text-xs transition-all duration-200 ${
+              guests || isFocused
+                ? "text-gray-500"
+                : "text-gray-400"
+            }`}>
               Guests 
             </label>
             <div className="flex items-center relative">
@@ -790,6 +794,12 @@ export function SearchForm({ sectionType }: SearchFormProps) {
             <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black text-white text-xs p-2 rounded pointer-events-none -bottom-12 left-0 whitespace-nowrap z-20">
               Maximum 5 rooms, 3 guests per room
               <div className="absolute -top-1 left-4 transform rotate-45 w-2 h-2 bg-black"></div>
+            </div>
+          )}
+          
+          {sectionType === "hostels" && (
+            <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black text-white text-xs p-2 rounded pointer-events-none -bottom-12 left-0 whitespace-nowrap z-20">
+              Maximum 1 guest per room
             </div>
           )}
         </div>

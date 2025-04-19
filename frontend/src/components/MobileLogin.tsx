@@ -31,7 +31,7 @@ export function MobileLogin({ onLoginSuccess }: MobileLoginProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Login</CardTitle>
+        <CardTitle>Login / Signup</CardTitle>
         <CardDescription>Enter your mobile number to continue booking</CardDescription>
       </CardHeader>
       <CardContent>

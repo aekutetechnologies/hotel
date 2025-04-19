@@ -783,6 +783,12 @@ export default function PropertyDetails() {
                                         {room.smoking ? 'Smoking allowed' : 'Non-smoking'}
                                       </div>
                                     )}
+                                    {isHostel && room.security_deposit !== undefined && (
+                                      <div className="flex items-center gap-2">
+                                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                        {room.security_deposit ? 'Security Deposit' : 'No Security Deposit'}
+                                      </div>
+                                    )}
                                     {room.amenities && room.amenities.length > 0 && room.amenities.slice(0, 6).map((amenity: CustomAmenity, index: number) => (
                                       <div key={`room-amenity-item-${amenity.id || index}`} className="flex items-center gap-2">
                                         <CheckCircle2 className="h-4 w-4 text-green-600" />
@@ -791,14 +797,6 @@ export default function PropertyDetails() {
                                     ))}
                                   </div>
                                 </div>
-                              </div>
-                              <div className="flex flex-col items-start sm:items-end gap-1 text-sm text-gray-700 mt-2 sm:mt-0">
-                                {isHostel && (
-                                  <div className="flex flex-col items-start sm:items-end">
-                                    {room.security_deposit !== undefined && <div><span className="text-black-900 font-semibold">Security Deposit:</span> <span className="text-gray-700">₹{room.security_deposit}</span></div>}
-                                    {(room as ExtendedRoom).security !== undefined && <div><span className="text-black-900 font-semibold">Security Required:</span> <span className="text-gray-700">{(room as ExtendedRoom).security ? 'Yes' : 'No'}</span></div>}
-                                  </div>
-                                )}
                               </div>
                             </div>
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between">

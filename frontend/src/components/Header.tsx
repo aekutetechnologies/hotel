@@ -152,7 +152,7 @@ export function Header() {
                   onClick={() => { console.log("Login/Signup button clicked"); setIsLoginOpen(true); }}
                 >
                   <LogIn className="w-5 h-5 mr-2" />
-                  Login
+                  Login / Signup
                 </NewButton>
               )}
             </div>
@@ -226,7 +226,7 @@ export function Header() {
                       setIsMobileMenuOpen(false);
                     }}
                   >
-                    Login
+                    Login / Signup
                   </NewButton>
                 )}
               </div>

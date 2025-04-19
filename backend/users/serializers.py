@@ -1,7 +1,7 @@
 from rest_framework import serializers
-from .models import HsUser, HsPermission, HsPermissionGroup, UserHsPermission
+from .models import HsUser, HsPermission, HsPermissionGroup, UserHsPermission, UserDocument
 from booking.models import Booking
-
+from django.conf import settings
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = HsUser
@@ -40,3 +40,21 @@ class UserHsPermissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserHsPermission
         fields = ['id', 'user', 'permission_group', 'created_at', 'is_active']
+
+class UserDocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserDocument
+        fields = '__all__'
+
+    def create(self, validated_data):
+        user_document = UserDocument.objects.create(**validated_data)
+        user_document.save()
+        return user_document
+        
+class UserDocumentViewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserDocument
+        fields = '__all__'
+
+    def get_document(self, obj):
+        return settings.WEBSITE_URL + obj.document.url

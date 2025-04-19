@@ -8,6 +8,7 @@ interface ApiOptions {
   headers?: Record<string, string>
   includeAuth?: boolean
   throwOnError?: boolean
+  isFormData?: boolean
 }
 
 /**
@@ -26,7 +27,8 @@ export async function apiClient<T = any>(
     body,
     headers = {},
     includeAuth = true,
-    throwOnError = true
+    throwOnError = true,
+    isFormData = false
   } = options
 
   // Build request URL
@@ -36,8 +38,12 @@ export async function apiClient<T = any>(
 
   // Prepare headers
   const requestHeaders: Record<string, string> = {
-    'Content-Type': 'application/json',
     ...headers
+  }
+
+  // Only add Content-Type for JSON requests
+  if (!isFormData) {
+    requestHeaders['Content-Type'] = 'application/json'
   }
 
   // Add auth token if needed
@@ -56,7 +62,8 @@ export async function apiClient<T = any>(
 
   // Add request body if needed
   if (body && method !== 'GET') {
-    requestOptions.body = JSON.stringify(body)
+    // Don't stringify FormData objects
+    requestOptions.body = isFormData ? body : JSON.stringify(body)
   }
 
   try {

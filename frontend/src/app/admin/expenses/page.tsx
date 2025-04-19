@@ -11,12 +11,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Search, Plus, Edit, FileText } from 'lucide-react'
+import { Search, Plus, Edit, FileText, Trash2, Upload } from 'lucide-react'
 import { ExpenseModal } from '@/components/ExpenseModal'
 import { DocumentModal } from '@/components/DocumentModal'
+import { GenericModal } from '@/components/GenericModal'
 import { toast } from 'react-toastify'
 import { Spinner } from '@/components/ui/spinner'
-import { type Expense, type ExpenseFormData, type ExpenseCategory } from '@/types/expense'
+import { type Expense, type ExpenseFormData, type ExpenseCategory, type ExpenseDocument } from '@/types/expense'
 import { fetchExpenseCategory } from '@/lib/api/fetchExpenseCategory'
 import { listExpenseDoc } from '@/lib/api/listExpenseDocs'
 import { uploadExpenseDoc } from '@/lib/api/uploadExpenseDoc'
@@ -24,6 +25,7 @@ import { updateExpense } from '@/lib/api/updateExpense'
 import { createExpense } from '@/lib/api/createExpense'
 import { fetchExpenses } from '@/lib/api/fetchExpenses'
 import { fetchProperties } from '@/lib/api/fetchProperties'
+import { deleteExpenseDoc } from '@/lib/api/deleteExpenseDoc'
 import { type Property } from '@/types/property'
 import {
   Tooltip,
@@ -37,11 +39,15 @@ export default function Expenses() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDocumentModalOpen, setIsDocumentModalOpen] = useState(false)
+  const [isDocumentListModalOpen, setIsDocumentListModalOpen] = useState(false)
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null)
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [isLoadingExpenses, setIsLoadingExpenses] = useState(false)
+  const [isLoadingDocuments, setIsLoadingDocuments] = useState(false)
+  const [documents, setDocuments] = useState<ExpenseDocument[]>([])
   const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>([])
   const [properties, setProperties] = useState<Property[]>([])
+  
   const fetchExpensesData = useCallback(async () => {
     setIsLoadingExpenses(true)
     try {
@@ -75,6 +81,26 @@ export default function Expenses() {
 
     loadCategories()
   }, [])
+
+  const fetchDocuments = useCallback(async (expenseId: number) => {
+    setIsLoadingDocuments(true)
+    try {
+      const fetchedDocuments = await listExpenseDoc(expenseId.toString())
+      setDocuments(fetchedDocuments)
+    } catch (error: any) {
+      console.error('Error fetching documents:', error)
+      toast.error(`Failed to fetch documents: ${error.message}`)
+      setDocuments([])
+    } finally {
+      setIsLoadingDocuments(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (isDocumentListModalOpen && selectedExpense) {
+      fetchDocuments(selectedExpense.id)
+    }
+  }, [isDocumentListModalOpen, selectedExpense, fetchDocuments])
 
   const filteredExpenses = expenses.filter(expense =>
     expense.property.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -133,12 +159,26 @@ export default function Expenses() {
       if (response.success) {
         toast.success('Document uploaded successfully!')
         setIsDocumentModalOpen(false)
+        fetchExpensesData() // Refresh data to reflect uploaded document
       } else {
         toast.error('Failed to upload document.');
       }
     } catch (error: any) {
       console.error('Document upload failed:', error);
       toast.error(error.message || 'Failed to upload document.');
+    }
+  }
+
+  const handleDeleteDocument = async (documentId: number) => {
+    try {
+      await deleteExpenseDoc(documentId.toString())
+      toast.success('Document deleted successfully!')
+      if (selectedExpense) {
+        fetchDocuments(selectedExpense.id)
+      }
+    } catch (error: any) {
+      console.error('Error deleting document:', error)
+      toast.error(`Failed to delete document: ${error.message}`)
     }
   }
 
@@ -242,11 +282,26 @@ export default function Expenses() {
                               setSelectedExpense(expense)
                               setIsDocumentModalOpen(true)
                             }}>
-                              <FileText className="h-4 w-4" />
+                              <Upload className="h-4 w-4" />
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
                             <p>Upload document</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="neutral" size="icon" onClick={() => {
+                              setSelectedExpense(expense)
+                              setIsDocumentListModalOpen(true)
+                            }}>
+                              <FileText className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>View documents</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -285,6 +340,59 @@ export default function Expenses() {
           onUpload={(file) => handleDocumentUpload(file)}
           title="Upload Document"
         />
+      )}
+
+      {selectedExpense && (
+        <GenericModal
+          isOpen={isDocumentListModalOpen}
+          onClose={() => {
+            setIsDocumentListModalOpen(false)
+            setDocuments([])
+          }}
+          title="Expense Documents"
+          description={`Documents for Expense #${selectedExpense.id}`}
+        >
+          <div className="max-h-[60vh] overflow-y-auto">
+            {isLoadingDocuments ? (
+              <div className="text-center py-4">
+                <Spinner />
+              </div>
+            ) : documents.length === 0 ? (
+              <p className="text-gray-500 text-center">No documents found for this expense</p>
+            ) : (
+              <div className="space-y-4">
+                {documents.map((document) => (
+                  <div key={document.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <FileText className="h-5 w-5 text-gray-600" />
+                      <div>
+                        <p className="font-medium">{document.document.split('/').pop()}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={document.document}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-md"
+                      >
+                        View
+                      </a>
+                      <Button
+                        variant="neutral"
+                        size="icon"
+                        onClick={() => handleDeleteDocument(document.id)}
+                        className="text-red-600 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </GenericModal>
       )}
     </div>
   )

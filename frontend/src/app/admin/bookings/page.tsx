@@ -806,12 +806,12 @@ export default function Bookings() {
                     <div className="flex items-center gap-3">
                       <FileText className="h-5 w-5 text-gray-600" />
                       <div>
-                        <p className="font-medium">{document.name.split('/').pop()}</p>
+                        <p className="font-medium">{document.document?.split('/').pop()}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <a
-                        href={document.file}
+                        href={document.document}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-md"

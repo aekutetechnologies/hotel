@@ -35,6 +35,3 @@ class ExpenseDocument(models.Model):
     document = models.FileField(upload_to='expenses/documents/')
     created_at = models.DateTimeField(default=timezone.now)
     is_active = models.BooleanField(default=True)
-
-    def __str__(self):
-        return f"{self.expense.user.mobile} - {self.expense.amount} - {self.expense.date}"

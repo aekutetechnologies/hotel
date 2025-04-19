@@ -4,8 +4,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.conf import settings
 from django.core.cache import cache
-from .models import HsUser, UserSession, HsPermission, HsPermissionGroup, UserHsPermission
-from .serializers import UserSerializer, UserViewSerializer, HsPermissionSerializer, HsPermissionGroupSerializer
+from .models import HsUser, UserSession, HsPermission, HsPermissionGroup, UserHsPermission, UserDocument
+from .serializers import UserSerializer, UserViewSerializer, HsPermissionSerializer, HsPermissionGroupSerializer, UserDocumentSerializer, UserDocumentViewSerializer
 from django.shortcuts import get_object_or_404
 import logging
 from .decorators import custom_authentication_and_permissions
@@ -201,3 +201,23 @@ def list_users(request):
     serializer = UserViewSerializer(users, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+
+@api_view(['GET', 'POST', 'DELETE'])
+@custom_authentication_and_permissions()
+def user_document(request, pk):
+    user = get_object_or_404(HsUser, id=pk)
+    if request.method == 'GET':
+        documents = UserDocument.objects.filter(user=user)
+        serializer = UserDocumentViewSerializer(documents, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK) 
+    elif request.method == 'POST':
+        serializer = UserDocumentSerializer(data={'user': user.id, 'document': request.FILES['document']})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    elif request.method == 'DELETE':
+        document = get_object_or_404(UserDocument, id=pk)
+        document.delete()
+        return Response({'message': 'Document deleted successfully'}, status=status.HTTP_200_OK)

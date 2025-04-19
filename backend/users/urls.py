@@ -11,5 +11,6 @@ urlpatterns = [
     path('permissions/', views.list_permissions, name='list-permissions'),
     path('permissions/group/<int:id>/', views.view_group_permissions, name='view-group-permissions'),
     path('permissions/group/', views.list_group_permissions, name='list-group-permissions'),
+    path('user-document/<int:pk>/', views.user_document, name='user-document'),
 
 ]

@@ -99,7 +99,7 @@ def booking_list_by_user(request):
 
     is_admin = UserHsPermission.objects.filter(user=user, permission_group__name="admin").exists()
     is_customer = UserHsPermission.objects.filter(user=user, permission_group__name="customer").exists()
-    
+
     if is_admin:
         bookings = Booking.objects.all().order_by('-created_at')
     elif is_customer:
@@ -133,11 +133,12 @@ def upload_booking_document(request, pk):
         return Response(serializer.data)
     elif request.method == 'POST':
         file = request.FILES['file']
+        print(file)
         serializer = BookingDocumentSerializer(data={'booking': booking.id, 'document': file})
         if serializer.is_valid():
             serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET', 'DELETE'])

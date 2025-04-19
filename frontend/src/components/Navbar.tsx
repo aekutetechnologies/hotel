@@ -191,7 +191,7 @@ const Navbar: React.FC<NavbarProps> = ({
               size="sm"
             >
               <LogIn className="w-5 h-5 mr-2" />
-              <span>Login</span>
+              <span>Login / Signup</span>
             </NewButton>
           )}
         </div>

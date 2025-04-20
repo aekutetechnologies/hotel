@@ -159,7 +159,7 @@ export default function Properties() {
                 <TableHead>Name</TableHead>
                 <TableHead>Location</TableHead>
                 <TableHead>Type</TableHead>
-                <TableHead>Rooms</TableHead>
+                <TableHead>Room Type</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>

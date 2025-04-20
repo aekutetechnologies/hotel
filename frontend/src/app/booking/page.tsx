@@ -5,7 +5,7 @@ import { Header } from '@/components/Header'
 import Footer from '@/components/Footer'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Star, CalendarIcon, PackageSearch, Clock, Bed, X } from 'lucide-react'
+import { Star, CalendarIcon, PackageSearch, Clock, Bed, X, FileText } from 'lucide-react'
 import { toast, ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { getUserBookings } from '@/lib/api/fetchUserBookings'
@@ -16,6 +16,42 @@ import { format, parseISO } from 'date-fns'
 import { createUserReview } from '@/lib/api/createUserReview'
 import { getBookingReview } from '@/lib/api/fetchBookingReview'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { generatePDFInvoice } from '@/lib/invoice/generatePDFInvoice'
+
+// Extend the room interface to include rate information
+interface ExtendedBookingProperty {
+  id: number
+  name: string
+  description: string
+  location: string
+  area: string
+  city?: { name: string }
+  state?: { name: string }
+  country?: { name: string }
+  rooms: {
+    id: number
+    name: string
+    amenities?: { id: number; name: string }[]
+    hourly_rate?: string
+    daily_rate?: string
+    monthly_rate?: string
+    discount?: string
+  }[]
+  images: { image: string }[]
+  reviews?: {
+    id: number
+    user: { name: string }
+    rating: number
+    review: string
+    created_at: string
+    images?: string[]
+  }[]
+}
+
+interface ExtendedBooking extends Booking {
+  created_at?: string
+  property: ExtendedBookingProperty
+}
 
 export default function BookingPage() {
   const [selectedBooking, setSelectedBooking] = useState<number | null>(null)
@@ -107,185 +143,17 @@ export default function BookingPage() {
     )
   }
 
-  // Function to generate invoice HTML
-  const generateInvoiceHTML = (booking: Booking): string => { 
-    return `
-    <html>
-    <head>
-      <style>
-        .invoice-box {
-          max-width: 800px;
-          margin: auto;
-          padding: 30px;
-          border: 1px solid #eee;
-          box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
-          font-family: 'Arial', sans-serif;
-          color: #555;
-        }
-        
-        .header {
-          display: flex;
-          justify-content: space-between;
-          border-bottom: 2px solid #eee;
-          padding-bottom: 20px;
-          margin-bottom: 20px;
-        }
-        
-        .company-address {
-          text-align: right;
-        }
-        
-        .invoice-title {
-          font-size: 24px;
-          color: #333;
-          margin-bottom: 5px;
-        }
-        
-        .details-table {
-          width: 100%;
-          border-collapse: collapse;
-          margin: 20px 0;
-        }
-        
-        .details-table td {
-          padding: 12px;
-          border: 1px solid #eee;
-        }
-        
-        .details-table tr:nth-child(odd) {
-          background-color: #f9f9f9;
-        }
-        
-        .total {
-          font-size: 18px;
-          font-weight: bold;
-          color: #2c3e50;
-          margin-top: 20px;
-        }
-        
-        .footer {
-          margin-top: 30px;
-          padding-top: 20px;
-          border-top: 2px solid #eee;
-          text-align: center;
-          color: #777;
-        }
-        
-        .highlight {
-          color: #3498db;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="invoice-box">
-        <div class="header">
-          <div>
-            <h1 class="invoice-title">Invoice #${booking.id}</h1>
-            <p>Invoice Date: ${new Date().toLocaleDateString()}</p>
-          </div>
-          <div class="company-address">
-            <h2>Hsquare</h2>
-            <p>123 Hospitality Street</p>
-            <p>Mumbai, MH 400001</p>
-            <p>GSTIN: 27ABCDE1234F1Z2</p>
-          </div>
-        </div>
-  
-        <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
-          <div>
-            <h3>Billed To:</h3>
-            <p>${booking.user.name}</p>
-            <p>${booking.user.email}</p>
-            <p>${booking.user.mobile}</p>
-          </div>
-          <div>
-            <h3>Booking Details:</h3>
-            <p>Booking ID: ${booking.id}</p>
-            <p>Check-in: ${formatDate(booking.checkin_date)}</p>
-            <p>Check-out: ${formatDate(booking.checkout_date)}</p>
-            ${booking.booking_time === 'hourly' ? 
-              `<p>Check-in Time: ${booking.checkin_time || 'N/A'}</p>
-               <p>Check-out Time: ${booking.checkout_time || 'N/A'}</p>` : ''}
-          </div>
-        </div>
-  
-        <table class="details-table">
-          <tr>
-            <td>Property Name</td>
-            <td>${booking.property.name}</td>
-          </tr>
-          <tr>
-            <td>Booking Type</td>
-            <td>${booking.booking_time === 'daily' ? 'Daily' : 
-                 booking.booking_time === 'hourly' ? 'Hourly' : 
-                 booking.booking_time === 'monthly' ? 'Monthly' : booking.booking_time}</td>
-          </tr>
-          ${booking.booking_room_types ? 
-            booking.booking_room_types.map((roomTypeObj) => {
-              const roomId = Object.keys(roomTypeObj)[0]
-              const count = roomTypeObj[roomId]
-              const roomDetails = booking.property.rooms.find(room => room.id === parseInt(roomId))
-              return `
-                <tr>
-                  <td>Room Type</td>
-                  <td>${roomDetails?.name || `Room #${roomId}`} × ${count}</td>
-                </tr>
-              `
-            }).join('') : 
-            `<tr>
-              <td>Room Type</td>
-              <td>${booking.property.rooms.find(room => room.id === booking.room)?.name}</td>
-            </tr>`
-          }
-          <tr>
-            <td>Number of Guests</td>
-            <td>${booking.number_of_guests}</td>
-          </tr>
-          <tr>
-            <td>Base Price</td>
-            <td>₹${booking.price}</td>
-          </tr>
-          ${booking.discount ? `
-          <tr>
-            <td>Discount</td>
-            <td>- ₹${booking.price * booking.discount / 100}</td>
-          </tr>
-          ` : ''}
-        </table>
-  
-        <div class="total">
-          Total Amount: ₹${booking.price - (booking.price * booking.discount / 100 || 0)}
-        </div>
-  
-        <div style="margin-top: 30px;">
-          <h3>Payment Details:</h3>
-          <p>Payment Method: ${booking.payment_type.toUpperCase()}</p>
-          <p>Payment Status: <span class="highlight">${booking.status.toUpperCase()}</span></p>
-        </div>
-  
-        <div class="footer">
-          <p>Thank you for choosing Hsquare!</p>
-          <p>For any inquiries, contact us at support@hsquare.in</p>
-          <p>This is computer generated invoice and does not require signature</p>
-        </div>
-      </div>
-    </body>
-    </html>
-    `;
-  };
-
   // Function to trigger download
   const downloadInvoice = (booking: Booking) => {
-    const invoiceHTML = generateInvoiceHTML(booking)
-    const blob = new Blob([invoiceHTML], { type: 'text/html' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `invoice-${booking.id}.html`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
+    try {
+      // Generate and download PDF
+      const doc = generatePDFInvoice(booking as ExtendedBooking);
+      doc.save(`invoice-${booking.id}.pdf`);
+      toast.success('Invoice downloaded successfully');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Failed to generate invoice. Please try again.');
+    }
   }
 
   // Function to handle review actions

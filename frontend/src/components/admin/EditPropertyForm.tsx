@@ -625,7 +625,7 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
       console.log(`Updating property ${initialData.id}: ${name}`);
       await editProperty(initialData.id.toString(), propertyData as any);
       toast.success('Property updated successfully');
-      router.push('/admin/dashboard');
+      router.push('/admin/properties');
     } catch (error) {
       console.error('Error updating property:', error);
       toast.error('Failed to update property');

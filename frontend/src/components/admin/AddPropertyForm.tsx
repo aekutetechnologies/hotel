@@ -551,7 +551,7 @@ export function AddPropertyForm() {
       console.log('Creating new property:', name);
       await createProperty(propertyData as any);
       toast.success('Property created successfully');
-      router.push('/admin/dashboard');
+      router.push('/admin/properties');
     } catch (error) {
       console.error('Error creating property:', error);
       toast.error('Failed to create property');

@@ -238,39 +238,71 @@ export default function BookProperty() {
     } else if (booking.bookingType === 'monthly') {
       // For monthly bookings, use the specified number of months
       const checkInDate = new Date(booking.checkIn);
-        const checkOutDate = new Date(booking.checkOut);
-        const diffTime = Math.abs(checkOutDate.getTime() - checkInDate.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        duration = Math.floor(Math.max(1, diffDays) / 30);
+      const checkOutDate = new Date(booking.checkOut);
+      const diffTime = Math.abs(checkOutDate.getTime() - checkInDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      duration = Math.max(1, Math.floor(diffDays / 30)); // At least 1 month
     }
     
-    if (property && property.rooms && Array.isArray(property.rooms)) {
+    // Use selected room details if they exist
+    if (selectedRoomDetails && selectedRoomDetails.length > 0) {
+      selectedRoomDetails.forEach(room => {
+        if (!room.id || !room.quantity) return;
+        
+        const quantity = parseInt(room.quantity, 10);
+        if (quantity <= 0) return;
+        
+        // Find the room details from property data
+        const roomInfo = property?.rooms?.find((r: any) => r.id === parseInt(room.id, 10));
+        if (!roomInfo) return;
+        
+        // Use the appropriate rate based on booking type
+        let basePrice = 0;
+        if (booking.bookingType === 'hourly') {
+          basePrice = parseFloat(roomInfo.hourly_rate || '0');
+        } else if (booking.bookingType === 'monthly') {
+          basePrice = parseFloat(roomInfo.monthly_rate || '0');
+        } else { // daily
+          basePrice = parseFloat(roomInfo.daily_rate || '0');
+        }
+        
+        // Apply room discount
+        const discount = parseFloat(roomInfo.discount || '0');
+        const discountedPrice = basePrice * (1 - (discount / 100));
+        
+        // For hostels, multiple by number of guests for shared rooms
+        const isHostel = property?.property_type === 'hostel';
+        const guestFactor = isHostel ? parseInt(booking.guests, 10) || 1 : 1;
+        
+        // Add to total
+        total += quantity * discountedPrice * duration * guestFactor;
+      });
+    } else if (property && property.rooms && Array.isArray(property.rooms)) {
+      // Use selectedRoomQuantities if no selected room details
       property.rooms.forEach((room: any) => {
         const quantity = selectedRoomQuantities[room.id] || 0;
-        if (quantity > 0) {
-          if (property.property_type === 'hotel') {
-            const basePrice = booking.bookingType === 'hourly' 
-              ? parseFloat(room.hourly_rate || '0') 
-              : booking.bookingType === 'monthly'
-                ? parseFloat(room.monthly_rate || '0')
-                : parseFloat(room.daily_rate || '0');
-            
-            const discount = parseFloat(room.discount || '0');
-            const discountedPrice = basePrice * (1 - (discount / 100));
-            
-            // Apply duration to the price calculation
-            total += quantity * discountedPrice * duration;
-          } else {
-            // For hostels with monthly pricing
-            const basePrice = parseFloat(room.monthly_rate || '0');
-            const discount = parseFloat(room.discount || '0');
-            const discountedPrice = basePrice * (1 - (discount / 100));
-            
-            // For hostels, multiply by guests for shared rooms and by duration (months)
-            const guests = parseInt(booking.guests, 10) || 1;
-            total += quantity * discountedPrice * duration * (property.property_type === 'hostel' ? guests : 1);
-          }
+        if (quantity <= 0) return;
+        
+        // Use the appropriate rate based on booking type
+        let basePrice = 0;
+        if (booking.bookingType === 'hourly') {
+          basePrice = parseFloat(room.hourly_rate || '0');
+        } else if (booking.bookingType === 'monthly') {
+          basePrice = parseFloat(room.monthly_rate || '0');
+        } else { // daily
+          basePrice = parseFloat(room.daily_rate || '0');
         }
+        
+        // Apply room discount
+        const discount = parseFloat(room.discount || '0');
+        const discountedPrice = basePrice * (1 - (discount / 100));
+        
+        // For hostels, multiple by number of guests for shared rooms
+        const isHostel = property?.property_type === 'hostel';
+        const guestFactor = isHostel ? parseInt(booking.guests, 10) || 1 : 1;
+        
+        // Add to total
+        total += quantity * discountedPrice * duration * guestFactor;
       });
     }
     

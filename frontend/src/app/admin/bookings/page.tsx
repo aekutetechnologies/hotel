@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Search, Plus, Edit, FileText, Eye, Trash2, Upload, Calendar, Filter, X, Info } from 'lucide-react'
+import { Search, Plus, Edit, FileText, Eye, Trash2, Upload, Calendar, Filter, X, Info, FileDown } from 'lucide-react'
 import Link from 'next/link'
 import { BookingModal } from '@/components/BookingModal'
 import { DocumentModal } from '@/components/DocumentModal'
@@ -51,6 +51,7 @@ import { fetchUsers } from '@/lib/api/fetchUsers'
 import { type Property } from "@/types/property"
 import { type User } from "@/types/user"
 import { bookProperty } from '@/lib/api/bookProperty'
+import { generatePDFInvoice } from '@/lib/invoice/generatePDFInvoice'
 
 // Define Document and Booking interfaces that will be used by other files
 export interface Document {
@@ -473,6 +474,56 @@ export default function Bookings() {
     );
   };
 
+  // Add function to handle invoice download
+  const handleDownloadInvoice = (booking: Booking) => {
+    try {
+      // Extract property details to match expected BookingData format
+      let propertyDetails: any = null;
+      if (booking.property && typeof booking.property === 'object') {
+        propertyDetails = booking.property;
+      } else if (typeof booking.property === 'number') {
+        propertyDetails = properties.find(p => p.id === booking.property);
+      }
+      
+      // Extract user details
+      let userDetails: any = null;
+      if (booking.user && typeof booking.user === 'object') {
+        userDetails = booking.user;
+      } else if (typeof booking.user === 'number') {
+        userDetails = users.find(u => u.id === booking.user);
+      }
+      
+      // Format booking data for the invoice generator
+      const bookingData = {
+        id: booking.id,
+        property: propertyDetails,
+        user: userDetails || { name: 'Guest', email: 'guest@example.com', mobile: '' },
+        status: booking.status,
+        booking_time: booking.booking_time || booking.booking_type,
+        checkin_date: booking.checkin_date,
+        checkout_date: booking.checkout_date,
+        checkin_time: booking.checkin_time,
+        checkout_time: booking.checkout_time,
+        number_of_guests: booking.number_of_guests || 1,
+        number_of_rooms: booking.number_of_rooms || 1,
+        price: booking.price,
+        discount: booking.discount || '0',
+        room: booking.room,
+        booking_room_types: booking.booking_room_types,
+        created_at: booking.created_at,
+        payment_type: booking.payment_type
+      };
+      
+      // Generate and download the PDF invoice
+      const doc = generatePDFInvoice(bookingData as any);
+      doc.save(`invoice-${booking.id}.pdf`);
+      toast.success('Invoice downloaded successfully');
+    } catch (error) {
+      console.error('Error generating invoice:', error);
+      toast.error('Failed to generate invoice. Please try again.');
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl">
       <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -691,6 +742,22 @@ export default function Bookings() {
                           </TooltipTrigger>
                           <TooltipContent>
                             <p>View detailed information</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="neutral" 
+                              size="icon" 
+                              onClick={() => handleDownloadInvoice(booking)}
+                            >
+                              <FileDown className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Download invoice</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>

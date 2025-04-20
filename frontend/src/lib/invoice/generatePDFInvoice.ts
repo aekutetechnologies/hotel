@@ -21,6 +21,7 @@ interface ExtendedBookingProperty {
   city?: { name: string };
   state?: { name: string };
   country?: { name: string };
+  property_type?: string;
   rooms: {
     id: number;
     name: string;
@@ -221,8 +222,15 @@ export function generatePDFInvoice(booking: BookingData) {
     
     durationLabel = `${duration} night${duration > 1 ? 's' : ''}`;
   } else if (booking.booking_time === 'monthly') {
-    duration = 1; // Default to 1 month if not specified
-    durationLabel = `${duration} month${duration > 1 ? 's' : ''}`;
+
+    const checkinDate = new Date(booking.checkin_date);
+    const checkoutDate = new Date(booking.checkout_date);
+    const diffTime = Math.abs(checkoutDate.getTime() - checkinDate.getTime());
+    const rawMonths = diffTime / (1000 * 60 * 60 * 24 * 30); // approximate months
+    duration = Math.round(rawMonths);
+
+    durationLabel = `${duration} month${duration !== 1 ? 's' : ''}`;
+
   }
   
   // Prepare room data rows for the table
@@ -248,8 +256,18 @@ export function generatePDFInvoice(booking: BookingData) {
         
         const roomDiscount = parseFloat(roomInfo.discount || '0');
         const roomBasePrice = parseFloat(roomRate);
-        const roomDiscountedPrice = roomBasePrice - (roomBasePrice * roomDiscount / 100);
-        const lineAmount = roomDiscountedPrice * quantity * duration;
+        const roomDiscountedPrice = roomBasePrice * (1 - (roomDiscount / 100));
+        
+        // Calculate line amount based on property type and booking type
+        let lineAmount = 0;
+        if (booking.booking_time === 'monthly' && booking.property.property_type === 'hostel') {
+          // For hostels with monthly booking, multiply by guests for shared rooms
+          lineAmount = roomDiscountedPrice * quantity * duration * booking.number_of_guests;
+        } else {
+          // For hotels or non-monthly bookings
+          lineAmount = roomDiscountedPrice * quantity * duration;
+        }
+        
         totalAmount += lineAmount;
         
         tableRows.push([
@@ -277,8 +295,18 @@ export function generatePDFInvoice(booking: BookingData) {
       
       const roomDiscount = parseFloat(roomInfo.discount || '0');
       const roomBasePrice = parseFloat(roomRate);
-      const roomDiscountedPrice = roomBasePrice - (roomBasePrice * roomDiscount / 100);
-      const lineAmount = roomDiscountedPrice * (booking.number_of_rooms || 1) * duration;
+      const roomDiscountedPrice = roomBasePrice * (1 - (roomDiscount / 100));
+      
+      // Calculate line amount based on property type and booking type
+      let lineAmount = 0;
+      if (booking.booking_time === 'monthly' && booking.property.property_type === 'hostel') {
+        // For hostels with monthly booking, multiply by guests for shared rooms
+        lineAmount = roomDiscountedPrice * (booking.number_of_rooms || 1) * duration * booking.number_of_guests;
+      } else {
+        // For hotels or non-monthly bookings
+        lineAmount = roomDiscountedPrice * (booking.number_of_rooms || 1) * duration;
+      }
+      
       totalAmount += lineAmount;
       
       tableRows.push([
@@ -317,15 +345,14 @@ export function generatePDFInvoice(booking: BookingData) {
   // Get the last table's Y position
   const finalY = (doc as any).lastAutoTable.finalY + 5;
   
-  // Calculate tax details - Assuming 18% GST (9% CGST + 9% SGST)
-  const basePrice = parseFloat(booking.price.toString());
-  const bookingDiscount = parseFloat(booking.discount.toString()) || 0;
-  const discountedPrice = basePrice - (basePrice * bookingDiscount / 100);
+  // Use calculated totalAmount for tax calculations
+  // This ensures taxes are calculated based on the actual sum of line items
   const taxRate = 18;
-  const taxAmount = (discountedPrice * taxRate / 100);
-  const subtotal = discountedPrice - taxAmount;
+  const taxAmount = (totalAmount * taxRate / 100);
+  const subtotal = totalAmount;
   const cgst = taxAmount / 2;
   const sgst = taxAmount / 2;
+  const grandTotal = subtotal + taxAmount;
   
   // Add the summary table using autoTable - Now right-aligned
   autoTable(doc, {
@@ -334,7 +361,7 @@ export function generatePDFInvoice(booking: BookingData) {
       ['', 'Subtotal:', `${subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
       ['', 'CGST (9%):', `${cgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
       ['', 'SGST (9%):', `${sgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
-      ['', 'TOTAL:', `${parseFloat(booking.price.toString()).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`]
+      ['', 'TOTAL:', `${grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`]
     ],
     theme: 'plain',
     styles: {

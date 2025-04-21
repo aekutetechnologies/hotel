@@ -120,7 +120,7 @@ export async function apiClient<T = any>(
         ? `${errorMessage.substring(0, maxToastLength)}...`
         : errorMessage
       
-      toast.error(toastMessage)
+      // toast.error(toastMessage)
       throw new Error(errorMessage)
     }
     
@@ -134,7 +134,7 @@ export async function apiClient<T = any>(
         ? `${error.message.substring(0, maxToastLength)}...`
         : (error.message || 'An unexpected error occurred')
       
-      toast.error(toastMessage)
+      // toast.error(toastMessage)
     }
     
     throw error

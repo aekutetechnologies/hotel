@@ -224,6 +224,24 @@ function RequiredLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
+function RequiredHotelLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-1">
+      {children}
+      <span className="text-blue-500">*</span>
+    </div>
+  );
+}
+
+function RequiredHostelLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-1">
+      {children}
+      <span className="text-green-500">*</span>
+    </div>
+  );
+}
+
 export function AddPropertyForm() {
   const router = useRouter()
   
@@ -564,7 +582,7 @@ export function AddPropertyForm() {
       router.push('/admin/properties');
     } catch (error) {
       console.error('Error creating property:', error);
-      toast.error('Failed to create property');
+      toast.error('Failed to create property. Please check if all required fields are filled.');
     } finally {
       setLoading(false);
     }
@@ -671,11 +689,18 @@ export function AddPropertyForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       {/* Note about required fields */}
-      <div className="flex justify-end text-sm text-gray-500 mb-4">
-        <span className="flex items-center">
-          <span className="text-red-500 mr-1">*</span> Required fields
-        </span>
-      </div>
+      <div className="text-sm  text-gray-500 mb-4">
+  <div className="flex items-center">
+    <span className="text-blue-500 mr-1">*</span> Required Fields for Hotel
+  </div>
+  <div className="flex items-center">
+    <span className="text-green-500 mr-1">*</span> Required Fields for Hostel
+  </div>
+  <div className="flex items-center">
+    <span className="text-red-500 mr-1">*</span> Required fields
+  </div>
+</div>
+
 
       {/* Hidden file inputs for image uploads */}
       <input
@@ -1091,7 +1116,9 @@ export function AddPropertyForm() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor={`room-hourly-rate-${index}`}>Hourly Rate</Label>
+                      <RequiredHotelLabel>
+                        <Label htmlFor={`room-hourly-rate-${index}`}>Hourly Rate</Label>
+                      </RequiredHotelLabel>
                     <Input
                       id={`room-hourly-rate-${index}`}
                       type="number"
@@ -1102,7 +1129,9 @@ export function AddPropertyForm() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor={`room-daily-rate-${index}`}>Daily Rate</Label>
+                      <RequiredHotelLabel>
+                        <Label htmlFor={`room-daily-rate-${index}`}>Daily Rate</Label>
+                      </RequiredHotelLabel>
                     <Input
                       id={`room-daily-rate-${index}`}
                       type="number"
@@ -1113,7 +1142,9 @@ export function AddPropertyForm() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor={`room-monthly-rate-${index}`}>Monthly Rate</Label>
+                      <RequiredHostelLabel>
+                        <Label htmlFor={`room-monthly-rate-${index}`}>Monthly Rate</Label>
+                      </RequiredHostelLabel>
                     <Input
                       id={`room-monthly-rate-${index}`}
                       type="number"

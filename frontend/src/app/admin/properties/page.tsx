@@ -86,7 +86,7 @@ export default function Properties() {
 
   if (!isLoaded) {
     return (
-      <div className="flex justify-center items-center p-12">
+      <div className="flex justify-center items-center p-12 h-[70vh]">
         <Spinner className="h-12 w-12" />
       </div>
     )
@@ -139,7 +139,7 @@ export default function Properties() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center p-12">
+        <div className="flex justify-center items-center h-[70vh]">
           <Spinner className="h-12 w-12" />
         </div>
       ) : filteredProperties.length === 0 ? (

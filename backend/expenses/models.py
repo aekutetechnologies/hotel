@@ -5,6 +5,13 @@ from property.models import Property
 
 # Create your models here.
 
+STATUS_CHOICES = [
+    ('pending', 'Pending'),
+    ('approved', 'Approved'),
+    ('rejected', 'Rejected'),
+    ('paid', 'Paid'),
+]
+
 class ExpenseCategory(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255, unique=True)
@@ -21,6 +28,7 @@ class Expense(models.Model):
     category = models.ForeignKey(ExpenseCategory, on_delete=models.CASCADE, blank=True, null=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     date = models.DateField()
+    status = models.CharField(max_length=255, choices=STATUS_CHOICES, default='pending')
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(default=timezone.now)
     is_active = models.BooleanField(default=True)

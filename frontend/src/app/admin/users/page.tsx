@@ -45,6 +45,7 @@ import {
 import { PermissionGuard } from '@/components/PermissionGuard'
 import { usePermissions } from '@/hooks/usePermissions'
 import { Permission } from '@/lib/permissions'
+import { updateProfile } from '@/lib/api/updateProfile'
 
 export default function Users() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -187,14 +188,39 @@ export default function Users() {
     setIsAddModalOpen(false)
   }
 
-  const handleEditUser = (updatedUser: any) => {
-    console.log('Updating user:', updatedUser)
-    setIsEditModalOpen(false)
-  }
+  const handleStatusChange = async (userId: number, newStatus: boolean) => {
+    try {
+      const response = await updateProfile({
+        user_id: userId,
+        is_active: newStatus
+      });
+      toast.success('User status updated successfully!');
+      fetchUsersData(); // Refresh the user list
+    } catch (error: any) {
+      console.error('Error updating user status:', error);
+      toast.error(`Failed to update user status: ${error.message}`);
+    }
+  };
 
-  const handleStatusChange = (userId: any, newStatus: any) => {
-    console.log(`Changing status of user ${userId} to ${newStatus}`)
-  }
+  const handleEditUser = async (updatedUser: any) => {
+    try {
+      const profileData = {
+        user_id: updatedUser.id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        mobile: updatedUser.mobile,
+        is_active: updatedUser.is_active
+      };
+  
+      const response = await updateProfile(profileData);
+      toast.success('User updated successfully!');
+      setIsEditModalOpen(false);
+      fetchUsersData(); // Refresh the user list
+    } catch (error: any) {
+      console.error('Error updating user:', error);
+      toast.error(`Failed to update user: ${error.message}`);
+    }
+  };
 
   const handleDocumentUpload = async (userId: number, file: File) => {
     setIsLoadingUpload(true)
@@ -254,7 +280,7 @@ export default function Users() {
 
   if (!isLoaded) {
     return (
-      <div className="flex justify-center items-center p-12">
+      <div className="flex justify-center items-center p-12 h-[70vh]">
         <Spinner className="h-12 w-12" />
       </div>
     )
@@ -311,7 +337,9 @@ export default function Users() {
             {isLoadingUsers ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-6">
-                  <Spinner />
+                  <div className="flex justify-center items-center h-[70vh]">
+                    <Spinner className="h-12 w-12" />
+                  </div>
                 </TableCell>
               </TableRow>
             ) : paginatedUsers.length === 0 && !isLoadingUsers ? (
@@ -331,7 +359,7 @@ export default function Users() {
                     <PermissionGuard permissions={['admin:user:view']} requireAll={false}>
                       <select
                         value={user.is_active ? 'Active' : 'Inactive'}
-                        onChange={(e) => handleStatusChange(user.id, e.target.value)}
+                        onChange={(e) => handleStatusChange(user.id, e.target.value === 'Active')}
                         className="border rounded px-2 py-1"
                       >
                         <option value="Active">Active</option>
@@ -530,8 +558,8 @@ export default function Users() {
         >
           <div className="max-h-[60vh] overflow-y-auto">
             {isLoadingDocuments ? (
-              <div className="text-center py-4">
-                <Spinner />
+              <div className="text-center py-4 flex justify-center items-center h-[70vh]">
+                <Spinner className="h-12 w-12" />
               </div>
             ) : documents.length === 0 ? (
               <p className="text-gray-500 text-center">No documents found for this user</p>

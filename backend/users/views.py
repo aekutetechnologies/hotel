@@ -76,7 +76,12 @@ def profile(request):
         logger.info(f"Profile viewed for user: {user.mobile}")
         return Response(serializer.data, status=status.HTTP_200_OK)
     elif request.method == 'PUT':
-        user = request.user
+
+        if 'user_id' in request.data:
+            user = HsUser.objects.get(id=request.data.get('user_id'))
+        else:
+            user = request.user
+
         serializer = UserSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -91,15 +96,15 @@ def admin_profile(request, user_id):
     user = get_object_or_404(HsUser, id=user_id)
     if request.method == 'GET':
         serializer = UserSerializer(user)
-        logger.info(f"Admin viewed profile for user: {user.mobile}")
+        logger.info(f"Viewed profile for user: {user.mobile}")
         return Response(serializer.data, status=status.HTTP_200_OK)
     elif request.method == 'PUT':
         serializer = UserSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            logger.info(f"Admin updated profile for user: {user.mobile}")
+            logger.info(f"Profile updated for user: {user.mobile}")
             return Response(serializer.data, status=status.HTTP_200_OK)
-        logger.error(f"Admin invalid profile update for user: {user.mobile}")
+        logger.error(f"Invalid profile update for user: {user.mobile}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])

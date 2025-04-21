@@ -1,5 +1,3 @@
-'use client'
-
 import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,31 +24,43 @@ export function OfferModal({ isOpen, onClose, onSubmit, title, initialData }: Of
     title: '',
     description: '',
     code: '',
-    discountPercentage: '',
-    validFrom: '',
-    validTo: '',
+    discount_percentage: '',
+    offer_start_date: '',
+    offer_end_date: '',
     status: 'active',
   })
   const [formErrors, setFormErrors] = useState({
-    discountPercentage: '',
+    discount_percentage: '',
   })
 
   useEffect(() => {
     if (initialData) {
-      setOffer(initialData)
+      // Convert date strings to the format expected by the input element
+      const formattedInitialData = {
+        ...initialData,
+        offer_start_date: formatDate(initialData.offer_start_date),
+        offer_end_date: formatDate(initialData.offer_end_date),
+      }
+      setOffer(formattedInitialData)
     }
   }, [initialData])
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toISOString().split('T')[0]; // Format to YYYY-MM-DD
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     
     // Validate discount percentage
-    if (name === 'discountPercentage') {
+    if (name === 'discount_percentage') {
       const numValue = parseFloat(value)
       if (numValue > 100) {
-        setFormErrors(prev => ({ ...prev, discountPercentage: 'Discount percentage cannot exceed 100%' }))
+        setFormErrors(prev => ({ ...prev, discount_percentage: 'Discount percentage cannot exceed 100%' }))
       } else {
-        setFormErrors(prev => ({ ...prev, discountPercentage: '' }))
+        setFormErrors(prev => ({ ...prev, discount_percentage: '' }))
       }
     }
     
@@ -61,7 +71,7 @@ export function OfferModal({ isOpen, onClose, onSubmit, title, initialData }: Of
     e.preventDefault()
     
     // Validation before submission
-    const discountValue = parseFloat(offer.discountPercentage)
+    const discountValue = parseFloat(offer.discount_percentage)
     if (discountValue > 100) {
       toast.error('Discount percentage cannot exceed 100%')
       return
@@ -70,13 +80,12 @@ export function OfferModal({ isOpen, onClose, onSubmit, title, initialData }: Of
     const offerData = {
       ...offer,
       discount_percentage: discountValue,
-      offer_start_date: new Date(offer.validFrom).toISOString(),
-      offer_end_date: new Date(offer.validTo).toISOString()
+      offer_start_date: new Date(offer.offer_start_date).toISOString(),
+      offer_end_date: new Date(offer.offer_end_date).toISOString()
     }
     
     onSubmit(offerData)
   }
-
 
   return (
     <>
@@ -107,20 +116,20 @@ export function OfferModal({ isOpen, onClose, onSubmit, title, initialData }: Of
               />
             </div>
             <div>
-              <Label htmlFor="discountPercentage">Discount Percentage</Label>
+              <Label htmlFor="discount_percentage">Discount Percentage</Label>
               <Input
-                id="discountPercentage"
-                name="discountPercentage"
+                id="discount_percentage"
+                name="discount_percentage"
                 type="number"
                 min="0"
                 max="100"
-                value={offer.discountPercentage}
+                value={offer.discount_percentage}
                 onChange={handleChange}
                 required
-                className={formErrors.discountPercentage ? 'border-red-500' : ''}
+                className={formErrors.discount_percentage ? 'border-red-500' : ''}
               />
-              {formErrors.discountPercentage && (
-                <p className="text-red-500 text-sm mt-1">{formErrors.discountPercentage}</p>
+              {formErrors.discount_percentage && (
+                <p className="text-red-500 text-sm mt-1">{formErrors.discount_percentage}</p>
               )}
             </div>
             <div>
@@ -139,7 +148,7 @@ export function OfferModal({ isOpen, onClose, onSubmit, title, initialData }: Of
                 id="validFrom"
                 name="validFrom"
                 type="date"
-                value={offer.validFrom}
+                value={offer.offer_start_date}
                 onChange={handleChange}
                 required
               />
@@ -150,7 +159,7 @@ export function OfferModal({ isOpen, onClose, onSubmit, title, initialData }: Of
                 id="validTo"
                 name="validTo"
                 type="date"
-                value={offer.validTo}
+                value={offer.offer_end_date}
                 onChange={handleChange}
                 required
               />
@@ -171,7 +180,7 @@ export function OfferModal({ isOpen, onClose, onSubmit, title, initialData }: Of
             <Button 
               type="submit" 
               className="w-full"
-              disabled={!!formErrors.discountPercentage}
+              disabled={!!formErrors.discount_percentage}
             >
               {initialData ? 'Update' : 'Create'} Offer
             </Button>

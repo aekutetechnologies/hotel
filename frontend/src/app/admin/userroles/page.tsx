@@ -134,10 +134,12 @@ export default function UserRoles() {
           <TableBody>
             {isLoadingGroupRoles ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-6">
-                  <Spinner />
-                </TableCell>
-              </TableRow>
+              <TableCell colSpan={7} className="text-center py-6">
+                <div className="flex justify-center items-center h-[70vh]">
+                  <Spinner className="h-12 w-12" />
+                </div>
+              </TableCell>
+            </TableRow>
             ) : filteredGroupRoles.length === 0 && !isLoadingGroupRoles ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-4 text-gray-500">

@@ -142,10 +142,41 @@ export default function Expenses() {
     }
   }
 
-  const handleStatusChange = (expenseId: number, newStatus: string) => {
-    // In a real app, you would update the status in your backend here
-    console.log(`Changing status of expense ${expenseId} to ${newStatus}`)
-  }
+  const handleStatusChange = async (expenseId: number, newStatus: string) => {
+    try {
+      // Ensure selectedExpense is not null
+      if (!selectedExpense) {
+        console.error('Selected expense is null');
+        toast.error('Failed to update expense status: Selected expense is null');
+        return;
+      }
+
+      console.log(selectedExpense)
+  
+      // Create the updated expense data with the new status
+      const updatedExpense: ExpenseFormData = {
+        property: selectedExpense.property.id.toString(),
+        category: selectedExpense.category.id.toString(),
+        description: selectedExpense.description,
+        amount: selectedExpense.amount,
+        date: selectedExpense.date,
+        status: newStatus,
+      };
+  
+      // Call the updateExpense API
+      const response = await updateExpense(expenseId.toString(), updatedExpense);
+  
+      if (response.success) {
+        toast.success('Expense status updated successfully!');
+        fetchExpensesData(); // Refresh data to reflect status change
+      } else {
+        toast.error('Failed to update expense status.');
+      }
+    } catch (error: any) {
+      console.error('Error updating expense status:', error);
+      toast.error('Failed to update expense status.');
+    }
+  };
 
   const handleDocumentUpload = async (file: File) => {
     if (!selectedExpense) return;
@@ -215,103 +246,108 @@ export default function Expenses() {
       </div>
 
       <div className="bg-white rounded-lg shadow">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Property</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoadingExpenses ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-6">
-                  <Spinner />
-                </TableCell>
-              </TableRow>
-            ) : filteredExpenses.length === 0 && !isLoadingExpenses ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-4 text-gray-500">
-                  No expenses found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredExpenses.map((expense) => (
-                <TableRow key={expense.id}>
-                  <TableCell className="font-medium">{expense.property.name}</TableCell>
-                  <TableCell>{expense.category.name}</TableCell>
-                  <TableCell>{expense.description}</TableCell>
-                  <TableCell>₹{expense.amount}</TableCell>
-                  <TableCell>{new Date(expense.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</TableCell>
-                  <TableCell>
-                    <select
-                      value={expense.status}
-                      onChange={(e) => handleStatusChange(expense.id, e.target.value)}
-                      className="border rounded px-2 py-1"
-                    >
-                      <option value="pending">Pending</option>
-                      <option value="paid">Paid</option>
-                    </select>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="neutral" size="icon" onClick={() => {
-                              setSelectedExpense(expense)
-                              setIsEditModalOpen(true)
-                            }}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Edit expense</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="neutral" size="icon" onClick={() => {
-                              setSelectedExpense(expense)
-                              setIsDocumentModalOpen(true)
-                            }}>
-                              <Upload className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Upload document</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="neutral" size="icon" onClick={() => {
-                              setSelectedExpense(expense)
-                              setIsDocumentListModalOpen(true)
-                            }}>
-                              <FileText className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>View documents</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+      <Table>
+  <TableHeader>
+    <TableRow>
+      <TableHead>Property</TableHead>
+      <TableHead>Category</TableHead>
+      <TableHead>Description</TableHead>
+      <TableHead>Amount</TableHead>
+      <TableHead>Date</TableHead>
+      <TableHead>Status</TableHead>
+      <TableHead className="text-right">Actions</TableHead>
+    </TableRow>
+  </TableHeader>
+  <TableBody>
+    {isLoadingExpenses ? (
+      <TableRow>
+        <TableCell colSpan={7} className="text-center py-6">
+          <div className="flex justify-center items-center h-[70vh]">
+            <Spinner className="h-12 w-12" />
+          </div>
+        </TableCell>
+      </TableRow>
+    ) : filteredExpenses.length === 0 && !isLoadingExpenses ? (
+      <TableRow>
+        <TableCell colSpan={7} className="text-center py-4 text-gray-500">
+          No expenses found.
+        </TableCell>
+      </TableRow>
+    ) : (
+      filteredExpenses.map((expense) => (
+        <TableRow key={expense.id}>
+          <TableCell className="font-medium">{expense.property.name}</TableCell>
+          <TableCell>{expense.category.name}</TableCell>
+          <TableCell>{expense.description}</TableCell>
+          <TableCell>₹{expense.amount}</TableCell>
+          <TableCell>{new Date(expense.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</TableCell>
+          <TableCell>
+            <select
+              value={expense.status}
+              onChange={(e) => handleStatusChange(expense.id, e.target.value)}
+              onClick={() => setSelectedExpense(expense)} // Set selectedExpense when dropdown is clicked
+              className="border rounded px-2 py-1"
+            >
+              <option value="pending">Pending</option>
+              <option value="paid">Paid</option>
+              <option value="rejected">Rejected</option>
+              <option value="approved">Approved</option>
+            </select>
+          </TableCell>
+          <TableCell className="text-right">
+            <div className="flex justify-end gap-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="neutral" size="icon" onClick={() => {
+                      setSelectedExpense(expense)
+                      setIsEditModalOpen(true)
+                    }}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Edit expense</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="neutral" size="icon" onClick={() => {
+                      setSelectedExpense(expense)
+                      setIsDocumentModalOpen(true)
+                    }}>
+                      <Upload className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Upload document</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="neutral" size="icon" onClick={() => {
+                      setSelectedExpense(expense)
+                      setIsDocumentListModalOpen(true)
+                    }}>
+                      <FileText className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>View documents</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </TableCell>
+        </TableRow>
+      ))
+    )}
+  </TableBody>
+</Table>
       </div>
 
       <ExpenseModal
@@ -354,8 +390,8 @@ export default function Expenses() {
         >
           <div className="max-h-[60vh] overflow-y-auto">
             {isLoadingDocuments ? (
-              <div className="text-center py-4">
-                <Spinner />
+              <div className="flex justify-center items-center h-[70vh]">
+                <Spinner className="h-12 w-12" />
               </div>
             ) : documents.length === 0 ? (
               <p className="text-gray-500 text-center">No documents found for this expense</p>

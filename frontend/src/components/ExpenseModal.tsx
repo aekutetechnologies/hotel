@@ -219,6 +219,8 @@ export function ExpenseModal({ isOpen, onClose, onSubmit, title, initialData, pr
             >
               <option value="pending">Pending</option>
               <option value="paid">Paid</option>
+              <option value="rejected">Rejected</option>
+              <option value="approved">Approved</option>
             </select>
           </div>
           <DialogFooter>

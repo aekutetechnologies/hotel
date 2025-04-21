@@ -644,10 +644,12 @@ export default function Bookings() {
           <TableBody>
             {isLoadingBookings ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-6">
-                  <Spinner />
-                </TableCell>
-              </TableRow>
+              <TableCell colSpan={7} className="text-center py-6">
+                <div className="flex justify-center items-center h-[70vh]">
+                  <Spinner className="h-12 w-12" />
+                </div>
+              </TableCell>
+            </TableRow>
             ) : paginatedBookings.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={9} className="text-center py-6 text-gray-500">
@@ -861,8 +863,8 @@ export default function Bookings() {
         >
           <div className="max-h-[60vh] overflow-y-auto">
             {isLoadingDocuments ? (
-              <div className="text-center py-4">
-                <Spinner />
+              <div className="flex justify-center items-center h-[70vh]">
+                <Spinner className="h-12 w-12" />
               </div>
             ) : documents.length === 0 ? (
               <p className="text-gray-500 text-center">No documents found for this booking</p>

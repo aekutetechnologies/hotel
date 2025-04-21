@@ -214,6 +214,16 @@ function PropertyMapSection({
   );
 }
 
+// Add a Required Field component that includes a red star
+function RequiredLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-1">
+      {children}
+      <span className="text-red-500">*</span>
+    </div>
+  );
+}
+
 export function AddPropertyForm() {
   const router = useRouter()
   
@@ -239,9 +249,9 @@ export function AddPropertyForm() {
   const [roomUploadingImages, setRoomUploadingImages] = useState<boolean>(false);
   const [selectedRoomIndexForImage, setSelectedRoomIndexForImage] = useState<number | null>(null);
   const roomFileInputRef = useRef<HTMLInputElement>(null);
-  const [city, setCity] = useState<string>('')
+  const [city, setCity] = useState<string>('Mumbai')
   const [citySuggestions, setCitySuggestions] = useState<any[]>([])
-  const [state, setState] = useState<string>('')
+  const [state, setState] = useState<string>('Maharashtra')
   const [country] = useState<string>('india') // Fixed to India
   const [area, setArea] = useState<string>('')
   const [stateOptions, setStateOptions] = useState<State[]>([])
@@ -660,6 +670,13 @@ export function AddPropertyForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
+      {/* Note about required fields */}
+      <div className="flex justify-end text-sm text-gray-500 mb-4">
+        <span className="flex items-center">
+          <span className="text-red-500 mr-1">*</span> Required fields
+        </span>
+      </div>
+
       {/* Hidden file inputs for image uploads */}
       <input
         type="file"
@@ -703,7 +720,9 @@ export function AddPropertyForm() {
           <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Property Name</Label>
+              <RequiredLabel>
+                <Label htmlFor="name">Property Name</Label>
+              </RequiredLabel>
               <Input
                 id="name"
                 value={name}
@@ -713,7 +732,9 @@ export function AddPropertyForm() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="address">Full Address</Label>
+              <RequiredLabel>
+                <Label htmlFor="address">Full Address</Label>
+              </RequiredLabel>
               <Input
                 id="address"
                 value={location.address}
@@ -723,7 +744,9 @@ export function AddPropertyForm() {
               />
             </div>
             <div className="space-y-2 relative">
-              <Label htmlFor="city">City</Label>
+              <RequiredLabel>
+                <Label htmlFor="city">City</Label>
+              </RequiredLabel>
               <div className="relative">
                 <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 z-10" />
                 <Input
@@ -756,6 +779,7 @@ export function AddPropertyForm() {
                   }}
                   placeholder="Enter city"
                   className="pl-10"
+                  required
                 />
               </div>
               {citySuggestions.length > 0 && (
@@ -769,7 +793,9 @@ export function AddPropertyForm() {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="state">State</Label>
+              <RequiredLabel>
+                <Label htmlFor="state">State</Label>
+              </RequiredLabel>
               <Select
                 value={state}
                 onValueChange={(value) => setState(value)}
@@ -815,14 +841,18 @@ export function AddPropertyForm() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Latitude</Label>
+              <RequiredLabel>
+                <Label>Latitude</Label>
+              </RequiredLabel>
               <Input
                 value={location.latitude}
                 readOnly
               />
             </div>
             <div className="space-y-2">
-              <Label>Longitude</Label>
+              <RequiredLabel>
+                <Label>Longitude</Label>
+              </RequiredLabel>
               <Input
                 value={location.longitude}
                 readOnly
@@ -839,11 +869,16 @@ export function AddPropertyForm() {
       <Card className="mb-4">
         <CardContent className="pt-6">
           <h3 className="text-lg font-semibold mb-4">Description</h3>
+          <RequiredLabel>
+            <Label htmlFor="description">Property Description</Label>
+          </RequiredLabel>
           <Textarea
+            id="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Enter property description"
             rows={4}
+            required
           />
         </CardContent>
       </Card>
@@ -851,7 +886,9 @@ export function AddPropertyForm() {
       {/* Images */}
       <Card className="mb-4">
         <CardContent className="pt-6">
-          <h3 className="text-lg font-semibold mb-4">Property Images</h3>
+          <h3 className="text-lg font-semibold mb-4">
+            <RequiredLabel>Property Images</RequiredLabel>
+          </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {images.map((image, index) => (
               <div key={index} className="relative aspect-[4/3]">
@@ -997,7 +1034,9 @@ export function AddPropertyForm() {
       <Card className="mb-4">
         <CardContent className="pt-6">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">Rooms</h3>
+            <h3 className="text-lg font-semibold">
+              <RequiredLabel>Rooms</RequiredLabel>
+            </h3>
             <Button
               type="button"
               variant="neutral"
@@ -1040,7 +1079,9 @@ export function AddPropertyForm() {
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor={`room-name-${index}`}>Room Name</Label>
+                    <RequiredLabel>
+                      <Label htmlFor={`room-name-${index}`}>Room Name</Label>
+                    </RequiredLabel>
                     <Input
                       id={`room-name-${index}`}
                       value={room.name}
@@ -1102,27 +1143,35 @@ export function AddPropertyForm() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor={`room-maxoccupancy-${index}`}>Max Occupancy</Label>
+                    <RequiredLabel>
+                      <Label htmlFor={`room-maxoccupancy-${index}`}>Max Occupancy</Label>
+                    </RequiredLabel>
                     <Input
                       id={`room-maxoccupancy-${index}`}
                       type="number"
                       value={room.maxoccupancy || ''}
                       onChange={(e) => updateRoom(index, { maxoccupancy: parseInt(e.target.value) })}
                       placeholder="Enter max occupancy"
+                      required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor={`room-numberofrooms-${index}`}>Number of Rooms</Label>
+                    <RequiredLabel>
+                      <Label htmlFor={`room-numberofrooms-${index}`}>Number of Rooms</Label>
+                    </RequiredLabel>
                     <Input
                       id={`room-numberofrooms-${index}`}
                       type="number"
                       value={room.number_of_rooms || ''}
                       onChange={(e) => updateRoom(index, { number_of_rooms: parseInt(e.target.value) })}
                       placeholder="Enter number of rooms"
+                      required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor={`room-bedtype-${index}`}>Bed Type</Label>
+                    <RequiredLabel>
+                      <Label htmlFor={`room-bedtype-${index}`}>Bed Type</Label>
+                    </RequiredLabel>
                     <Select
                       value={room.bed_type || undefined}
                       onValueChange={(value) => updateRoom(index, { bed_type: value })}

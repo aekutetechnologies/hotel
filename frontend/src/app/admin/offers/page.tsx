@@ -233,9 +233,15 @@ export default function Offers() {
   const handleEditOffer = async (updatedOffer: Offer) => {
     // In a real app, you would update the offer in your backend here
     console.log('Updating offer:', updatedOffer)
-    setIsEditModalOpen(false)
-     // After successful edit, refresh offers list
-    loadOffers()
+    try {
+      await updateOffer(updatedOffer.id, updatedOffer)
+      toast.success('Offer updated successfully.')
+      setIsEditModalOpen(false)
+      loadOffers()
+    } catch (error) {
+      console.error('Error updating offer:', error)
+      toast.error('Failed to update offer.')
+    }
   }
 
   const handleStatusChange = async (offerId: number, newStatus: string) => {
@@ -283,8 +289,8 @@ export default function Offers() {
   if (!isLoaded) {
     console.log('Render: Loading permissions')
     return (
-      <div className="flex justify-center items-center p-12">
-        <Spinner />
+      <div className="flex justify-center items-center p-12 h-[70vh]">
+        <Spinner className="h-12 w-12" />
       </div>
     )
   }

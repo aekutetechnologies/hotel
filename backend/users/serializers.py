@@ -25,7 +25,6 @@ class UserViewSerializer(serializers.ModelSerializer):
         return BookingViewSerializer(bookings, many=True).data
     
     def get_user_group(self, obj):
-        print(obj)
         try:
             user_group = UserHsPermission.objects.get(user=obj)
             return user_group.permission_group.name

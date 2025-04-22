@@ -13,7 +13,7 @@ export interface VerifyOtpResponse {
 }
 
 export async function verifyOtp({ mobileNumber, otp }: { mobileNumber: string, otp: string }): Promise<VerifyOtpResponse> {
-  const makeRequest = async (): Promise<VerifyOtpResponse> => {
+  try {
     const response = await fetch(`${API_URL}users/verify-otp/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -22,11 +22,12 @@ export async function verifyOtp({ mobileNumber, otp }: { mobileNumber: string, o
   
     if (!response.ok) {
       const errorData = await response.json()
-      throw new Error(errorData.message || 'Failed to login. Please try again or contact support.')
+      throw new Error(errorData.message || 'Failed to verify OTP. Please try again.')
     }
   
-    return response.json()
+    return await response.json()
+  } catch (error: any) {
+    console.error('OTP verification failed:', error)
+    throw error
   }
-  
-  return handleApiError(makeRequest())
 }

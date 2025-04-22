@@ -111,7 +111,7 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
       try {
         response = await verifyOtp({ mobileNumber: phoneNumber, otp: otpString })
       } catch (e: any) {
-        setError('Failed to verify OTP.');
+        setError('Failed to verify OTP. Please try again.');
         return;
       }
 
@@ -133,7 +133,6 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
         resetDialogState()
       } else {
         setError('Failed to verify OTP.')
-        resetDialogState()
       }
     } catch (err) {
       console.error("Verify OTP Error:", err)
@@ -275,7 +274,12 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
                   ))}
                 </div>
                 <div className="text-center">
-                  <button className="text-blue-600 text-sm hover:underline">Resend?</button>
+                  <button 
+                    className="text-blue-600 text-sm hover:underline" 
+                    onClick={handleSendOTP}
+                  >
+                    Resend?
+                  </button>
                 </div>
               </div>
 

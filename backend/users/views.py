@@ -12,6 +12,7 @@ from .decorators import custom_authentication_and_permissions
 import jwt
 from datetime import timedelta
 from django.utils import timezone
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,9 @@ def send_otp(request):
     otp = str(random.randint(100000, 999999))
     cache.set(mobile, otp, timeout=300)  # OTP valid for 5 minutes
     # In real app, send OTP via SMS
-    logger.info(f"OTP for {mobile}: {otp}")
+    print(otp)
+    otp_string = f"https://sms.staticking.com/index.php/smsapi/httpapi/?secret=psbJQL0U6jliRlaB4Syj&sender=HSQUPL&tempid=1707170989463685583&receiver={mobile}&route=TA&msgtype=1&sms=%22Welcome%20to%20Hsquareliving!%20Your%20One-Time%20Password%20(OTP)%20for%20registration/sign-in%20is:%20{otp}.%20Keep%20it%20safe%20and%20happy%20exploring!%22"
+    requests.get(otp_string)
     return Response({'message': 'OTP sent successfully', 'otp': otp}, status=status.HTTP_200_OK)
 
 

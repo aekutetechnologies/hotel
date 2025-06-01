@@ -31,6 +31,78 @@ permissions = [
         'description': 'Assign permissions to users.'
     },
     {
+        'name': 'admin:user:assign-role',
+        'description': 'Assign roles to users.'
+    },
+    {
+        'name': 'admin:settings:manage',
+        'description': 'Manage system settings and configurations.'
+    },
+    {
+        'name': 'admin:content:manage',
+        'description': 'Manage system content and data.'
+    },
+    {
+        'name': 'admin:reports:view',
+        'description': 'View system reports and analytics.'
+    },
+    {
+        'name': 'admin:reports:export',
+        'description': 'Export reports and data.'
+    },
+    {
+        'name': 'admin:dashboard:view',
+        'description': 'View admin dashboard and statistics.'
+    },
+    {
+        'name': 'admin:role:view',
+        'description': 'View roles and role permissions.'
+    },
+    {
+        'name': 'admin:role:create',
+        'description': 'Create new roles.'
+    },
+    {
+        'name': 'admin:role:update',
+        'description': 'Update existing roles.'
+    },
+    {
+        'name': 'admin:role:delete',
+        'description': 'Delete roles.'
+    },
+    {
+        'name': 'admin:offer:view',
+        'description': 'View offers and promotions.'
+    },
+    {
+        'name': 'admin:offer:create',
+        'description': 'Create new offers and promotions.'
+    },
+    {
+        'name': 'admin:offer:update',
+        'description': 'Update existing offers and promotions.'
+    },
+    {
+        'name': 'admin:offer:delete',
+        'description': 'Delete offers and promotions.'
+    },
+    {
+        'name': 'admin:expense:view',
+        'description': 'View expenses and financial records.'
+    },
+    {
+        'name': 'admin:expense:create',
+        'description': 'Create new expense records.'
+    },
+    {
+        'name': 'admin:expense:update',
+        'description': 'Update existing expense records.'
+    },
+    {
+        'name': 'admin:expense:delete',
+        'description': 'Delete expense records.'
+    },
+    {
         'name': 'property:view',
         'description': 'View property details.'
     },

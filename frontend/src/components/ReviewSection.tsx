@@ -55,7 +55,7 @@ export function ReviewSection({ reviews }: ReviewSectionProps) {
 
   if (!hasReviews) {
     return (
-      <div className="p-6 bg-white rounded-lg shadow-sm border text-center">
+      <div className="p-6 bg-white rounded-xl shadow-lg text-center">
         <p className="text-gray-500 mb-2">No reviews yet</p>
         <p className="text-sm text-gray-400">Be the first to review this property!</p>
       </div>
@@ -64,7 +64,7 @@ export function ReviewSection({ reviews }: ReviewSectionProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start gap-6 p-6 bg-white rounded-lg shadow-sm border">
+      <div className="flex items-start gap-6 p-6 bg-white rounded-xl shadow-lg">
         <div>
           <div className="text-4xl font-bold mb-2">
             {typeof averageRating === 'number' ? averageRating.toFixed(1) : averageRating}★
@@ -122,7 +122,7 @@ export function ReviewSection({ reviews }: ReviewSectionProps) {
                 {review.images && review.images.length > 0 && (
                   <div className="flex flex-wrap gap-3">
                     {review.images.map((image, index) => (
-                      <div key={`${review.id}-image-${index}`} className="relative w-24 h-24 overflow-hidden border rounded-md shadow-sm">
+                      <div key={`${review.id}-image-${index}`} className="relative w-24 h-24 overflow-hidden rounded-xl shadow-lg">
                         <Image
                           src={image}
                           alt={`Review image ${index + 1}`}
@@ -181,7 +181,7 @@ export function ReviewSection({ reviews }: ReviewSectionProps) {
                       {review.images && review.images.length > 0 && (
                         <div className="flex flex-wrap gap-3">
                           {review.images.map((image, index) => (
-                            <div key={`${review.id}-image-${index}`} className="relative w-24 h-24 overflow-hidden border rounded-md shadow-sm">
+                            <div key={`${review.id}-image-${index}`} className="relative w-24 h-24 overflow-hidden rounded-xl shadow-lg">
                               <Image
                                 src={image}
                                 alt={`Review image ${index + 1}`}

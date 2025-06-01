@@ -692,7 +692,7 @@ export default function PropertyDetails() {
                   return (
                     <div 
                       key={amenityKey} 
-                      className="flex items-center gap-2 p-3 sm:p-4 border rounded-lg"
+                      className="flex items-center gap-2 p-3 sm:p-4 shadow-lg rounded-xl bg-white"
                     >
                       {IconComponent}
                       <span className="text-sm sm:text-base">{amenity.name || 'Unknown amenity'}</span>
@@ -712,7 +712,7 @@ export default function PropertyDetails() {
                   const quantity = selectedRoom?.quantity || 0;
                   
                   return (
-                    <div key={roomId} className="border rounded-lg p-3 sm:p-4">
+                    <div key={roomId} className="shadow-lg rounded-xl p-3 sm:p-4 bg-white">
                       <div className="flex flex-col sm:flex-row sm:space-x-4">
                         {/* Image Slider (Left Side - Full width on mobile, 1/3 on desktop) */}
                         <div className="w-full sm:w-1/3 relative mb-4 sm:mb-0">

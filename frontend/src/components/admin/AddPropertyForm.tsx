@@ -339,9 +339,9 @@ export function AddPropertyForm() {
 
       let finalBlob = croppedImageBlob
       
-      // Compress image if size exceeds 1MB (1048576 bytes)
-      if (croppedImageBlob.size > 1048576) {
-        console.log(`Image size (${croppedImageBlob.size / 1048576}MB) exceeds 1MB, compressing...`)
+      // Compress image if size exceeds 4MB (4096000 bytes)
+      if (croppedImageBlob.size > 4096000) {
+        console.log(`Image size (${croppedImageBlob.size / 4096000}MB) exceeds 4MB, compressing...`)
         toast.info("Compressing large image...")
         
         // Create an image element to draw to canvas
@@ -387,7 +387,7 @@ export function AddPropertyForm() {
         // Clean up URL object
         URL.revokeObjectURL(blobUrl)
         
-        console.log(`Compressed image size: ${finalBlob.size / 1048576}MB`)
+        console.log(`Compressed image size: ${finalBlob.size / 4096000}MB`)
       }
 
       const imageFile = new File([finalBlob], "cropped_image.webp", { type: "image/webp" })
@@ -422,9 +422,9 @@ export function AddPropertyForm() {
 
       let finalBlob = croppedImageBlob;
       
-      // Compress image if size exceeds 1MB (1048576 bytes)
-      if (croppedImageBlob.size > 1048576) {
-        console.log(`Room image size (${croppedImageBlob.size / 1048576}MB) exceeds 1MB, compressing...`)
+      // Compress image if size exceeds 4MB (4096000 bytes)
+      if (croppedImageBlob.size > 4096000) {
+        console.log(`Room image size (${croppedImageBlob.size / 4096000}MB) exceeds 4MB, compressing...`)
         toast.info("Compressing large image...")
         
         // Create an image element to draw to canvas
@@ -470,7 +470,7 @@ export function AddPropertyForm() {
         // Clean up URL object
         URL.revokeObjectURL(blobUrl)
         
-        console.log(`Compressed room image size: ${finalBlob.size / 1048576}MB`)
+        console.log(`Compressed room image size: ${finalBlob.size / 4096000}MB`)
       }
 
       const imageFile = new File([finalBlob], "room_cropped_image.webp", { type: "image/webp" });

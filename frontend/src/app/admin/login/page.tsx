@@ -25,7 +25,6 @@ function AdminLogin() {
 
     try {
       const response = await sendOtp({ mobileNumber })
-      setOtp(response.otp)
       setShowOtpInput(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send OTP')

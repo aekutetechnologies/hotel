@@ -18,8 +18,8 @@ interface DocumentModalProps {
   title: string
 }
 
-// Define 1MB in bytes (1024 * 1024)
-const MAX_FILE_SIZE = 1048576
+// Define 4MB in bytes (1024 * 1024 * 4)
+const MAX_FILE_SIZE = 4096000
 
 export function DocumentModal({ isOpen, onClose, onUpload, title }: DocumentModalProps) {
   const [file, setFile] = useState<File | null>(null)
@@ -29,10 +29,10 @@ export function DocumentModal({ isOpen, onClose, onUpload, title }: DocumentModa
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0]
       
-      // Check if file size exceeds 1MB
+      // Check if file size exceeds 4MB
       if (selectedFile.size > MAX_FILE_SIZE) {
         setSizeError(true)
-        toast.error("File size exceeds 1MB. Please upload a file below 1MB.")
+        toast.error("File size exceeds 4MB. Please upload a file below 4MB.")
         return
       }
       
@@ -69,7 +69,7 @@ export function DocumentModal({ isOpen, onClose, onUpload, title }: DocumentModa
                     Upload a document
                   </span>
                   <span className="mt-1 text-xs text-gray-500">
-                    Maximum file size: 1MB
+                    Maximum file size: 4MB
                   </span>
                 </div>
                 <input type="file" className="hidden" onChange={handleFileChange} />
@@ -78,8 +78,8 @@ export function DocumentModal({ isOpen, onClose, onUpload, title }: DocumentModa
               <div className="relative w-full h-32 bg-red-50 flex items-center justify-center rounded-lg border border-red-200">
                 <div className="text-center px-4">
                   <AlertCircle className="mx-auto h-8 w-8 text-red-500 mb-2" />
-                  <div className="font-medium text-red-700">File size exceeds 1MB</div>
-                  <div className="text-sm text-red-600">Please upload a file below 1MB</div>
+                  <div className="font-medium text-red-700">File size exceeds 4MB</div>
+                  <div className="text-sm text-red-600">Please upload a file below 4MB</div>
                   <Button
                     variant="neutral"
                     size="sm"

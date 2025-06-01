@@ -110,13 +110,10 @@ export function Header() {
   return (
     <>
       <header className="
-        sticky 
-        top-0 
         bg-white 
         shadow-md 
         w-full 
-        py-4 
-        z-50
+        py-4
       ">
         <div className="container mx-auto px-4 flex justify-between items-center">
           <Link href="/home?type=hotels" className="flex items-center">
@@ -131,11 +128,11 @@ export function Header() {
 
           {/* Desktop menu */}
           <div className="hidden md:flex items-center gap-8">
-            <Link href={`tel:${phoneNumber.replace(/-/g, '')}`} className="flex items-center gap-3">
-              <PhoneCall className="h-10 w-10 text-gray-600" />
+            <Link href={`tel:${phoneNumber.replace(/-/g, '')}`} className="flex items-center gap-2">
+              <PhoneCall className="h-6 w-6 text-gray-600" />
               <div className="flex flex-col items-start">
-                <span className="text-lg font-bold text-[#000F24]">{phoneNumber}</span>
-                <span className="text-sm text-gray-500">Call us to Book now</span>
+                <span className="text-base font-semibold text-[#000F24]">{phoneNumber}</span>
+                <span className="text-xs text-gray-500">Call us to Book now</span>
               </div>
             </Link>
 
@@ -191,13 +188,13 @@ export function Header() {
             <div className="container mx-auto px-4 flex flex-col items-center gap-6">
               <Link 
                 href={`tel:${phoneNumber.replace(/-/g, '')}`}
-                className="flex items-center gap-3 py-3 border-b border-gray-100 w-full justify-center"
+                className="flex items-center gap-2 py-2 border-b border-gray-100 w-full justify-center"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                <PhoneCall className="h-8 w-8 text-gray-600" />
+                <PhoneCall className="h-6 w-6 text-gray-600" />
                 <div className="flex flex-col items-start">
-                  <span className="text-lg font-bold text-[#000F24]">{phoneNumber}</span>
-                  <span className="text-sm text-gray-500">Call us to Book now</span>
+                  <span className="text-base font-semibold text-[#000F24]">{phoneNumber}</span>
+                  <span className="text-xs text-gray-500">Call us to Book now</span>
                 </div>
               </Link>
 

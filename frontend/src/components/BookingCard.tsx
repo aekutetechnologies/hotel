@@ -575,7 +575,7 @@ export function BookingCard({
   };
 
   return (
-    <Card className="w-full bg-white shadow-lg">
+    <Card className="w-full bg-white shadow-lg border-none">
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
@@ -942,7 +942,7 @@ export function BookingCard({
             {Array.from(selectedRoomMap.values())
               .filter(room => room.quantity > 0)
               .map(room => (
-                <div key={room.id} className="border rounded-lg p-3 flex justify-between items-center">
+                <div key={room.id} className="shadow-lg rounded-xl p-3 flex justify-between items-center bg-white">
                   <div>
                     <span className="font-medium">{room.name}</span>
                     <p className="text-sm text-gray-500">
@@ -962,7 +962,7 @@ export function BookingCard({
             }
           </div>
         ) : (
-          <div className="border rounded-lg p-4 text-center text-gray-500">
+          <div className="shadow-lg rounded-xl p-4 text-center text-gray-500 bg-white">
             No rooms selected
           </div>
         )}
@@ -971,7 +971,7 @@ export function BookingCard({
         <div className="space-y-2">
           <Label>Apply Offer</Label>
           {selectedOffer ? (
-            <div className="flex items-center justify-between p-2 border rounded-md">
+            <div className="flex items-center justify-between p-2 shadow-lg rounded-xl bg-white">
               <div>
                 <p className="font-medium">{selectedOffer.offer.code}</p>
                 <p className="text-sm text-gray-500">{selectedOffer.offer.title}</p>
@@ -1006,7 +1006,7 @@ export function BookingCard({
               </SelectContent>
             </Select>
           ) : (
-            <div className="p-2 border rounded-md text-gray-500">
+            <div className="p-2 shadow-lg rounded-xl text-gray-500 bg-white">
               No offers available
             </div>
           )}

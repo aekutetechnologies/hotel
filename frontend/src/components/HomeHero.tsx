@@ -248,27 +248,9 @@ export function HomeHero({
             {(!expandedSection || expandedSection === "hotels") && (
               <>
                 <div className="my-auto py-12">
-                  <motion.h2
-                    className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6"
-                    initial="hidden"
-                    animate="visible"
-                    whileHover="hover"
-                  >
-                    {["LUXURY", "COMFORT", "STYLE"].map((word, index) => (
-                      <motion.div key={index} className="overflow-hidden">
-                        <motion.span
-                          className="inline-block"
-                          variants={textRevealVariants}
-                          custom={index}
-                        >
-                          {word}
-                        </motion.span>
-                      </motion.div>
-                    ))}
-                  </motion.h2>
 
                   {/* Typewriter Effect for "Hostels" using Framer Motion */}
-                  <div className="text-2xl font-semibold text-white flex">
+                  <div className="text-5xl font-semibold text-white flex">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ 
@@ -281,7 +263,7 @@ export function HomeHero({
                           ease: "easeInOut",
                         }
                       }}
-                      className="overflow-hidden whitespace-nowrap"
+                      className="overflow-hidden whitespace-nowrap mb-6"
                     >
                       {text}
                     </motion.div>
@@ -299,6 +281,25 @@ export function HomeHero({
                       |
                       </motion.span>
                   </div>
+
+                  <motion.h2
+                    className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-6"
+                    initial="hidden"
+                    animate="visible"
+                    whileHover="hover"
+                  >
+                    {["LUXURY", "COMFORT", "STYLE"].map((word, index) => (
+                      <motion.div key={index} className="overflow-hidden">
+                        <motion.span
+                          className="inline-block"
+                          variants={textRevealVariants}
+                          custom={index}
+                        >
+                          {word}
+                        </motion.span>
+                      </motion.div>
+                    ))}
+                  </motion.h2>
 
                   <motion.p
                     className="mb-8 max-w-md text-white/90 text-sm sm:text-base"
@@ -425,25 +426,7 @@ export function HomeHero({
             {(!expandedSection || expandedSection === "hostels") && (
               <>
                 <div className="my-auto py-12">
-                  <motion.h2
-                    className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6"
-                    initial="hidden"
-                    animate="visible"
-                    whileHover="hover"
-                  >
-                    {["VIBRANT", "SOCIAL", "AFFORDABLE"].map((word, index) => (
-                      <motion.div key={index} className="overflow-hidden">
-                        <motion.span
-                          className="inline-block"
-                          variants={textRevealVariants}
-                          custom={index}
-                        >
-                          {word}
-                        </motion.span>
-                      </motion.div>
-                    ))}
-                  </motion.h2>
-                  <div className="text-2xl font-semibold text-white flex">
+                <div className="text-5xl font-semibold text-white flex">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ 
@@ -456,7 +439,7 @@ export function HomeHero({
                           ease: "easeInOut",
                         }
                       }}
-                      className="overflow-hidden whitespace-nowrap"
+                      className="overflow-hidden whitespace-nowrap mb-6"
                     >
                       {textHostel}
                     </motion.div>
@@ -474,6 +457,24 @@ export function HomeHero({
                       |
                       </motion.span>
                   </div>
+                  <motion.h2
+                    className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-6"
+                    initial="hidden"
+                    animate="visible"
+                    whileHover="hover"
+                  >
+                    {["VIBRANT", "SOCIAL", "AFFORDABLE"].map((word, index) => (
+                      <motion.div key={index} className="overflow-hidden">
+                        <motion.span
+                          className="inline-block"
+                          variants={textRevealVariants}
+                          custom={index}
+                        >
+                          {word}
+                        </motion.span>
+                      </motion.div>
+                    ))}
+                  </motion.h2>
                   <motion.p
                     className="mb-8 max-w-md text-white/90"
                     initial={{ opacity: 0, y: 30 }}

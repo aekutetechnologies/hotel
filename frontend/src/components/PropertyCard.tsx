@@ -153,15 +153,25 @@ export function PropertyCard({ property, searchParams }: PropertyCardProps) {
         {/* Image Section */}
         <div className="w-full sm:w-2/5 relative flex pr-0">
           <div className="relative h-48 w-48 sm:h-52 sm:w-52 md:h-60 md:w-60 lg:h-64 lg:w-64 xl:h-72 xl:w-72 flex-1">
-            <img
-              src={property.images[currentImageIndex].image}
-              alt={property.name}
-              className="object-cover w-full h-full p-2"
-              onLoad={() => setIsImageLoaded(true)}
-              onError={() => setIsImageLoaded(true)}
-              style={{ opacity: isImageLoaded ? 1 : 0 }}
-              loading="lazy"
-            />
+            <Link 
+              href={{
+                pathname: `/property/${property.id}`,
+                query: searchParams ? Object.fromEntries(searchParams.entries()) : {}
+              }}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="cursor-pointer block h-full w-full"
+            >
+              <img
+                src={property.images[currentImageIndex].image}
+                alt={property.name}
+                className="object-cover w-full h-full p-2"
+                onLoad={() => setIsImageLoaded(true)}
+                onError={() => setIsImageLoaded(true)}
+                style={{ opacity: isImageLoaded ? 1 : 0 }}
+                loading="lazy"
+              />
+            </Link>
             <Badge
               variant="secondary"
               className="absolute top-2 left-2 bg-white/80 text-[#B11E43] border border-[#B11E43]"

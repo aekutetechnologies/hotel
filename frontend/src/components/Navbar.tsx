@@ -174,11 +174,11 @@ const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         <div className="flex items-center gap-4">
-          <Link href={`tel:${phoneNumber.replace(/-/g, '')}`} className="hidden md:flex items-center gap-3">
-            <PhoneCall className="h-10 w-10 text-gray-600" />
+          <Link href={`tel:${phoneNumber.replace(/-/g, '')}`} className="hidden md:flex items-center gap-2">
+            <PhoneCall className="h-6 w-6 text-gray-600" />
             <div className="flex flex-col items-start">
-              <span className="text-lg font-bold text-[#000F24]">{phoneNumber}</span>
-              <span className="text-sm text-gray-500">Call us to Book now</span>
+              <span className="text-base font-semibold text-[#000F24]">{phoneNumber}</span>
+              <span className="text-xs text-gray-500">Call us to Book now</span>
             </div>
           </Link>
           

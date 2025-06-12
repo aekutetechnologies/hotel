@@ -42,9 +42,14 @@ export function PropertyCard({ property, searchParams }: PropertyCardProps) {
   // Calculate price based on booking type
   const originalPrice = property.rooms && property.rooms.length > 0 ? 
     Math.min(...property.rooms.map(room => {
-      if (isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
-        // Always use monthly rate for hostels if available
-        return parseFloat(room.monthly_rate);
+      if (isHostel) {
+        if (room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
+          return parseFloat(room.monthly_rate)
+        } else if (room.yearly_rate && parseFloat(room.yearly_rate) > 0) {
+          return parseFloat(room.yearly_rate);
+        } else {
+          return parseFloat('0');
+        }
       } else if (bookingType === 'hourly' && room.hourly_rate && parseFloat(room.hourly_rate) > 0) {
         // Use hourly rate when booking type is hourly
         return parseFloat(room.hourly_rate);
@@ -73,6 +78,8 @@ export function PropertyCard({ property, searchParams }: PropertyCardProps) {
       // Check if we're using monthly rate
       if (property.rooms && property.rooms.some(room => room.monthly_rate && parseFloat(room.monthly_rate) > 0)) {
         return ' per month';
+      } else if (property.rooms && property.rooms.some(room => room.yearly_rate && parseFloat(room.yearly_rate) > 0)) {
+        return ' per year';
       } else {
         return bookingType === 'hourly' ? ' per hour' : ' per night';
       }

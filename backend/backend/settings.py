@@ -17,8 +17,9 @@ from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# WEBSITE_URL = 'http://localhost:8000'
-WEBSITE_URL = 'http://147.93.97.63/api'
+WEBSITE_URL = 'http://localhost:8000'
+# WEBSITE_URL = 'http://147.93.97.63/api'
+# WEBSITE_URL = 'https://hsquareliving.com/api'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -188,6 +189,11 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:8080",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:8000",
+    "https://hsquareliving.in",
+    "https://hsquareliving.in",
+    "https://www.hsquareliving.in",
+    "https://hsquareliving.com",
+    "https://www.hsquareliving.com",
 ]
 
 CORS_ALLOW_METHODS = (

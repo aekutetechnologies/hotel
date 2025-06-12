@@ -29,7 +29,7 @@ def send_otp(request):
     print(otp)
     otp_string = f"https://sms.staticking.com/index.php/smsapi/httpapi/?secret=psbJQL0U6jliRlaB4Syj&sender=HSQUPL&tempid=1707170989463685583&receiver={mobile}&route=TA&msgtype=1&sms=%22Welcome%20to%20Hsquareliving!%20Your%20One-Time%20Password%20(OTP)%20for%20registration/sign-in%20is:%20{otp}.%20Keep%20it%20safe%20and%20happy%20exploring!%22"
     requests.get(otp_string)
-    return Response({'message': 'OTP sent successfully', 'otp': otp}, status=status.HTTP_200_OK)
+    return Response({'message': 'OTP sent successfully'}, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])

@@ -16,6 +16,16 @@ const nextConfig = {
         hostname: '147.93.97.63',
         pathname: '/api/media/**',
       },
+           {
+        protocol: 'https',
+        hostname: 'hsquareliving.com',
+        pathname: '/api/media/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'hsquareliving.in',
+        pathname: '/api/media/**',
+      },
     ],
   },
   eslint: {

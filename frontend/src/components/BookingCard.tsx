@@ -44,6 +44,7 @@ interface BookingCardProps {
   selectedGuests: number | null
   selectedRoomsCount: number | null
   months?: number
+  years?: number
   searchParams: ReturnType<typeof useSearchParams>
 }
 
@@ -95,6 +96,7 @@ export function BookingCard({
   checkOutTime: initialCheckOutTime,
   selectedRoomMap,
   months: initialMonths = 1,
+  years: initialYears = 1,
   selectedGuests: initialSelectedGuests,
   selectedRoomsCount: initialSelectedRoomsCount,
   searchParams
@@ -135,6 +137,7 @@ export function BookingCard({
   
   const [guests, setGuests] = useState(initialSelectedGuests || 1)
   const [months, setMonths] = useState(initialMonths)
+  const [years, setYears] = useState(initialYears)
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null)
   
   // Check if this is a hostel property
@@ -335,7 +338,7 @@ export function BookingCard({
     }
   }, [date, checkOut, checkInTime, checkOutTime])
   
-  // Update checkout date when check-in date or months change for monthly bookings
+  // Update checkout date when check-in date or months/years change for long-term bookings
   useEffect(() => {
     if (bookingType === 'monthly' && date) {
       const newCheckoutDate = new Date(date);
@@ -350,8 +353,21 @@ export function BookingCard({
       const url = new URL(window.location.href);
       url.search = newSearchParams.toString();
       window.history.pushState({}, '', url);
+    } else if (bookingType === 'yearly' && date) {
+      const newCheckoutDate = new Date(date);
+      newCheckoutDate.setMonth(newCheckoutDate.getMonth() + (years * 12));
+      setCheckOutDate(newCheckoutDate);
+      
+      // Update search params with the new checkout date
+      const newSearchParams = new URLSearchParams(searchParams.toString());
+      newSearchParams.set('checkOutDate', format(newCheckoutDate, 'yyyy-MM-dd'));
+      
+      // Update URL without page reload
+      const url = new URL(window.location.href);
+      url.search = newSearchParams.toString();
+      window.history.pushState({}, '', url);
     }
-  }, [date, months, bookingType, searchParams]);
+  }, [date, months, years, bookingType, searchParams]);
 
   // Debug logs to help troubleshoot time values
   useEffect(() => {
@@ -381,10 +397,14 @@ export function BookingCard({
       
       let roomPrice = 0;
       
-      // Check if we should use monthly rate
+      // Check if we should use monthly or yearly rate
       if (bookingType === 'monthly' || (isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0)) {
         // Use monthly rate for monthly bookings or hostels
         const basePrice = parseFloat(room.monthly_rate || '0');
+        roomPrice = basePrice * quantity;
+      } else if (bookingType === 'yearly' && room.yearly_rate && parseFloat(room.yearly_rate) > 0) {
+        // Use yearly rate for yearly bookings
+        const basePrice = parseFloat(room.yearly_rate || '0');
         roomPrice = basePrice * quantity;
       } else {
         // Use hourly or daily rate based on bookingType
@@ -468,7 +488,9 @@ export function BookingCard({
   const getPriceLabel = () => {
     const selectedRoomsArray = Array.from(selectedRoomMap.values()).filter(room => room.quantity > 0);
     
-    if (bookingType === 'monthly' || (isHostel && selectedRoomsArray.length > 0 && selectedRoomsArray[0].monthly_rate && parseFloat(selectedRoomsArray[0].monthly_rate || '0') > 0)) {
+    if (bookingType === 'yearly' && selectedRoomsArray.length > 0 && selectedRoomsArray[0].yearly_rate && parseFloat(selectedRoomsArray[0].yearly_rate || '0') > 0) {
+      return "/year";
+    } else if (bookingType === 'monthly' || (isHostel && selectedRoomsArray.length > 0 && selectedRoomsArray[0].monthly_rate && parseFloat(selectedRoomsArray[0].monthly_rate || '0') > 0)) {
       return "/month";
     } else {
       return bookingType === 'hourly' ? "/hour" : "/night";
@@ -483,9 +505,11 @@ export function BookingCard({
       bookingType,
       isHostel,
       hasMonthlyRate: selectedRoomsArray.length > 0 && selectedRoomsArray[0].monthly_rate && parseFloat(selectedRoomsArray[0].monthly_rate || '0') > 0,
+      hasYearlyRate: selectedRoomsArray.length > 0 && selectedRoomsArray[0].yearly_rate && parseFloat(selectedRoomsArray[0].yearly_rate || '0') > 0,
       checkIn: date,
       checkOut,
       months,
+      years,
       rooms: getRoomCountFromSearchParams(),
       priceLabel: getPriceLabel(),
       calculatedPrice: totalPrice
@@ -789,7 +813,7 @@ export function BookingCard({
                 </Select>
               </div>
             </div>
-          ) : bookingType !== 'monthly' ? (
+          ) : bookingType !== 'monthly' && bookingType !== 'yearly' ? (
             <div>
               <Label>Check-out Date</Label>
               <Popover>
@@ -836,7 +860,7 @@ export function BookingCard({
                 {checkOut ? format(checkOut, "PPP") : <span>Date not set</span>}
               </Button>
               <div className="text-xs text-gray-500 mt-1">
-                Auto-calculated based on check-in date and number of months
+                Auto-calculated based on check-in date and number of {bookingType === 'yearly' ? 'years' : 'months'}
               </div>
             </div>
           )}
@@ -933,6 +957,50 @@ export function BookingCard({
               />
             </div>
           )}
+
+          {bookingType === 'yearly' && (
+            <div>
+              <Label>Number of Years</Label>
+              <Input 
+                type="number" 
+                value={years}
+                onChange={(e) => {
+                  const newValue = parseInt(e.target.value) || 1;
+                  
+                  // Update search params with selected years immediately
+                  const newSearchParams = new URLSearchParams(searchParams.toString());
+                  newSearchParams.set('years', newValue.toString());
+                  
+                  // Update URL
+                  const url = new URL(window.location.href);
+                  url.search = newSearchParams.toString();
+                  window.history.pushState({}, '', url);
+                  
+                  // Update local state
+                  setYears(newValue);
+                  
+                  // Immediately update checkout date when years change
+                  if (date) {
+                    const newCheckoutDate = new Date(date);
+                    newCheckoutDate.setMonth(newCheckoutDate.getMonth() + (newValue * 12));
+                    
+                    // Update checkout date in search params
+                    newSearchParams.set('checkOutDate', format(newCheckoutDate, 'yyyy-MM-dd'));
+                    
+                    // Update URL again with the new checkout date
+                    url.search = newSearchParams.toString();
+                    window.history.pushState({}, '', url);
+                    
+                    // Update checkout date state
+                    setCheckOutDate(newCheckoutDate);
+                  }
+                }}
+                min={1}
+                max={5}
+                className="mt-1"
+              />
+            </div>
+          )}
         </div>
 
         {/* Room Selection */}
@@ -946,11 +1014,13 @@ export function BookingCard({
                   <div>
                     <span className="font-medium">{room.name}</span>
                     <p className="text-sm text-gray-500">
-                      {bookingType === 'monthly' 
-                        ? `₹${room.monthly_rate || 'N/A'}/month`
-                        : bookingType === 'hourly' 
-                          ? `₹${room.hourly_rate || 'N/A'}/hour`
-                          : `₹${room.daily_rate || 'N/A'}/night`
+                      {bookingType === 'yearly' 
+                        ? `₹${room.yearly_rate || 'N/A'}/year`
+                        : bookingType === 'monthly' 
+                          ? `₹${room.monthly_rate || 'N/A'}/month`
+                          : bookingType === 'hourly' 
+                            ? `₹${room.hourly_rate || 'N/A'}/hour`
+                            : `₹${room.daily_rate || 'N/A'}/night`
                       }
                     </p>
                   </div>
@@ -1019,28 +1089,36 @@ export function BookingCard({
               <span>Room Charges</span>
               <span>₹{bookingType === 'monthly' 
                 ? (totalPrice * months * guests).toFixed(2)
-                : totalPrice.toFixed(2)}</span>
+                : bookingType === 'yearly'
+                  ? (totalPrice * years * guests).toFixed(2)
+                  : totalPrice.toFixed(2)}</span>
             </div>
             {averageDiscount > 0 && (
               <div className="flex justify-between text-green-600">
                 <span>Discount</span>
                 <span>-₹{bookingType === 'monthly' 
                   ? (totalPrice * averageDiscount / 100 * months * guests).toFixed(2)
-                  : (totalPrice * averageDiscount / 100).toFixed(2)}</span>
+                  : bookingType === 'yearly'
+                    ? (totalPrice * averageDiscount / 100 * years * guests).toFixed(2)
+                    : (totalPrice * averageDiscount / 100).toFixed(2)}</span>
               </div>
             )}
             <div className="flex justify-between">
               <span>Taxes</span>
               <span>₹{bookingType === 'monthly' 
                 ? (taxes * months * guests).toFixed(2)
-                : taxes.toFixed(2)}</span>
+                : bookingType === 'yearly'
+                  ? (taxes * years * guests).toFixed(2)
+                  : taxes.toFixed(2)}</span>
             </div>
             <Separator />
             <div className="flex justify-between font-semibold">
               <span>Total Price</span>
               <span>₹{bookingType === 'monthly' 
                 ? (finalPrice * months * guests).toFixed(2)
-                : finalPrice.toFixed(2)}</span>
+                : bookingType === 'yearly'
+                  ? (finalPrice * years * guests).toFixed(2)
+                  : finalPrice.toFixed(2)}</span>
             </div>
           </div>
         </div>
@@ -1058,11 +1136,13 @@ export function BookingCard({
                   id,
                   name: room.name || room.occupancyType || 'Room',
                   quantity: room.quantity,
-                  price: bookingType === 'monthly' 
-                    ? room.monthly_rate 
-                    : bookingType === 'hourly' 
-                      ? room.hourly_rate 
-                      : room.daily_rate
+                  price: bookingType === 'yearly'
+                    ? room.yearly_rate
+                    : bookingType === 'monthly' 
+                      ? room.monthly_rate 
+                      : bookingType === 'hourly' 
+                        ? room.hourly_rate 
+                        : room.daily_rate
                 }))
             ),
             selectedOffer: selectedOffer ? JSON.stringify({

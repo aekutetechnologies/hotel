@@ -28,8 +28,9 @@ export function SearchForm({ sectionType }: SearchFormProps) {
   const [checkOutTime, setCheckOutTime] = useState("")
   const [rooms, setRooms] = useState(1)
   const [guests, setGuests] = useState(1)
-  const [bookingType, setBookingType] = useState<"day" | "hour" | "month">(sectionType === "hostels" ? "month" : "day")
+  const [bookingType, setBookingType] = useState<"day" | "hour" | "month" | "year">(sectionType === "hostels" ? "month" : "day")
   const [months, setMonths] = useState(1)
+  const [years, setYears] = useState(1)
   const [isFocused, setIsFocused] = useState(false)
   const [minCheckInDate, setMinCheckInDate] = useState("")
   const [minCheckOutDate, setMinCheckOutDate] = useState("")
@@ -59,10 +60,15 @@ export function SearchForm({ sectionType }: SearchFormProps) {
     // Prefill the dates
     setCheckIn(formattedToday)
     
-    // If hostel (monthly booking), calculate checkout date based on months
+    // If hostel, calculate checkout date based on booking type
     if (sectionType === "hostels") {
-      const checkoutDate = addMonths(today, months)
-      setCheckOut(format(checkoutDate, 'yyyy-MM-dd'))
+      if (bookingType === "month") {
+        const checkoutDate = addMonths(today, months)
+        setCheckOut(format(checkoutDate, 'yyyy-MM-dd'))
+      } else if (bookingType === "year") {
+        const checkoutDate = addMonths(today, years * 12)
+        setCheckOut(format(checkoutDate, 'yyyy-MM-dd'))
+      }
     } else {
       // For hotels, set checkout based on booking type
       if (bookingType === "day") {
@@ -88,9 +94,9 @@ export function SearchForm({ sectionType }: SearchFormProps) {
         setCheckOutTime(twoHoursLaterTime)
       }
     }
-  }, [sectionType, bookingType, months])
+  }, [sectionType, bookingType, months, years])
 
-  // Update checkout date when checkin date or months change for monthly booking
+  // Update checkout date when checkin date or months/years change for long-term booking
   useEffect(() => {
     if (bookingType === "month" && checkIn) {
       try {
@@ -102,8 +108,18 @@ export function SearchForm({ sectionType }: SearchFormProps) {
       } catch (error) {
         console.error("Invalid date format:", error)
       }
+    } else if (bookingType === "year" && checkIn) {
+      try {
+        const checkInDate = parseISO(checkIn)
+        if (isValid(checkInDate)) {
+          const checkOutDate = addMonths(checkInDate, years * 12)
+          setCheckOut(format(checkOutDate, 'yyyy-MM-dd'))
+        }
+      } catch (error) {
+        console.error("Invalid date format:", error)
+      }
     }
-  }, [checkIn, months, bookingType])
+  }, [checkIn, months, years, bookingType])
 
   // Update minimum check-out date when check-in date changes
   useEffect(() => {
@@ -172,6 +188,44 @@ export function SearchForm({ sectionType }: SearchFormProps) {
         const checkInDate = parseISO(checkIn)
         if (isValid(checkInDate)) {
           const checkOutDate = addMonths(checkInDate, newMonths)
+          setCheckOut(format(checkOutDate, 'yyyy-MM-dd'))
+        }
+      } catch (error) {
+        console.error("Error updating checkout date:", error)
+      }
+    }
+  }
+  
+  const incrementYears = () => {
+    const newYears = years < 5 ? years + 1 : 5
+    setYears(newYears)
+    
+    // Update checkout date when years change for yearly booking
+    if (bookingType === "year" && checkIn) {
+      try {
+        const checkInDate = parseISO(checkIn)
+        if (isValid(checkInDate)) {
+          const checkOutDate = addMonths(checkInDate, newYears * 12)
+          setCheckOut(format(checkOutDate, 'yyyy-MM-dd'))
+        }
+      } catch (error) {
+        console.error("Error updating checkout date:", error)
+      }
+    }
+  }
+  
+  const decrementYears = () => {
+    if (years <= 1) return
+    
+    const newYears = years - 1
+    setYears(newYears)
+    
+    // Update checkout date when years change for yearly booking
+    if (bookingType === "year" && checkIn) {
+      try {
+        const checkInDate = parseISO(checkIn)
+        if (isValid(checkInDate)) {
+          const checkOutDate = addMonths(checkInDate, newYears * 12)
           setCheckOut(format(checkOutDate, 'yyyy-MM-dd'))
         }
       } catch (error) {
@@ -278,8 +332,8 @@ export function SearchForm({ sectionType }: SearchFormProps) {
     
     // Set the booking type parameter based on property type
     if (sectionType === "hostels") {
-      // Always use monthly booking for hostels
-      params.set('bookingType', "monthly")
+      // Use monthly or yearly booking for hostels
+      params.set('bookingType', bookingType === "month" ? "monthly" : "yearly")
     } else {
       // For hotels, use either daily or hourly
     params.set('bookingType', bookingType === "day" ? "daily" : "hourly")
@@ -290,10 +344,14 @@ export function SearchForm({ sectionType }: SearchFormProps) {
     
     // Set check-out date based on booking type
     if (sectionType === "hostels") {
-      // For hostels, always set checkout date (monthly booking)
+      // For hostels, always set checkout date (monthly or yearly booking)
       if (checkOut) params.set('checkOutDate', checkOut)
-      // Set months parameter for hostels
-      params.set('months', months.toString())
+      // Set duration parameter for hostels
+      if (bookingType === "month") {
+        params.set('months', months.toString())
+      } else if (bookingType === "year") {
+        params.set('years', years.toString())
+      }
       params.set('rooms', rooms.toString())
     } else if (sectionType === "hotels") {
       // For hotels, set parameters based on booking type
@@ -354,12 +412,22 @@ export function SearchForm({ sectionType }: SearchFormProps) {
       return;
     }
     
-    // If booking type is monthly, update checkout date based on months
+    // If booking type is monthly or yearly, update checkout date based on duration
     if (bookingType === "month") {
       try {
         const checkInDate = parseISO(newDate)
         if (isValid(checkInDate)) {
           const checkOutDate = addMonths(checkInDate, months)
+          setCheckOut(format(checkOutDate, 'yyyy-MM-dd'))
+        }
+      } catch (error) {
+        console.error("Error updating checkout date:", error)
+      }
+    } else if (bookingType === "year") {
+      try {
+        const checkInDate = parseISO(newDate)
+        if (isValid(checkInDate)) {
+          const checkOutDate = addMonths(checkInDate, years * 12)
           setCheckOut(format(checkOutDate, 'yyyy-MM-dd'))
         }
       } catch (error) {
@@ -503,13 +571,13 @@ export function SearchForm({ sectionType }: SearchFormProps) {
   }
 
   // Handle booking type change with appropriate updates
-  const handleBookingTypeChange = (type: "day" | "hour" | "month") => {
+  const handleBookingTypeChange = (type: "day" | "hour" | "month" | "year") => {
     // Restrict booking types based on section type
-    if (sectionType === "hostels" && type !== "month") {
-      return; // Only allow "month" for hostels
+    if (sectionType === "hostels" && type !== "month" && type !== "year") {
+      return; // Only allow "month" and "year" for hostels
     }
-    if (sectionType === "hotels" && type === "month") {
-      return; // Don't allow "month" for hotels
+    if (sectionType === "hotels" && (type === "month" || type === "year")) {
+      return; // Don't allow "month" or "year" for hotels
     }
     
     setBookingType(type)
@@ -520,6 +588,17 @@ export function SearchForm({ sectionType }: SearchFormProps) {
         const checkInDate = parseISO(checkIn)
         if (isValid(checkInDate)) {
           const checkOutDate = addMonths(checkInDate, months)
+          setCheckOut(format(checkOutDate, 'yyyy-MM-dd'))
+        }
+      } catch (error) {
+        console.error("Error updating checkout date:", error)
+      }
+    } else if (type === "year" && checkIn) {
+      // For yearly booking, set checkout based on years
+      try {
+        const checkInDate = parseISO(checkIn)
+        if (isValid(checkInDate)) {
+          const checkOutDate = addMonths(checkInDate, years * 12)
           setCheckOut(format(checkOutDate, 'yyyy-MM-dd'))
         }
       } catch (error) {
@@ -685,8 +764,8 @@ export function SearchForm({ sectionType }: SearchFormProps) {
           </div>
         )}
 
-        {/* Show Months field for hostels */}
-        {sectionType === "hostels" && (
+        {/* Show Months field for hostels with monthly booking */}
+        {sectionType === "hostels" && bookingType === "month" && (
           <div className="flex items-center flex-1 min-w-full md:min-w-[90px] p-2 border-b md:border-b-0 md:border-r border-gray-200">
             <div className="flex flex-col flex-grow">
               <label className="text-xs text-gray-500 font-medium">Duration (Months)</label>
@@ -708,13 +787,38 @@ export function SearchForm({ sectionType }: SearchFormProps) {
                     <Plus size={14} />
                   </button>
                 </div>
-                {/* <div className="absolute right-0 top-1/2 transform -translate-y-1/2 pr-2 pointer-events-none">
-                  <CalendarDays className="h-6 w-6 text-black" />
-                </div> */}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Show Years field for hostels with yearly booking */}
+        {sectionType === "hostels" && bookingType === "year" && (
+          <div className="flex items-center flex-1 min-w-full md:min-w-[90px] p-2 border-b md:border-b-0 md:border-r border-gray-200">
+            <div className="flex flex-col flex-grow">
+              <label className="text-xs text-gray-500 font-medium">Duration (Years)</label>
+              <div className="flex items-center relative">
+                <div className="flex items-center flex-grow">
+                  <button
+                    type="button"
+                    className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center"
+                    onClick={decrementYears}
+                  >
+                    <Minus size={14} />
+                  </button>
+                  <span className="mx-2 text-sm">{years}</span>
+                  <button
+                    type="button"
+                    className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center"
+                    onClick={incrementYears}
+                  >
+                    <Plus size={14} />
+                  </button>
                 </div>
               </div>
-            )}
+            </div>
+          </div>
+        )}
 
         {/* Show Rooms field for hotels */}
         {sectionType === "hotels" && (
@@ -820,8 +924,7 @@ export function SearchForm({ sectionType }: SearchFormProps) {
 
       {/* Booking Type Toggle - show options based on property type */}
       <div className="mt-4 flex justify-center">
-        {/* Only show toggle for hotels, since hostels have only one option */}
-      {sectionType === "hotels" && (
+        {sectionType === "hotels" && (
           <div className="bg-white rounded-full p-1 inline-flex shadow-md">
             <button
               type="button"
@@ -843,7 +946,30 @@ export function SearchForm({ sectionType }: SearchFormProps) {
             </button>
           </div>
         )}
-        </div>
+        
+        {sectionType === "hostels" && (
+          <div className="bg-white rounded-full p-1 inline-flex shadow-md">
+            <button
+              type="button"
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                bookingType === "month" ? "bg-black text-white" : "text-gray-700 hover:bg-gray-100"
+              }`}
+              onClick={() => handleBookingTypeChange("month")}
+            >
+              Book by Month
+            </button>
+            <button
+              type="button"
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                bookingType === "year" ? "bg-black text-white" : "text-gray-700 hover:bg-gray-100"
+              }`}
+              onClick={() => handleBookingTypeChange("year")}
+            >
+              Book by Year
+            </button>
+          </div>
+        )}
+      </div>
     </>
   )
 } 

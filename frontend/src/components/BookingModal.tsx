@@ -78,6 +78,7 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
     guests: string
     numberOfRooms: number
     months: number
+    years: number
     checkInTime: string
     checkOutTime: string
   }>({
@@ -94,6 +95,7 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
     guests: '1',
     numberOfRooms: 1,
     months: 1,
+    years: 1,
     checkInTime: '12',
     checkOutTime: '14',
   })
@@ -137,6 +139,7 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
         guests: initialData.number_of_guests || '1',
         numberOfRooms: initialData.number_of_rooms || 1,
         months: initialData.months || 1,
+        years: initialData.years || 1,
         checkInTime: initialData.check_in_time || '12',
         checkOutTime: initialData.check_out_time || '14',
       })
@@ -205,6 +208,7 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
         guests: '1',
         numberOfRooms: 1,
         months: 1,
+        years: 1,
         checkInTime: '12',
         checkOutTime: '14',
       })
@@ -354,6 +358,10 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
         // Use monthly rate for monthly bookings or hostels
         const basePrice = parseFloat(room.monthly_rate || '0')
         roomPrice = basePrice * quantity * booking.months
+      } else if (booking.bookingTime === 'yearly' || (isHostel && room.yearly_rate && parseFloat(room.yearly_rate) > 0)) {
+        // Use yearly rate for yearly bookings or hostels
+        const basePrice = parseFloat(room.yearly_rate || '0')
+        roomPrice = basePrice * quantity * booking.months
       } else {
         // Use hourly or daily rate based on bookingTime
         const basePrice = booking.bookingTime === 'hourly'
@@ -422,6 +430,8 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
         
         if (booking.bookingTime === 'monthly') {
           roomRate = parseFloat(room.monthly_rate || '0') * booking.months
+        } else if (booking.bookingTime === 'yearly') {
+          roomRate = parseFloat(room.yearly_rate || '0') * booking.years
         } else if (booking.bookingTime === 'hourly' && booking.checkInTime && booking.checkOutTime) {
           const startHour = parseInt(booking.checkInTime, 10)
           const endHour = parseInt(booking.checkOutTime, 10)
@@ -544,6 +554,17 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
           checkIn: newCheckInDate,
           checkOut: checkOutDate.toISOString().split('T')[0]
         }))
+      } else if (booking.bookingTime === 'yearly' && booking.years > 0) {
+        // Calculate checkout based on number of years
+        const checkInDate = new Date(newCheckInDate)
+        const checkOutDate = new Date(checkInDate)
+        checkOutDate.setFullYear(checkOutDate.getFullYear() + booking.years)
+        
+        setBooking(prev => ({
+          ...prev,
+          checkIn: newCheckInDate,
+          checkOut: checkOutDate.toISOString().split('T')[0]
+        }))
       } else {
         // For non-monthly bookings, set checkout to at least the next day
         const checkInDate = new Date(newCheckInDate)
@@ -589,6 +610,17 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
           ...prev,
           checkOut: checkOutDate.toISOString().split('T')[0]
         }))
+      } else if (booking.bookingTime === 'yearly' && booking.years > 0) {
+        // Calculate checkout based on number of years
+        const checkInDate = new Date(booking.checkIn)
+        const checkOutDate = new Date(checkInDate)
+        checkOutDate.setFullYear(checkOutDate.getFullYear() + booking.years)
+        
+        setBooking(prev => ({
+          ...prev,
+          checkIn: booking.checkIn,
+          checkOut: checkOutDate.toISOString().split('T')[0]
+        }))
       } else if (booking.bookingTime === 'daily' && booking.checkIn === booking.checkOut) {
         // For daily booking, ensure checkout is at least next day
         const checkOutDate = new Date(checkInDate)
@@ -630,6 +662,8 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
           quantity: room.quantity || 1,
           price: booking.bookingTime === 'monthly' 
             ? room.monthly_rate
+            : booking.bookingTime === 'yearly'
+              ? room.yearly_rate
             : booking.bookingTime === 'hourly'
               ? room.hourly_rate
               : room.daily_rate
@@ -650,6 +684,7 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
         number_of_guests: parseInt(booking.guests, 10),
         number_of_rooms: booking.numberOfRooms,
         months: booking.bookingTime === 'monthly' ? booking.months : null,
+        years: booking.bookingTime === 'yearly' ? booking.years : null,
       }
 
       if (initialData) {
@@ -729,7 +764,10 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
                       </>
                     )}
                     {isHostel && (
-                    <SelectItem value="monthly">Monthly</SelectItem>
+                      <>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                        <SelectItem value="yearly">Yearly</SelectItem>
+                      </>
                   )}
                   </SelectContent>
                 </Select>
@@ -860,6 +898,22 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
                 />
               </div>
             )}
+
+            {booking.bookingTime === 'yearly' && (
+              <div>
+                <Label htmlFor="years">Number of Years</Label>
+                <Input 
+                  id="years"
+                  name="years"
+                  type="number"
+                  value={booking.years}
+                  onChange={handleChange}
+                  min={1}
+                  max={10}
+                  className="mt-1"
+                />
+              </div>
+            )}
             
             <div>
               <Label htmlFor="guests">Number of Guests</Label>
@@ -897,6 +951,8 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
                             <span>
                               {booking.bookingTime === 'monthly' 
                                 ? `₹${room.monthly_rate || 'N/A'}/month`
+                                : booking.bookingTime === 'yearly'
+                                  ? `₹${room.yearly_rate || 'N/A'}/year`
                                 : booking.bookingTime === 'hourly' 
                                   ? `₹${room.hourly_rate || 'N/A'}/hour`
                                   : `₹${room.daily_rate || 'N/A'}/night`

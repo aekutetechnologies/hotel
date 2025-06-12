@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from "@/components/ui/input"
@@ -56,6 +56,7 @@ interface Room {
   daily_rate: string;
   hourly_rate: string;
   monthly_rate: string;
+  yearly_rate: string;
   discount: string;
   bed_type: string | null;
   private_bathroom: boolean;
@@ -115,6 +116,7 @@ interface PropertyApiData {
     daily_rate: string;
     hourly_rate: string;
     monthly_rate: string;
+    yearly_rate: string;
     discount: string;
     bed_type: string | null;
     private_bathroom: boolean;
@@ -157,9 +159,14 @@ function PropertyMapSection({
   location: { address: string; latitude: string; longitude: string }; 
   setLocation: React.Dispatch<React.SetStateAction<{ address: string; latitude: string; longitude: string }>>;
 }) {
-  // We've replaced the interactive map picker with a simple coordinate input
-  // to avoid Leaflet map initialization issues and conflicts in the form context.
-  // This approach is more reliable especially with multiple instances of map components.
+  // Create a stable key that changes when coordinates are manually entered
+  const mapKey = useMemo(() => {
+    if (location.latitude && location.longitude) {
+      return `map-${location.latitude}-${location.longitude}`;
+    }
+    return `map-${Math.random().toString(36).substr(2, 9)}`;
+  }, [location.latitude, location.longitude]);
+
   return (
     <div className="mt-6">
       <div className="flex justify-between items-center mb-2">
@@ -176,14 +183,14 @@ function PropertyMapSection({
       </div>
       <div className="h-[300px] w-full rounded-lg overflow-hidden border">
         <FormMapPicker
-          key={`map-${Math.random().toString(36).substr(2, 9)}`} 
+          key={mapKey} 
           onLocationChange={(lat: number, lng: number) => {
             setLocation(prev => {
               if (prev.latitude === lat.toFixed(6) && prev.longitude === lng.toFixed(6)) {
                 return prev;
               }
               
-              toast.success("Location coordinates updated successfully");
+              toast.success("Location coordinates updated from map");
               return {
                 ...prev,
                 latitude: lat.toFixed(6),
@@ -672,6 +679,7 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
         daily_rate: '',
         hourly_rate: '',
         monthly_rate: '',
+        yearly_rate: '',
         discount: '',
         size: '',
         maxoccupancy: 0,
@@ -938,20 +946,44 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
             </div>
             <div className="space-y-2">
               <RequiredLabel>
-                <Label>Latitude</Label>
+                <Label htmlFor="latitude">Latitude</Label>
               </RequiredLabel>
               <Input
+                id="latitude"
+                type="number"
+                step="any"
                 value={location.latitude}
-                readOnly
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const lat = parseFloat(value);
+                  
+                  // Basic validation for latitude (-90 to 90)
+                  if (value === '' || (!isNaN(lat) && lat >= -90 && lat <= 90)) {
+                    setLocation(prev => ({ ...prev, latitude: value }));
+                  }
+                }}
+                placeholder="Enter latitude (-90 to 90)"
               />
             </div>
             <div className="space-y-2">
               <RequiredLabel>
-                <Label>Longitude</Label>
+                <Label htmlFor="longitude">Longitude</Label>
               </RequiredLabel>
               <Input
+                id="longitude"
+                type="number"
+                step="any"
                 value={location.longitude}
-                readOnly
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const lng = parseFloat(value);
+                  
+                  // Basic validation for longitude (-180 to 180)
+                  if (value === '' || (!isNaN(lng) && lng >= -180 && lng <= 180)) {
+                    setLocation(prev => ({ ...prev, longitude: value }));
+                  }
+                }}
+                placeholder="Enter longitude (-180 to 180)"
               />
             </div>
           </div>
@@ -1223,6 +1255,19 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
                     value={room.monthly_rate || ''}
                     onChange={(e) => updateRoom(index, { monthly_rate: e.target.value })}
                     placeholder="Enter monthly rate"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <RequiredHostelLabel>
+                    <Label htmlFor={`room-yearly-rate-${index}`}>Yearly Rate</Label>
+                  </RequiredHostelLabel>
+                  <Input
+                    id={`room-yearly-rate-${index}`}
+                    type="number"
+                    step="0.01"
+                    value={room.yearly_rate || ''}
+                    onChange={(e) => updateRoom(index, { yearly_rate: e.target.value })}
+                    placeholder="Enter yearly rate"
                   />
                 </div>
                 <div className="space-y-2">

@@ -99,6 +99,7 @@ class Room(models.Model):
     daily_rate = models.DecimalField(max_digits=10, decimal_places=2)
     hourly_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     monthly_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    yearly_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     discount = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     bed_type = models.CharField(max_length=255, null=True, blank=True, choices=BED_TYPE_CHOICES)
     private_bathroom = models.BooleanField(default=False)

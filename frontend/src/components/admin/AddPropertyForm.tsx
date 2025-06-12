@@ -52,6 +52,7 @@ interface Room {
   daily_rate: string;
   hourly_rate: string;
   monthly_rate: string;
+  yearly_rate: string;
   discount: string;
   bed_type: string | null;
   private_bathroom: boolean;
@@ -111,6 +112,7 @@ interface PropertyApiData {
     daily_rate: string;
     hourly_rate: string;
     monthly_rate: string;
+    yearly_rate: string;
     discount: string;
     bed_type: string | null;
     private_bathroom: boolean;
@@ -166,7 +168,7 @@ function PropertyMapSection({
       }
       
       // If there's a change, show the notification and return new state
-      toast.success("Location coordinates updated successfully");
+      toast.success("Location coordinates updated from map");
       return {
         ...prev,
         latitude: lat.toFixed(6),
@@ -174,6 +176,14 @@ function PropertyMapSection({
       };
     });
   }, [setLocation]);
+
+  // Create a stable key that changes when coordinates are manually entered
+  const mapKey = useMemo(() => {
+    if (location.latitude && location.longitude) {
+      return `map-${location.latitude}-${location.longitude}`;
+    }
+    return `map-${Math.random().toString(36).substr(2, 9)}`;
+  }, [location.latitude, location.longitude]);
   
   return (
     <div className="mt-6">
@@ -191,7 +201,7 @@ function PropertyMapSection({
       </div>
       <div className="h-[300px] w-full rounded-lg overflow-hidden border">
         <FormMapPicker
-          key={mapId} 
+          key={mapKey} 
           onLocationChange={handleLocationChange}
           initialPosition={
             location.latitude && location.longitude
@@ -597,6 +607,7 @@ export function AddPropertyForm() {
         daily_rate: '',
         hourly_rate: '',
         monthly_rate: '',
+        yearly_rate: '',
         discount: '',
         size: '',
         maxoccupancy: 0,
@@ -867,20 +878,44 @@ export function AddPropertyForm() {
             </div>
             <div className="space-y-2">
               <RequiredLabel>
-                <Label>Latitude</Label>
+                <Label htmlFor="latitude">Latitude</Label>
               </RequiredLabel>
               <Input
+                id="latitude"
+                type="number"
+                step="any"
                 value={location.latitude}
-                readOnly
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const lat = parseFloat(value);
+                  
+                  // Basic validation for latitude (-90 to 90)
+                  if (value === '' || (!isNaN(lat) && lat >= -90 && lat <= 90)) {
+                    setLocation(prev => ({ ...prev, latitude: value }));
+                  }
+                }}
+                placeholder="Enter latitude (-90 to 90)"
               />
             </div>
             <div className="space-y-2">
               <RequiredLabel>
-                <Label>Longitude</Label>
+                <Label htmlFor="longitude">Longitude</Label>
               </RequiredLabel>
               <Input
+                id="longitude"
+                type="number"
+                step="any"
                 value={location.longitude}
-                readOnly
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const lng = parseFloat(value);
+                  
+                  // Basic validation for longitude (-180 to 180)
+                  if (value === '' || (!isNaN(lng) && lng >= -180 && lng <= 180)) {
+                    setLocation(prev => ({ ...prev, longitude: value }));
+                  }
+                }}
+                placeholder="Enter longitude (-180 to 180)"
               />
             </div>
           </div>
@@ -1152,6 +1187,19 @@ export function AddPropertyForm() {
                       value={room.monthly_rate || ''}
                       onChange={(e) => updateRoom(index, { monthly_rate: e.target.value })}
                       placeholder="Enter monthly rate"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                      <RequiredHostelLabel>
+                        <Label htmlFor={`room-yearly-rate-${index}`}>Yearly Rate</Label>
+                      </RequiredHostelLabel>
+                    <Input
+                      id={`room-yearly-rate-${index}`}
+                      type="number"
+                      step="0.01"
+                      value={room.yearly_rate || ''}
+                      onChange={(e) => updateRoom(index, { yearly_rate: e.target.value })}
+                      placeholder="Enter yearly rate"
                     />
                   </div>
                   <div className="space-y-2">

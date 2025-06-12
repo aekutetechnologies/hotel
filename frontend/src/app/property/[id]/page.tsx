@@ -485,10 +485,18 @@ export default function PropertyDetails() {
                   if (!property.rooms || property.rooms.length === 0) return 0;
                   
                   const prices = property.rooms.map(room => {
-                    if (isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
-                      const basePrice = parseFloat(room.monthly_rate);
+                    if (isHostel) {
+                      if (room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
+                        const basePrice = parseFloat(room.monthly_rate);
                       const discount = parseFloat(String(room.discount || '0'));
                       return basePrice * (1 - discount / 100);
+                      } else if (room.yearly_rate && parseFloat(room.yearly_rate) > 0) {
+                        const basePrice = parseFloat(room.yearly_rate);
+                        const discount = parseFloat(String(room.discount || '0'));
+                        return basePrice * (1 - discount / 100);
+                      } else {
+                        return parseFloat('0');
+                      }
                     } else {
                       const basePrice = bookingType === 'hourly' 
                         ? parseFloat(room.hourly_rate || '0') 
@@ -805,11 +813,20 @@ export default function PropertyDetails() {
                                   ₹{(() => {
                                     try {
                                       // Safely handle price calculations
-                                      if (isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
-                                        const basePrice = parseFloat(room.monthly_rate);
+                                      if (isHostel) {
+                                        if (room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
+                                          const basePrice = parseFloat(room.monthly_rate);
                                         const discount = parseFloat(String(room.discount || '0'));
                                         if (isNaN(basePrice) || isNaN(discount)) return 0;
                                         return (basePrice * (1 - discount / 100)).toFixed(0);
+                                        } else if (room.yearly_rate && parseFloat(room.yearly_rate) > 0) {
+                                          const basePrice = parseFloat(room.yearly_rate);
+                                          const discount = parseFloat(String(room.discount || '0'));
+                                          if (isNaN(basePrice) || isNaN(discount)) return 0;
+                                          return (basePrice * (1 - discount / 100)).toFixed(0);
+                                        } else {
+                                          return parseFloat('0');
+                                        }
                                       } else {
                                         const basePrice = bookingType === 'hourly' 
                                           ? parseFloat(room.hourly_rate || '0') 
@@ -827,8 +844,14 @@ export default function PropertyDetails() {
                                 <div className="text-gray-500 line-through">
                                   ₹{(() => {
                                     try {
-                                      if (isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
-                                        return parseFloat(room.monthly_rate).toFixed(0);
+                                      if (isHostel) {
+                                        if (room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
+                                          return parseFloat(room.monthly_rate).toFixed(0);
+                                        } else if (room.yearly_rate && parseFloat(room.yearly_rate) > 0) {
+                                          return parseFloat(room.yearly_rate).toFixed(0);
+                                        } else {
+                                          return parseFloat('0');
+                                        }
                                       } else {
                                         return bookingType === 'hourly' 
                                           ? parseFloat(room.hourly_rate || '0').toFixed(0) 
@@ -841,9 +864,7 @@ export default function PropertyDetails() {
                                   })()}
                                 </div>
                                 <div className="text-xs text-gray-500">
-                                  {isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0 
-                                    ? 'per month' 
-                                    : bookingType === 'hourly' ? 'per hour' : 'per night'
+                                  {isHostel ? (room.monthly_rate && parseFloat(room.monthly_rate) > 0 ? 'per month' : 'per year') : (bookingType === 'hourly' ? 'per hour' : 'per night')
                                   }
                                 </div>
                               </div>

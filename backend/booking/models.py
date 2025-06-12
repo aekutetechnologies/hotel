@@ -25,6 +25,7 @@ class Booking(models.Model):
         ('hourly', 'Hourly'),
         ('daily', 'Daily'),
         ('monthly', 'Monthly'),
+        ('yearly', 'Yearly'),
     ]
     STATUS_CHOICES = [
         ('pending', 'Pending'),

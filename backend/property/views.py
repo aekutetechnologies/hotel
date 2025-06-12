@@ -642,6 +642,7 @@ def public_search_properties(request):
         area = query_params.get("area")
         price = query_params.get("price")
         id = query_params.get("id")
+        booking_type = query_params.get("bookingType")
         
         print(f"Public search params: {query_params}")
 
@@ -696,6 +697,21 @@ def public_search_properties(request):
                 )
             except ValueError:
                 pass
+
+        if booking_type:
+            if booking_type == 'monthly':
+                properties = properties.filter(
+                    rooms__monthly_rate__gt=0
+                )
+            elif booking_type == 'yearly':
+                properties = properties.filter(
+                    rooms__yearly_rate__gt=0
+                )
+            else:
+                properties = properties.filter(
+                    Q(rooms__daily_rate__gt=0) |
+                    Q(rooms__monthly_rate__gt=0)
+                )
 
         print(f"Found {properties.count()} properties for public search")
         

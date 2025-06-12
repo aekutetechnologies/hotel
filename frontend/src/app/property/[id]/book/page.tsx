@@ -132,10 +132,20 @@ export default function BookProperty() {
             name: room.name || room.occupancyType,
             daily_rate: room.daily_rate,
             hourly_rate: room.hourly_rate,
-            price: bookingTypeParam === 'hourly' ? room.hourly_rate : room.daily_rate,
-            priceType: typeof (bookingTypeParam === 'hourly' ? room.hourly_rate : room.daily_rate),
+            monthly_rate: room.monthly_rate,
+            yearly_rate: room.yearly_rate,
+            price: bookingTypeParam === 'hourly' ? room.hourly_rate : 
+                   bookingTypeParam === 'monthly' ? room.monthly_rate :
+                   bookingTypeParam === 'yearly' ? room.yearly_rate : room.daily_rate,
+            priceType: typeof (bookingTypeParam === 'hourly' ? room.hourly_rate : 
+                              bookingTypeParam === 'monthly' ? room.monthly_rate :
+                              bookingTypeParam === 'yearly' ? room.yearly_rate : room.daily_rate),
             parsedPrice: bookingTypeParam === 'hourly' 
               ? (room.hourly_rate ? parseFloat(room.hourly_rate) : 'N/A')
+              : bookingTypeParam === 'monthly'
+              ? (room.monthly_rate ? parseFloat(room.monthly_rate) : 'N/A')
+              : bookingTypeParam === 'yearly'
+              ? (room.yearly_rate ? parseFloat(room.yearly_rate) : 'N/A')
               : (room.daily_rate ? parseFloat(room.daily_rate) : 'N/A'),
             discount: room.discount
           });
@@ -146,7 +156,9 @@ export default function BookProperty() {
       if (data && data.rooms) {
         data.rooms = data.rooms.map((room: any) => ({
           ...room,
-          price: bookingTypeParam === 'hourly' ? room.hourly_rate : room.daily_rate
+          price: bookingTypeParam === 'hourly' ? room.hourly_rate : 
+                 bookingTypeParam === 'monthly' ? room.monthly_rate :
+                 bookingTypeParam === 'yearly' ? room.yearly_rate : room.daily_rate
         }));
       }
       
@@ -217,7 +229,7 @@ export default function BookProperty() {
     
     // Calculate duration of stay based on booking type
     let duration = 1;
-    if (booking.checkIn && booking.bookingType !== 'monthly') {
+    if (booking.checkIn && booking.bookingType !== 'monthly' && booking.bookingType !== 'yearly') {
       if (booking.bookingType === 'hourly' && booking.checkInTime && booking.checkOutTime) {
         // For hourly bookings, calculate hours between checkInTime and checkOutTime
         const checkInHour = parseInt(booking.checkInTime.split(':')[0], 10);
@@ -242,6 +254,13 @@ export default function BookProperty() {
       const diffTime = Math.abs(checkOutDate.getTime() - checkInDate.getTime());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       duration = Math.max(1, Math.floor(diffDays / 30)); // At least 1 month
+    } else if (booking.bookingType === 'yearly') {
+      // For yearly bookings, use the specified number of years
+      const checkInDate = new Date(booking.checkIn);
+      const checkOutDate = new Date(booking.checkOut);
+      const diffTime = Math.abs(checkOutDate.getTime() - checkInDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      duration = Math.max(1, Math.floor(diffDays / 365)); // At least 1 year
     }
     
     // Use selected room details if they exist
@@ -262,6 +281,8 @@ export default function BookProperty() {
           basePrice = parseFloat(roomInfo.hourly_rate || '0');
         } else if (booking.bookingType === 'monthly') {
           basePrice = parseFloat(roomInfo.monthly_rate || '0');
+        } else if (booking.bookingType === 'yearly') {
+          basePrice = parseFloat(roomInfo.yearly_rate || '0');
         } else { // daily
           basePrice = parseFloat(roomInfo.daily_rate || '0');
         }
@@ -289,6 +310,8 @@ export default function BookProperty() {
           basePrice = parseFloat(room.hourly_rate || '0');
         } else if (booking.bookingType === 'monthly') {
           basePrice = parseFloat(room.monthly_rate || '0');
+        } else if (booking.bookingType === 'yearly') {
+          basePrice = parseFloat(room.yearly_rate || '0');
         } else { // daily
           basePrice = parseFloat(room.daily_rate || '0');
         }
@@ -437,7 +460,9 @@ export default function BookProperty() {
                 id: roomId,
                 name: room.name || 'Room',
                 quantity: qty,
-                price: booking.bookingType === 'hourly' ? room.hourly_rate : room.daily_rate,
+                price: booking.bookingType === 'hourly' ? room.hourly_rate : 
+                       booking.bookingType === 'monthly' ? room.monthly_rate :
+                       booking.bookingType === 'yearly' ? room.yearly_rate : room.daily_rate,
                 discount: room.discount
               });
               
@@ -502,7 +527,16 @@ export default function BookProperty() {
   }
 
   const formatRoomPrice = (room: any, discount: string | number | null | undefined = 0) => {
-    const price = booking.bookingType === 'hourly' ? room.hourly_rate : room.daily_rate;
+    let price;
+    if (booking.bookingType === 'hourly') {
+      price = room.hourly_rate;
+    } else if (booking.bookingType === 'monthly') {
+      price = room.monthly_rate;
+    } else if (booking.bookingType === 'yearly') {
+      price = room.yearly_rate;
+    } else {
+      price = room.daily_rate;
+    }
     
     if (!price) return 'Price unavailable';
     
@@ -591,13 +625,28 @@ export default function BookProperty() {
                   </div>
                 </div>
 
-                {/* Check-out Date - shown only for daily/monthly bookings */}
-                {bookingTypeParam !== 'hourly' && (
+                {/* Check-out Date - shown only for daily bookings (not hourly, monthly, or yearly) */}
+                {bookingTypeParam !== 'hourly' && bookingTypeParam !== 'monthly' && bookingTypeParam !== 'yearly' && (
                   <div>
                     <label htmlFor="checkOut" className="block text-sm font-medium text-gray-700">Check-out Date</label>
                     <div className="relative mt-1">
                       <div className="flex items-center justify-between w-full pr-2 border border-gray-100 rounded-md px-3 py-2 bg-gray-50 shadow-sm">
                         <span className="text-sm">{booking.checkOut ? format(parseISO(booking.checkOut), 'dd MMM yyyy') : 'Select date'}</span>
+                        <CalendarDays className="h-4 w-4 text-gray-500" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Auto-calculated Check-out Date - shown for monthly and yearly bookings */}
+                {(bookingTypeParam === 'monthly' || bookingTypeParam === 'yearly') && (
+                  <div>
+                    <label htmlFor="checkOut" className="block text-sm font-medium text-gray-700">
+                      Auto Check-out Date ({bookingTypeParam === 'yearly' ? 'Yearly' : 'Monthly'} Booking)
+                    </label>
+                    <div className="relative mt-1">
+                      <div className="flex items-center justify-between w-full pr-2 border border-gray-100 rounded-md px-3 py-2 bg-gray-50 shadow-sm">
+                        <span className="text-sm">{booking.checkOut ? format(parseISO(booking.checkOut), 'dd MMM yyyy') : 'Auto-calculated'}</span>
                         <CalendarDays className="h-4 w-4 text-gray-500" />
                       </div>
                     </div>
@@ -677,7 +726,7 @@ export default function BookProperty() {
                           <h3 className="font-medium">{room.name}</h3>
                           <div className="flex items-center text-sm text-gray-600">
                             ₹{formatPrice(parseFloat(room.price))} 
-                            {bookingTypeParam === 'monthly' ? '/month' : bookingTypeParam === 'hourly' ? '/hour' : '/night'}
+                            {bookingTypeParam === 'yearly' ? '/year' : bookingTypeParam === 'monthly' ? '/month' : bookingTypeParam === 'hourly' ? '/hour' : '/night'}
                           </div>
                         </div>
                         <div className="font-medium">

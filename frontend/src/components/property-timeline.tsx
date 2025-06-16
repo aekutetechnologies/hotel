@@ -46,7 +46,7 @@ export function PropertyTimeline({ type = "hotel" }: PropertyTimelineProps) {
             className="rounded-lg object-cover h-48 sm:h-52 md:h-60 w-full shadow-lg"
           />
           <Image
-            src="/images/hotels/hotel_1.webp"
+            src="/images/hotels/hotel_6.jpg"
             alt="HSquare room service"
             width={500}
             height={500}
@@ -56,21 +56,21 @@ export function PropertyTimeline({ type = "hotel" }: PropertyTimelineProps) {
       ),
     },
     {
-      year: "Culinary Excellence",
+      year: "Luxury Room Experience",
       title: "",
-      description: "HSquare's signature restaurants fuse local ingredients with global techniques. Our executive chefs craft seasonal menus that celebrate authentic flavors while offering modern interpretations of classic dishes. Dining with us is a journey for your palate.",
+      description: "Experience unparalleled comfort in our meticulously designed rooms. Each space features smart climate control, high-speed WiFi, and premium entertainment systems. Our signature HSquare beds with memory foam mattresses ensure a restful night's sleep, while the spacious en-suite bathrooms offer rain showers and luxury amenities.",
       content: (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
           <Image
-            src="/images/hotels/hotel_2.png"
-            alt="HSquare restaurant interior"
+            src="/images/hotels/hotel_12.png"
+            alt="HSquare luxury room"
             width={500}
             height={500}
             className="rounded-lg object-cover h-48 sm:h-52 md:h-60 w-full shadow-lg"
           />
           <Image
-            src="/images/hotels/hotel_3.webp"
-            alt="HSquare signature dish"
+            src="/images/hotels/hotel_11.png"
+            alt="HSquare bathroom amenities"
             width={500}
             height={500}
             className="rounded-lg object-cover h-48 sm:h-52 md:h-60 w-full shadow-lg"
@@ -120,14 +120,14 @@ export function PropertyTimeline({ type = "hotel" }: PropertyTimelineProps) {
       content: (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
           <Image
-            src="/images/hostels/hostel_1.jpg"
+            src="/images/hostels/hostel_7.jpg"
             alt="HSquare private room"
             width={500}
             height={500}
             className="rounded-lg object-cover h-48 sm:h-52 md:h-60 w-full shadow-lg"
           />
           <Image
-            src="/images/hostels/hostel_2.jpg"
+            src="/images/hostels/hostel_4.png"
             alt="HSquare room storage"
             width={500}
             height={500}
@@ -144,14 +144,14 @@ export function PropertyTimeline({ type = "hotel" }: PropertyTimelineProps) {
       content: (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
           <Image
-            src="/images/hostels/hostel_1.jpg"
+            src="/images/hostels/hostel_5.png"
             alt="HSquare cleaning service"
             width={500}
             height={500}
             className="rounded-lg object-cover h-48 sm:h-52 md:h-60 w-full shadow-lg"
           />
           <Image
-            src="/images/hostels/hostel_2.jpg"
+            src="/images/hostels/hostel_6.jpg"
             alt="HSquare laundry service"
             width={500}
             height={500}

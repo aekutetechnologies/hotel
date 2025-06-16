@@ -1,93 +1,53 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Star } from "lucide-react";
-// import city1 from "/public/images/city/city1.jpg";
-// import city2 from "/public/images/city/city2.jpg";
-// import city3 from "/public/images/city/city3.jpg";
-// import city4 from "/public/images/city/city4.jpg";
-
-import hotel1 from "/public/hotel/hotel1.jpeg";
-import hotel2 from "/public/hotel/hotel2.jpg";
-import hotel3 from "/public/hotel/hotel3.jpg";
-import hotel4 from "/public/hotel/hotel4.jpg";
-
-import hostel1 from "/public/hostel/hostel1.jpg";
-import hostel2 from "/public/hostel/hostel2.jpg";
-import hostel3 from "/public/hostel/hostel3.jpg";
-import hostel4 from "/public/hostel/hostel4.jpg";
+import { getAllProperties } from "@/lib/api/getAllProperties";
+import { type Property } from "@/types/property";
 
 interface placeCardProps {
   type: "hotel" | "hostel";
 }
 
 const PlaceCard = ({ type = "hotel" }: placeCardProps) => {
-  const hotelData = [
-    { 
-      tilt: -10, 
-      name: "HSquare Suites", 
-      rating: 4.8,
-      reviewCount: 124,
-      img: hotel1 
-    },
-    { 
-      tilt: 4, 
-      name: "HSquare Business", 
-      rating: 4.6,
-      reviewCount: 98,
-      img: hotel2 
-    },
-    { 
-      tilt: -4, 
-      name: "HSquare Urban", 
-      rating: 4.5,
-      reviewCount: 112,
-      img: hotel3 
-    },
-    { 
-      tilt: -12, 
-      name: "HSquare Boutique", 
-      rating: 4.4,
-      reviewCount: 76,
-      img: hotel4 
-    },
-  ];
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [hotelProperties, setHotelProperties] = useState<Property[]>([]);
+  const [hostelProperties, setHostelProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const hostelData = [
-    { 
-      tilt: -10, 
-      name: "HSquare Social", 
-      rating: 4.7,
-      reviewCount: 87,
-      img: hostel1 
-    },
-    { 
-      tilt: 4, 
-      name: "HSquare Co-Living", 
-      rating: 4.6,
-      reviewCount: 92,
-      img: hostel2 
-    },
-    { 
-      tilt: -4, 
-      name: "HSquare Digital Nomad", 
-      rating: 4.5,
-      reviewCount: 112,
-      img: hostel3 
-    },
-    { 
-      tilt: -12, 
-      name: "HSquare Budget Plus", 
-      rating: 4.4,
-      reviewCount: 76,
-      img: hostel4 
-    },
-  ];
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        const data = await getAllProperties();
+        setProperties(data);
+        const hotels = data.filter(property => property.property_type === "hotel").slice(0, 4);
+        const hostels = data.filter(property => property.property_type === "hostel").slice(0, 4);
+        setHotelProperties(hotels);
+        setHostelProperties(hostels);
+      } catch (error) {
+        console.error("Error fetching properties:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const cardData = type === "hotel" ? hotelData : hostelData;
+    fetchProperties();
+  }, []);
+
   const themeColor = type === "hotel" ? "#A31C44" : "#343F52";
 
+  if (loading) {
+    return (
+      <div className="w-full min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#A31C44]"></div>
+      </div>
+    );
+  }
+
+  // Get current properties based on type
+  const currentProperties = type === "hotel" ? hotelProperties : hostelProperties;
+  
   return (
     <div className="w-full min-h-screen flex flex-col justify-evenly items-center my-10 p-5 gap-10">
       {/* Heading Section */}
@@ -106,38 +66,61 @@ const PlaceCard = ({ type = "hotel" }: placeCardProps) => {
 
       {/* Card Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 px-4 sm:px-6 md:px-8 lg:px-10">
-        {cardData.map(({ tilt, name, rating, reviewCount, img }, index) => (
-          <motion.div
-            key={index}
-            className={`w-full max-w-xs md:max-w-sm bg-white rounded-2xl shadow-lg flex flex-col items-center justify-center text-xl font-bold cursor-pointer ${
-              type === "hotel" 
-                ? "text-[#A31C44] hover:bg-[#A31C44]" 
-                : "text-[#343F52] hover:bg-[#343F52]"
-            } hover:text-white`}
-            initial={{ rotate: tilt, x: tilt * 2 }}
-            whileHover={{ rotate: 0, x: 0 }}
-            transition={{ type: "spring", stiffness: 100 }}
-          >
-            {/* Image Section */}
-            <div className="w-full h-48">
-              <Image src={img} alt={name} className="w-full h-full object-cover rounded-t-2xl" />
-            </div>
-
-            {/* Content Section */}
-            <div className="flex flex-col justify-center items-center p-5 text-center">
-              <h1 className="text-lg md:text-xl font-semibold">{name}</h1>
-              
-              {/* Rating and Review Count */}
-              <div className="flex items-center mt-2 text-xs font-normal">
-                <div className="flex items-center">
-                  <Star size={12} className="fill-current" />
-                  <span className="ml-1 font-medium">{rating}</span>
-                </div>
-                <span className="ml-2 opacity-75">({reviewCount} reviews)</span>
+        {currentProperties.length === 0 ? (
+          <div className="col-span-full text-center py-8">
+            <p className="text-gray-500">No {type} properties found</p>
+          </div>
+        ) : (
+          currentProperties.map((property, index) => (
+            <motion.div
+              key={property.id}
+              className={`w-full max-w-xs md:max-w-sm bg-white rounded-2xl shadow-lg flex flex-col items-center justify-center text-xl font-bold cursor-pointer ${
+                type === "hotel" 
+                  ? "text-[#A31C44] hover:bg-[#A31C44]" 
+                  : "text-[#343F52] hover:bg-[#343F52]"
+              } hover:text-white`}
+              initial={{ rotate: index % 2 === 0 ? -10 : 10, x: index % 2 === 0 ? -20 : 20 }}
+              whileHover={{ rotate: 0, x: 0 }}
+              transition={{ type: "spring", stiffness: 100 }}
+            >
+              {/* Image Section */}
+              <div className="w-full h-48">
+                <Image 
+                  src={property.images?.[0]?.image || "/images/placeholder.jpg"} 
+                  alt={property.name} 
+                  className="w-full h-full object-cover rounded-t-2xl"
+                  width={500}
+                  height={300}
+                />
               </div>
-            </div>
-          </motion.div>
-        ))}
+
+              {/* Content Section */}
+              <div className="flex flex-col justify-center items-center p-5 text-center">
+                <h1 className="text-lg md:text-xl font-semibold">{property.name}</h1>
+                
+                {/* Location */}
+                <p className="text-sm text-gray-600 mt-1">
+                  {property.city?.name}, {property.state?.name}
+                </p>
+
+                {/* Rating and Review Count */}
+                <div className="flex items-center mt-2 text-xs font-normal">
+                  <div className="flex items-center">
+                    <Star size={12} className="fill-current" />
+                    <span className="ml-1 font-medium">
+                      {property.reviews && property.reviews.length > 0 
+                        ? (property.reviews.reduce((acc, review) => acc + review.rating, 0) / property.reviews.length).toFixed(1)
+                        : "New"}
+                    </span>
+                  </div>
+                  <span className="ml-2 opacity-75">
+                    ({property.reviews?.length || 0} reviews)
+                  </span>
+                </div>
+              </div>
+            </motion.div>
+          ))
+        )}
       </div>
     </div>
   );

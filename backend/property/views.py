@@ -283,7 +283,7 @@ def property_list(request):
 
 
 @api_view(["GET"])
-@custom_authentication_and_permissions()
+@custom_authentication_and_permissions(exempt_get_views=[r"^/api/property/all-properties/$"])
 def get_all_properties(request):
     """
     Get all properties.

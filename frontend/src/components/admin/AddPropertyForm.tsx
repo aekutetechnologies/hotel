@@ -878,7 +878,7 @@ export function AddPropertyForm() {
             </div>
             <div className="space-y-2">
               <RequiredLabel>
-                <Label htmlFor="latitude">Latitude</Label>
+                <Label htmlFor="latitude">Latitude : Upto 6 digit decimal</Label>
               </RequiredLabel>
               <Input
                 id="latitude"
@@ -899,7 +899,7 @@ export function AddPropertyForm() {
             </div>
             <div className="space-y-2">
               <RequiredLabel>
-                <Label htmlFor="longitude">Longitude</Label>
+                <Label htmlFor="longitude">Longitude : Upto 6 digit decimal</Label>
               </RequiredLabel>
               <Input
                 id="longitude"

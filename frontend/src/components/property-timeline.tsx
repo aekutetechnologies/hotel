@@ -62,14 +62,14 @@ export function PropertyTimeline({ type = "hotel" }: PropertyTimelineProps) {
       content: (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
           <Image
-            src="/images/hotels/hotel_12.png"
+            src="/images/hotels/hotel_15.jpg"
             alt="HSquare luxury room"
             width={500}
             height={500}
             className="rounded-lg object-cover h-48 sm:h-52 md:h-60 w-full shadow-lg"
           />
           <Image
-            src="/images/hotels/hotel_11.png"
+            src="/images/hotels/hotel_14.jpg"
             alt="HSquare bathroom amenities"
             width={500}
             height={500}

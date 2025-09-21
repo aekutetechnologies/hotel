@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { MessageSquare, X, Whatsapp } from 'lucide-react';
+import { MessageSquare, X, MessagesSquare } from 'lucide-react';
 
 export default function WhatsApp() {
   // phone without plus: country + number (used by wa.me)
@@ -20,7 +20,7 @@ export default function WhatsApp() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 font-sans">
+    <div className="fixed bottom-6 right-6 z-50 font-sans" onClick={(e) => e.stopPropagation()}>
       <div className="relative">
         {/* Chat panel */}
         {open && (
@@ -33,7 +33,7 @@ export default function WhatsApp() {
                   </div>
                   <div className="text-sm font-semibold">Start chat</div>
                 </div>
-                <button onClick={() => setOpen(false)} className="p-1 rounded hover:bg-white/10">
+                <button onClick={(e) => { e.stopPropagation(); setOpen(false); }} className="p-1 rounded hover:bg-white/10">
                   <X className="w-4 h-4 text-white" />
                 </button>
               </div>
@@ -53,7 +53,7 @@ export default function WhatsApp() {
                 <option>Hotel</option>
               </select>
 
-              <button onClick={startChat} className="w-full py-2 rounded text-white" style={{ background: '#7A1633' }}>
+              <button onClick={(e) => { e.stopPropagation(); startChat(); }} className="w-full py-2 rounded text-white" style={{ background: '#7A1633' }}>
                 Start Chat
               </button>
             </div>
@@ -61,8 +61,8 @@ export default function WhatsApp() {
         )}
 
         {/* Floating button */}
-        <button onClick={toggle} aria-label="Open WhatsApp chat" className="flex items-center justify-center w-14 h-14 rounded-full shadow-lg focus:outline-none" style={{ background: '#25D366' }}>
-          <Whatsapp className="w-6 h-6 text-white" />
+        <button onClick={(e) => { e.stopPropagation(); toggle(); }} aria-label="Open WhatsApp chat" className="flex items-center justify-center w-14 h-14 rounded-full shadow-lg focus:outline-none" style={{ background: '#7A1633' }}>
+          <MessagesSquare className="w-6 h-6 text-white" />
         </button>
       </div>
     </div>

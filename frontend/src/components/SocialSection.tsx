@@ -147,7 +147,7 @@ const SocialSection = ({ type = "hotel" }: socialSectionProps) => {
   
   const images = type === "hotel" ? hotelImg : hostelImg;
   const amenities = type === "hotel" ? hotelAmenities : hostelAmenities;
-  const themeColor = type === "hotel" ? "#A31C44" : "#2A2B2E";
+  const themeColor = type === "hotel" ? "#A31C44" : "#A31C44";
   const accentColor = type === "hotel" ? "#FF9BAC" : "#3bf0c1";
   
   const openPopup = (index: number) => {
@@ -162,7 +162,7 @@ const SocialSection = ({ type = "hotel" }: socialSectionProps) => {
     // <div className=" w-full text-black flex flex-col gap-10 py-1 my-20 bg-gradient-to-r from-[#bfa8af] via-[#b95372] to-[#7A1533]">
     <div
       className={` w-full text-white flex flex-col gap-10 py-5 my-20  ${
-        type === "hotel" ? "bg-[#A31C44]" : "bg-[#2A2B2E]"
+        type === "hotel" ? "bg-[#A31C44]" : "bg-[#A31C44]"
       }`}
     >
       {/* Title */}

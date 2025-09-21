@@ -54,7 +54,7 @@ export default function PrivacyPolicyPage() {
                 please do not access our website or use our services.
               </p>
 
-              <h2 className="text-2xl font-bold mb-4 text-[#343F52]">1. Information We Collect</h2>
+              <h2 className="text-2xl font-bold mb-4 text-[#A31C44]">1. Information We Collect</h2>
               <div className="mb-8 pl-4">
                 <h3 className="text-xl font-semibold mb-3 text-[#A31C44]">1.1. Personal Information</h3>
                 <p className="mb-4">
@@ -91,7 +91,7 @@ export default function PrivacyPolicyPage() {
                 </ul>
               </div>
 
-              <h2 className="text-2xl font-bold mb-4 text-[#343F52]">2. How We Use Your Information</h2>
+              <h2 className="text-2xl font-bold mb-4 text-[#A31C44]">2. How We Use Your Information</h2>
               <div className="mb-8 pl-4">
                 <p className="mb-4">
                   We may use the information we collect for various purposes, including to:
@@ -107,7 +107,7 @@ export default function PrivacyPolicyPage() {
                 </ul>
               </div>
 
-              <h2 className="text-2xl font-bold mb-4 text-[#343F52]">3. Sharing of Your Information</h2>
+              <h2 className="text-2xl font-bold mb-4 text-[#A31C44]">3. Sharing of Your Information</h2>
               <div className="mb-8 pl-4">
                 <p className="mb-4">
                   We may share your information with:
@@ -122,7 +122,7 @@ export default function PrivacyPolicyPage() {
                 </p>
               </div>
 
-              <h2 className="text-2xl font-bold mb-4 text-[#343F52]">4. Security of Your Information</h2>
+              <h2 className="text-2xl font-bold mb-4 text-[#A31C44]">4. Security of Your Information</h2>
               <div className="mb-8 pl-4">
                 <p className="mb-4">
                   We use administrative, technical, and physical security measures to protect your personal information. 
@@ -131,7 +131,7 @@ export default function PrivacyPolicyPage() {
                 </p>
               </div>
 
-              <h2 className="text-2xl font-bold mb-4 text-[#343F52]">5. Cookies and Tracking Technologies</h2>
+              <h2 className="text-2xl font-bold mb-4 text-[#A31C44]">5. Cookies and Tracking Technologies</h2>
               <div className="mb-8 pl-4">
                 <p className="mb-4">
                   We use cookies and similar tracking technologies to track activity on our website and hold certain information. 
@@ -140,7 +140,7 @@ export default function PrivacyPolicyPage() {
                 </p>
               </div>
 
-              <h2 className="text-2xl font-bold mb-4 text-[#343F52]">6. Your Rights</h2>
+              <h2 className="text-2xl font-bold mb-4 text-[#A31C44]">6. Your Rights</h2>
               <div className="mb-8 pl-4">
                 <p className="mb-4">
                   Depending on your location, you may have certain rights regarding your personal information, including:
@@ -157,7 +157,7 @@ export default function PrivacyPolicyPage() {
                 </p>
               </div>
 
-              <h2 className="text-2xl font-bold mb-4 text-[#343F52]">7. Children's Privacy</h2>
+              <h2 className="text-2xl font-bold mb-4 text-[#A31C44]">7. Children's Privacy</h2>
               <div className="mb-8 pl-4">
                 <p className="mb-4">
                   Our services are not intended for individuals under the age of 18. We do not knowingly collect personal information 
@@ -166,7 +166,7 @@ export default function PrivacyPolicyPage() {
                 </p>
               </div>
 
-              <h2 className="text-2xl font-bold mb-4 text-[#343F52]">8. Changes to This Privacy Policy</h2>
+              <h2 className="text-2xl font-bold mb-4 text-[#A31C44]">8. Changes to This Privacy Policy</h2>
               <div className="mb-8 pl-4">
                 <p className="mb-4">
                   We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy 
@@ -175,13 +175,13 @@ export default function PrivacyPolicyPage() {
               </div>
 
               <div className="bg-gray-50 p-6 rounded-lg mt-8">
-                <h2 className="text-2xl font-bold mb-4 text-[#343F52]">Contact Information</h2>
+                <h2 className="text-2xl font-bold mb-4 text-[#A31C44]">Contact Information</h2>
                 <p className="mb-4">
                   If you have any questions or concerns about this Privacy Policy or our data practices, please contact us:
                 </p>
                 <ul className="space-y-2">
                   <li>Email: <a href="mailto:booking@hsquareliving.com" className="text-[#A31C44] hover:underline">booking@hsquareliving.com</a></li>
-                  <li>Phone: <a href="tel:+919090151524" className="text-[#A31C44] hover:underline">+91 9090151524</a></li>
+                  <li>Phone: <a href="tel:+917400455087" className="text-[#A31C44] hover:underline">+91 7400455087</a></li>
                   <li>Address: 4R8P+FHV, Juhu Galli, above Tata Motors Showroom, Mahavi Darshan, Dhangar wadi, Andheri West, Mumbai, Maharashtra 400049</li>
                 </ul>
               </div>

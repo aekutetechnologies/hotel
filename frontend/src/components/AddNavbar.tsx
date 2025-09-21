@@ -18,7 +18,7 @@ const AddNavbar = ({ type, onClose }: AddNavbarProps) => {
       className={`w-full px-4 max-w-[100vw] overflow-x-hidden h-[40px] z-[60] ${
         type === "hotel"
           ? "bg-[#B21D46]"
-          : "bg-[#343F52]"
+          : "bg-[#A31C44]"
       }`}
       initial={{ x: -2 }}
       animate={{ x: [0, -3, 3, -3, 3, 0] }}

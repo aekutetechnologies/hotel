@@ -51,24 +51,28 @@ export const Timeline = ({ data, theme = "hotel" }: TimelineProps) => {
   const lineGradient =
     theme === "hotel"
       ? "bg-gradient-to-t from-[#A31C44] via-[#7A1533] to-transparent"
-      : "bg-gradient-to-t from-[#2A2B2E] via-[#1A1B1E] to-transparent"
+      : "bg-gradient-to-t from-[#A31C44] via-[#1A1B1E] to-transparent"
 
   // Define theme colors for the background line
-  const bgLineColor = theme === "hotel" ? "bg-[#A31C44]/10" : "bg-[#2A2B2E]/10"
+  const bgLineColor = theme === "hotel" ? "bg-[#A31C44]/10" : "bg-[#A31C44]/10"
   
   // Text color based on theme
-  const textColor = theme === "hotel" ? "text-[#A31C44]" : "text-[#2A2B2E]"
+  const textColor = theme === "hotel" ? "text-[#A31C44]" : "text-[#A31C44]"
 
   return (
     <div className="w-full bg-white dark:bg-neutral-950 px-4 md:px-10" ref={containerRef}>
       <div ref={ref} className="relative max-w-7xl mx-auto pb-20">
         {data.map((item, index) => (
-          <div key={index} className="flex justify-start pt-20 md:pt-40 gap-4 md:gap-10">
-            <div className="sticky flex flex-row z-40 items-start top-20 md:top-40 self-start">
+          <div
+            key={index}
+            className={`flex justify-start ${index === 0 ? 'pt-0 md:pt-0' : 'pt-20 md:pt-40'} gap-4 md:gap-10`}
+          >
+            {/* left column: fixed responsive width to keep right content aligned */}
+            <div className="sticky flex flex-row z-40 items-start top-20 md:top-40 self-start w-40 sm:w-48 md:w-64 lg:w-96 flex-shrink-0">
               <div className="relative flex items-center justify-center">
                 <div className="absolute left-0 w-5 h-5 bg-white dark:bg-black rounded-full flex items-center justify-center">
                   <div
-                    className={`h-3 w-3 rounded-full ${theme === "hotel" ? "bg-[#A31C44] border-[#A31C44]" : "bg-[#2A2B2E] border-[#2A2B2E]"} border`}
+                    className={`h-3 w-3 rounded-full ${theme === "hotel" ? "bg-[#A31C44] border-[#A31C44]" : "bg-[#A31C44] border-[#A31C44]"} border`}
                   />
                 </div>
               </div>
@@ -82,6 +86,7 @@ export const Timeline = ({ data, theme = "hotel" }: TimelineProps) => {
               </div>
             </div>
 
+            {/* right column: content area that starts after the fixed left column */}
             <div className="relative pl-2 md:pl-4 w-full">
               <p className="text-neutral-800 dark:text-neutral-200 text-sm mb-8">
                 {item.description}
@@ -124,10 +129,10 @@ export const Timeline = ({ data, theme = "hotel" }: TimelineProps) => {
             top: heightTransform,
             opacity: opacityTransform,
           }}
-          className={`absolute left-[10px] w-[10px] h-[10px] -ml-[3.75px] rounded-full ${theme === "hotel" ? "bg-[#A31C44]" : "bg-[#2A2B2E]"}`}
+          className={`absolute left-[10px] w-[10px] h-[10px] -ml-[3.75px] rounded-full ${theme === "hotel" ? "bg-[#A31C44]" : "bg-[#A31C44]"}`}
         >
           <span
-            className={`absolute inset-0 rounded-full ${theme === "hotel" ? "bg-[#A31C44]" : "bg-[#2A2B2E]"} animate-ping opacity-75`}
+            className={`absolute inset-0 rounded-full ${theme === "hotel" ? "bg-[#A31C44]" : "bg-[#A31C44]"} animate-ping opacity-75`}
           ></span>
         </motion.div>
       </div>

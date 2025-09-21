@@ -1,10 +1,11 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { motion } from "framer-motion";
-import { Star } from "lucide-react";
+import Link from "next/link";
 import { getAllProperties } from "@/lib/api/getAllProperties";
 import { type Property } from "@/types/property";
+import { Building, MapPin, Users, Star } from "lucide-react";
+import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 
 interface placeCardProps {
   type: "hotel" | "hostel";
@@ -15,14 +16,33 @@ const PlaceCard = ({ type = "hotel" }: placeCardProps) => {
   const [hotelProperties, setHotelProperties] = useState<Property[]>([]);
   const [hostelProperties, setHostelProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isInView, setIsInView] = useState(false);
+
+  const Counter = ({ value, duration = 2 }: { value: number; duration?: number }) => {
+    const count = useMotionValue(0);
+    const rounded = useTransform(count, (latest) => Math.round(latest));
+    const displayValue = useTransform(rounded, (latest) => {
+      if (latest >= 1000) {
+        return `${(latest / 1000).toFixed(0)}K+`;
+      }
+      return `${latest}+`;
+    });
+
+    useEffect(() => {
+      const animation = animate(count, value, { duration });
+      return animation.stop;
+    }, [count, value, duration]);
+
+    return <motion.span>{displayValue}</motion.span>;
+  };
 
   useEffect(() => {
     const fetchProperties = async () => {
       try {
         const data = await getAllProperties();
         setProperties(data);
-        const hotels = data.filter(property => property.property_type === "hotel").slice(0, 4);
-        const hostels = data.filter(property => property.property_type === "hostel").slice(0, 4);
+        const hotels = data.filter((p) => p.property_type === "hotel").slice(0, 4);
+        const hostels = data.filter((p) => p.property_type === "hostel").slice(0, 4);
         setHotelProperties(hotels);
         setHostelProperties(hostels);
       } catch (error) {
@@ -35,7 +55,7 @@ const PlaceCard = ({ type = "hotel" }: placeCardProps) => {
     fetchProperties();
   }, []);
 
-  const themeColor = type === "hotel" ? "#A31C44" : "#343F52";
+  const themeColor = type === "hotel" ? "#A31C44" : "#A31C44";
 
   if (loading) {
     return (
@@ -45,88 +65,112 @@ const PlaceCard = ({ type = "hotel" }: placeCardProps) => {
     );
   }
 
-  // Get current properties based on type
   const currentProperties = type === "hotel" ? hotelProperties : hostelProperties;
-  
-  return (
-    <div className="w-full min-h-screen flex items-center justify-center p-5">
-      <div className="w-full max-w-7xl mx-auto">
-        {/* Heading Section */}
-        <div className="text-center mb-10">
-          <h2 className={`text-2xl md:text-4xl font-bold mb-3 ${type === "hotel" ? "text-[#A31C44]" : "text-[#343F52]"}`}>
-            {type === "hotel" 
-              ? "Experience Luxury at HSquare Hotels" 
-              : "Join the HSquare Community"}
-          </h2>
-          <p className="text-neutral-700 dark:text-neutral-300 text-sm md:text-base max-w-2xl mx-auto">
-            {type === "hotel"
-              ? "Discover our handpicked collection of premium properties designed for the discerning traveler"
-              : "More than just accommodation – find your tribe in our innovative social living spaces"}
-          </p>
-        </div>
 
-        {/* Card Grid */}
-        <div className="flex justify-center">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 justify-items-center">
+  return (
+    <>
+      <div className="w-full min-h-screen flex justify-center p-5">
+        <div className="w-full max-w-7xl mx-auto flex flex-col space-y-10">
+          {/* Heading Section */}
+          <div className="text-center">
+            <h2 className={`text-2xl md:text-4xl font-bold ${type === "hotel" ? "text-[#A31C44]" : "text-[#A31C44]"}`}>
+              {type === "hotel" ? "Experience Luxury at HSquare Hotels" : "Join the HSquare Community"}
+            </h2>
+            <p className="text-neutral-700 dark:text-neutral-300 text-sm md:text-base max-w-2xl mx-auto">
+              {type === "hotel"
+                ? "Discover our handpicked collection of premium properties designed for the discerning traveler"
+                : "More than just accommodation – find your tribe in our innovative social living spaces"}
+            </p>
+          </div>
+
+          {/* Card Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 justify-items-center">
             {currentProperties.length === 0 ? (
               <div className="col-span-full text-center py-8">
                 <p className="text-gray-500">No {type} properties found</p>
               </div>
             ) : (
-              currentProperties.map((property, index) => (
-                <motion.div
-                  key={property.id}
-                  className={`w-full max-w-xs bg-white rounded-2xl shadow-lg flex flex-col items-center justify-center text-xl font-bold cursor-pointer ${
-                    type === "hotel" 
-                      ? "text-[#A31C44] hover:bg-[#A31C44]" 
-                      : "text-[#343F52] hover:bg-[#343F52]"
-                  } hover:text-white`}
-                  initial={{ rotate: index % 2 === 0 ? -10 : 10, x: index % 2 === 0 ? -20 : 20 }}
-                  whileHover={{ rotate: 0, x: 0 }}
-                  transition={{ type: "spring", stiffness: 100 }}
-                >
-                  {/* Image Section */}
-                  <div className="w-full h-48">
-                    <Image 
-                      src={property.images?.[0]?.image || "/images/placeholder.jpg"} 
-                      alt={property.name} 
-                      className="w-full h-full object-cover rounded-t-2xl"
-                      width={500}
-                      height={300}
-                    />
-                  </div>
-
-                  {/* Content Section */}
-                  <div className="flex flex-col justify-center items-center p-5 text-center">
-                    <h1 className="text-lg md:text-xl font-semibold">{property.name}</h1>
-                    
-                    {/* Location */}
-                    <p className="text-sm text-gray-600 mt-1">
-                      {property.city?.name}, {property.state?.name}
-                    </p>
-
-                    {/* Rating and Review Count */}
-                    <div className="flex items-center mt-2 text-xs font-normal">
-                      <div className="flex items-center">
-                        <Star size={12} className="fill-current" />
-                        <span className="ml-1 font-medium">
-                          {property.reviews && property.reviews.length > 0 
-                            ? (property.reviews.reduce((acc, review) => acc + review.rating, 0) / property.reviews.length).toFixed(1)
-                            : "New"}
-                        </span>
+              currentProperties.map((property) => (
+                <div key={property.id} className="flex flex-col items-start">
+                  <Link href={`/property/${property.id}`} className="group block">
+                    {/* Full Image Card */}
+                    <div className="relative w-full max-w-[280px] h-[380px] rounded-xl overflow-hidden transition-transform duration-300 group-hover:scale-[1.02] group-hover:shadow-2xl">
+                      <Image
+                        src={property.images?.[0]?.image || "/images/placeholder.jpg"}
+                        alt={property.name}
+                        width={400}
+                        height={400}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute top-3 left-3 bg-yellow-300 text-black font-semibold text-sm px-3 py-1 rounded">
+                        {property.property_type || "Zen zone"}
                       </div>
-                      <span className="ml-2 opacity-75">
-                        ({property.reviews?.length || 0} reviews)
-                      </span>
                     </div>
+                  </Link>
+
+                  {/* Text Info Below Image */}
+                  <div className="mt-4 px-1">
+                    <h3 className="text-base font-semibold text-[#A31C44]">
+                      {property.name}, {property.location || "India"}
+                    </h3>
                   </div>
-                </motion.div>
+                </div>
               ))
             )}
           </div>
+
+          {/* Statistics Section */}
+          <div className="bg-white py-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+              {[
+                {
+                  icon: <MapPin className="h-8 w-8 text-red-600" />,
+                  label: "Areas Covered in Mumbai",
+                  value: 10,
+                },
+                {
+                  icon: <Building className="h-8 w-8 text-red-600" />,
+                  label: `${type === "hotel" ? "Hotels" : "Hostels"} Available`,
+                  value: 12,
+                },
+                {
+                  icon: <Users className="h-8 w-8 text-red-600" />,
+                  label: "Happy Customers",
+                  value: 1000,
+                },
+                {
+                  icon: <Star className="h-8 w-8 text-red-600" />,
+                  label: "Average Rating",
+                  value: 4.9,
+                  isStatic: true,
+                },
+              ].map((stat, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: isInView ? 1 : 0, y: isInView ? 0 : 20 }}
+                  transition={{ delay: 0.1 * idx, duration: 0.5 }}
+                  whileHover={{
+                    scale: 1.05,
+                    boxShadow: "0 10px 25px -5px rgba(0,0,0,0.1)",
+                  }}
+                  className="bg-gray-50 rounded-lg p-6 text-center"
+                  onViewportEnter={() => setIsInView(true)}
+                >
+                  <div className="flex justify-center mb-4">
+                    <div className="rounded-full p-3 bg-red-50">{stat.icon}</div>
+                  </div>
+                  <h3 className="text-4xl font-bold mb-2">
+                    {stat.isStatic ? stat.value : <Counter value={stat.value} />}
+                  </h3>
+                  <p className="text-gray-600">{stat.label}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

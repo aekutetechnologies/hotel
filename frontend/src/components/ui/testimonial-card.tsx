@@ -25,7 +25,7 @@ export function TestimonialCard({ author, text, href, className, theme = "hotel"
         "flex flex-col rounded-lg border-t",
         theme === "hotel"
           ? "bg-gradient-to-b from-[#A31C44]/10 to-[#A31C44]/5 hover:from-[#A31C44]/20 hover:to-[#A31C44]/10"
-          : "bg-gradient-to-b from-[#2A2B2E]/10 to-[#2A2B2E]/5 hover:from-[#2A2B2E]/20 hover:to-[#2A2B2E]/10",
+          : "bg-gradient-to-b from-[#A31C44]/10 to-[#A31C44]/5 hover:from-[#A31C44]/20 hover:to-[#A31C44]/10",
         "p-4 text-start sm:p-6",
         "w-[280px] sm:w-[320px] flex-shrink-0 mx-4",
         "transition-colors duration-300",

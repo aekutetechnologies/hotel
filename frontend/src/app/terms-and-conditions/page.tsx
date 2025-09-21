@@ -59,7 +59,7 @@ export default function TermsAndConditionsPage() {
                 you may not access our services.
               </p>
 
-              <h2 className="text-2xl font-bold mb-4 text-[#343F52]">1. Booking and Reservations</h2>
+              <h2 className="text-2xl font-bold mb-4 text-[#A31C44]">1. Booking and Reservations</h2>
               <div className="mb-6 pl-4">
                 <p className="mb-4">
                   1.1. All reservations are subject to availability and confirmation.
@@ -75,7 +75,7 @@ export default function TermsAndConditionsPage() {
                 </p>
               </div>
 
-              <h2 className="text-2xl font-bold mb-4 text-[#343F52]">2. Check-in and Check-out</h2>
+              <h2 className="text-2xl font-bold mb-4 text-[#A31C44]">2. Check-in and Check-out</h2>
               <div className="mb-6 pl-4">
                 <p className="mb-4">
                   2.1. Standard check-in time is 2:00 PM and check-out time is 11:00 AM local time, unless otherwise specified for specific properties.
@@ -88,7 +88,7 @@ export default function TermsAndConditionsPage() {
                 </p>
               </div>
 
-              <h2 className="text-2xl font-bold mb-4 text-[#343F52]">3. Payment and Fees</h2>
+              <h2 className="text-2xl font-bold mb-4 text-[#A31C44]">3. Payment and Fees</h2>
               <div className="mb-6 pl-4">
                 <p className="mb-4">
                   3.1. All rates are quoted in Indian Rupees (INR) unless otherwise specified.
@@ -101,7 +101,7 @@ export default function TermsAndConditionsPage() {
                 </p>
               </div>
 
-              <h2 className="text-2xl font-bold mb-4 text-[#343F52]">4. Cancellation Policy</h2>
+              <h2 className="text-2xl font-bold mb-4 text-[#A31C44]">4. Cancellation Policy</h2>
               <div className="mb-6 pl-4">
                 <p className="mb-4">
                   4.1. Cancellation policies vary by property and rate plan. The specific policy will be communicated at the time of booking.
@@ -111,7 +111,7 @@ export default function TermsAndConditionsPage() {
                 </p>
               </div>
 
-              <h2 className="text-2xl font-bold mb-4 text-[#343F52]">5. Guest Conduct</h2>
+              <h2 className="text-2xl font-bold mb-4 text-[#A31C44]">5. Guest Conduct</h2>
               <div className="mb-6 pl-4">
                 <p className="mb-4">
                   5.1. Guests are expected to conduct themselves in a respectful manner and to consider the comfort of other guests.
@@ -124,7 +124,7 @@ export default function TermsAndConditionsPage() {
                 </p>
               </div>
 
-              <h2 className="text-2xl font-bold mb-4 text-[#343F52]">6. Limitation of Liability</h2>
+              <h2 className="text-2xl font-bold mb-4 text-[#A31C44]">6. Limitation of Liability</h2>
               <div className="mb-6 pl-4">
                 <p className="mb-4">
                   6.1. HSquare Living is not responsible for any loss, damage, or theft of guest property on our premises.
@@ -134,7 +134,7 @@ export default function TermsAndConditionsPage() {
                 </p>
               </div>
 
-              <h2 className="text-2xl font-bold mb-4 text-[#343F52]">7. Website Usage</h2>
+              <h2 className="text-2xl font-bold mb-4 text-[#A31C44]">7. Website Usage</h2>
               <div className="mb-6 pl-4">
                 <p className="mb-4">
                   7.1. The content on our website is for general information purposes only.
@@ -144,7 +144,7 @@ export default function TermsAndConditionsPage() {
                 </p>
               </div>
 
-              <h2 className="text-2xl font-bold mb-4 text-[#343F52]">8. Modifications</h2>
+              <h2 className="text-2xl font-bold mb-4 text-[#A31C44]">8. Modifications</h2>
               <div className="mb-6 pl-4">
                 <p className="mb-4">
                   8.1. We reserve the right to modify these Terms at any time. Changes will be effective immediately upon posting on our website.
@@ -154,7 +154,7 @@ export default function TermsAndConditionsPage() {
                 </p>
               </div>
 
-              <h2 className="text-2xl font-bold mb-4 text-[#343F52]">9. Governing Law</h2>
+              <h2 className="text-2xl font-bold mb-4 text-[#A31C44]">9. Governing Law</h2>
               <div className="mb-6 pl-4">
                 <p className="mb-4">
                   9.1. These Terms shall be governed by and construed in accordance with the laws of India.
@@ -165,13 +165,13 @@ export default function TermsAndConditionsPage() {
               </div>
 
               <div className="bg-gray-50 p-6 rounded-lg mt-8">
-                <h2 className="text-2xl font-bold mb-4 text-[#343F52]">Contact Information</h2>
+                <h2 className="text-2xl font-bold mb-4 text-[#A31C44]">Contact Information</h2>
                 <p className="mb-4">
                   If you have any questions about these Terms and Conditions, please contact us:
                 </p>
                 <ul className="space-y-2">
                   <li>Email: <a href="mailto:booking@hsquareliving.com" className="text-[#A31C44] hover:underline">booking@hsquareliving.com</a></li>
-                  <li>Phone: <a href="tel:+919090151524" className="text-[#A31C44] hover:underline">+91 9090151524</a></li>
+                  <li>Phone: <a href="tel:+917400455087" className="text-[#A31C44] hover:underline">+91 7400455087</a></li>
                   <li>Address: 4R8P+FHV, Juhu Galli, above Tata Motors Showroom, Mahavi Darshan, Dhangar wadi, Andheri West, Mumbai, Maharashtra 400049</li>
                 </ul>
               </div>

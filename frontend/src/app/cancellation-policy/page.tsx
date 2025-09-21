@@ -63,7 +63,7 @@ export default function RefundPolicyPage() {
             
             <TabsContent value="hotel" className="bg-white p-8 rounded-lg shadow-md">
               <div className="mb-8">
-                <h2 className="text-2xl font-bold mb-4 text-[#343F52] flex items-center">
+                <h2 className="text-2xl font-bold mb-4 text-[#A31C44] flex items-center">
                   <Building className="h-5 w-5 mr-2 text-[#A31C44]" />
                   Hotel Cancellation Policy
                 </h2>
@@ -71,7 +71,7 @@ export default function RefundPolicyPage() {
                 <div className="space-y-6">
                   <div className="grid md:grid-cols-3 gap-6">
                     <div className="bg-gray-50 p-5 rounded-lg border border-gray-100">
-                      <h3 className="font-semibold text-lg mb-3 flex items-center text-[#343F52]">
+                      <h3 className="font-semibold text-lg mb-3 flex items-center text-[#A31C44]">
                         <CalendarDays className="h-4 w-4 mr-2 text-[#A31C44]" />
                         Standard Bookings
                       </h3>
@@ -96,7 +96,7 @@ export default function RefundPolicyPage() {
                     </div>
                     
                     <div className="bg-gray-50 p-5 rounded-lg border border-gray-100">
-                      <h3 className="font-semibold text-lg mb-3 flex items-center text-[#343F52]">
+                      <h3 className="font-semibold text-lg mb-3 flex items-center text-[#A31C44]">
                         <Clock className="h-4 w-4 mr-2 text-[#A31C44]" />
                         Hourly Bookings
                       </h3>
@@ -121,7 +121,7 @@ export default function RefundPolicyPage() {
                     </div>
                     
                     <div className="bg-gray-50 p-5 rounded-lg border border-gray-100">
-                      <h3 className="font-semibold text-lg mb-3 flex items-center text-[#343F52]">
+                      <h3 className="font-semibold text-lg mb-3 flex items-center text-[#A31C44]">
                         <CreditCard className="h-4 w-4 mr-2 text-[#A31C44]" />
                         Group Bookings (5+ rooms)
                       </h3>
@@ -157,7 +157,7 @@ export default function RefundPolicyPage() {
               </div>
               
               <div className="mb-8">
-                <h2 className="text-2xl font-bold mb-4 text-[#343F52]">No-Show & Early Check-out</h2>
+                <h2 className="text-2xl font-bold mb-4 text-[#A31C44]">No-Show & Early Check-out</h2>
                 <div className="space-y-4">
                   <div className="bg-gray-50 p-5 rounded-lg border border-gray-100">
                     <p className="font-medium mb-2">No-Show:</p>
@@ -179,7 +179,7 @@ export default function RefundPolicyPage() {
             
             <TabsContent value="hostel" className="bg-white p-8 rounded-lg shadow-md">
               <div className="mb-8">
-                <h2 className="text-2xl font-bold mb-4 text-[#343F52] flex items-center">
+                <h2 className="text-2xl font-bold mb-4 text-[#A31C44] flex items-center">
                   <Home className="h-5 w-5 mr-2 text-[#A31C44]" />
                   Hostel Cancellation Policy
                 </h2>
@@ -187,7 +187,7 @@ export default function RefundPolicyPage() {
                 <div className="space-y-6">
                   <div className="grid md:grid-cols-3 gap-6">
                     <div className="bg-gray-50 p-5 rounded-lg border border-gray-100">
-                      <h3 className="font-semibold text-lg mb-3 flex items-center text-[#343F52]">
+                      <h3 className="font-semibold text-lg mb-3 flex items-center text-[#A31C44]">
                         <CalendarDays className="h-4 w-4 mr-2 text-[#A31C44]" />
                         Short-term Stays (1-14 days)
                       </h3>
@@ -212,7 +212,7 @@ export default function RefundPolicyPage() {
                     </div>
                     
                     <div className="bg-gray-50 p-5 rounded-lg border border-gray-100">
-                      <h3 className="font-semibold text-lg mb-3 flex items-center text-[#343F52]">
+                      <h3 className="font-semibold text-lg mb-3 flex items-center text-[#A31C44]">
                         <CalendarDays className="h-4 w-4 mr-2 text-[#A31C44]" />
                         Monthly Stays (15+ days)
                       </h3>
@@ -237,7 +237,7 @@ export default function RefundPolicyPage() {
                     </div>
                     
                     <div className="bg-gray-50 p-5 rounded-lg border border-gray-100">
-                      <h3 className="font-semibold text-lg mb-3 flex items-center text-[#343F52]">
+                      <h3 className="font-semibold text-lg mb-3 flex items-center text-[#A31C44]">
                         <CreditCard className="h-4 w-4 mr-2 text-[#A31C44]" />
                         Deposits & Security
                       </h3>
@@ -278,7 +278,7 @@ export default function RefundPolicyPage() {
               </div>
               
               <div className="mb-8">
-                <h2 className="text-2xl font-bold mb-4 text-[#343F52]">Hostel Code of Conduct</h2>
+                <h2 className="text-2xl font-bold mb-4 text-[#A31C44]">Hostel Code of Conduct</h2>
                 <div className="space-y-4">
                   <div className="bg-gray-50 p-5 rounded-lg border border-gray-100">
                     <p className="text-gray-600 mb-3">
@@ -299,14 +299,14 @@ export default function RefundPolicyPage() {
           </Tabs>
           
           <div className="max-w-4xl bg-white p-8 rounded-lg shadow-md mt-8">
-            <h2 className="text-2xl font-bold mb-4 text-[#343F52]">Special Circumstances</h2>
+            <h2 className="text-2xl font-bold mb-4 text-[#A31C44]">Special Circumstances</h2>
             <p className="mb-4">
               In case of unexpected events such as medical emergencies, family emergencies, or natural disasters affecting your travel plans, 
               please contact our customer support team immediately. We may consider refunds on a case-by-case basis with appropriate documentation.
             </p>
             
             <div className="my-6">
-              <h3 className="text-xl font-bold mb-3 text-[#343F52]">Force Majeure</h3>
+              <h3 className="text-xl font-bold mb-3 text-[#A31C44]">Force Majeure</h3>
               <p className="mb-4">
                 In the event of force majeure circumstances (such as natural disasters, pandemics, government travel restrictions, etc.) 
                 that prevent us from providing accommodation or you from traveling, we may offer:
@@ -319,7 +319,7 @@ export default function RefundPolicyPage() {
             </div>
             
             <div className="my-6">
-              <h3 className="text-xl font-bold mb-3 text-[#343F52]">Refund Processing</h3>
+              <h3 className="text-xl font-bold mb-3 text-[#A31C44]">Refund Processing</h3>
               <p className="mb-4">
                 All approved refunds will be processed within 7-10 business days. The refund will be credited back to the original payment method used during booking.
               </p>
@@ -329,13 +329,13 @@ export default function RefundPolicyPage() {
             </div>
             
             <div className="bg-gray-50 p-6 rounded-lg">
-              <h2 className="text-2xl font-bold mb-4 text-[#343F52]">Contact Information</h2>
+              <h2 className="text-2xl font-bold mb-4 text-[#A31C44]">Contact Information</h2>
               <p className="mb-4">
                 For any questions or concerns regarding our refund policy or to request a cancellation, please contact our customer support team:
               </p>
               <ul className="space-y-2">
                 <li>Email: <a href="mailto:booking@hsquareliving.com" className="text-[#A31C44] hover:underline">booking@hsquareliving.com</a></li>
-                <li>Phone: <a href="tel:+919090151524" className="text-[#A31C44] hover:underline">+91 9090151524</a></li>
+                <li>Phone: <a href="tel:+917400455087" className="text-[#A31C44] hover:underline">+91 7400455087</a></li>
               </ul>
             </div>
             

@@ -40,7 +40,7 @@ export default function RefundPolicyPage() {
           
           <div className="max-w-4xl bg-white p-8 rounded-lg shadow-md">
             <div className="mb-8">
-              <h2 className="text-2xl font-bold mb-4 text-[#343F52]">Booking Cancellations</h2>
+              <h2 className="text-2xl font-bold mb-4 text-[#A31C44]">Booking Cancellations</h2>
               <p className="mb-4">
                 At HSquare Living, we understand that plans can change. Our refund policy is designed to be fair and transparent, 
                 while also protecting our business operations. Please review our cancellation and refund terms below:
@@ -60,7 +60,7 @@ export default function RefundPolicyPage() {
             </div>
             
             <div className="mb-8">
-              <h2 className="text-2xl font-bold mb-4 text-[#343F52]">No-Show Policy</h2>
+              <h2 className="text-2xl font-bold mb-4 text-[#A31C44]">No-Show Policy</h2>
               <p className="mb-4">
                 If you do not check in on your scheduled arrival date without prior notification, you will be considered a "no-show" 
                 and no refund will be provided for your booking.
@@ -68,14 +68,14 @@ export default function RefundPolicyPage() {
             </div>
             
             <div className="mb-8">
-              <h2 className="text-2xl font-bold mb-4 text-[#343F52]">Early Departure</h2>
+              <h2 className="text-2xl font-bold mb-4 text-[#A31C44]">Early Departure</h2>
               <p className="mb-4">
                 If you decide to shorten your stay after check-in, we regret to inform that no refund will be provided for the unused portion of your booking.
               </p>
             </div>
             
             <div className="mb-8">
-              <h2 className="text-2xl font-bold mb-4 text-[#343F52]">Special Circumstances</h2>
+              <h2 className="text-2xl font-bold mb-4 text-[#A31C44]">Special Circumstances</h2>
               <p className="mb-4">
                 In case of unexpected events such as medical emergencies, family emergencies, or natural disasters affecting your travel plans, 
                 please contact our customer support team immediately. We may consider refunds on a case-by-case basis with appropriate documentation.
@@ -83,7 +83,7 @@ export default function RefundPolicyPage() {
             </div>
             
             <div className="mb-8">
-              <h2 className="text-2xl font-bold mb-4 text-[#343F52]">Refund Processing</h2>
+              <h2 className="text-2xl font-bold mb-4 text-[#A31C44]">Refund Processing</h2>
               <p className="mb-4">
                 All approved refunds will be processed within 7-10 business days. The refund will be credited back to the original payment method used during booking.
               </p>
@@ -93,13 +93,13 @@ export default function RefundPolicyPage() {
             </div>
             
             <div className="bg-gray-50 p-6 rounded-lg">
-              <h2 className="text-2xl font-bold mb-4 text-[#343F52]">Contact Information</h2>
+              <h2 className="text-2xl font-bold mb-4 text-[#A31C44]">Contact Information</h2>
               <p className="mb-4">
                 For any questions or concerns regarding our refund policy or to request a cancellation, please contact our customer support team:
               </p>
               <ul className="space-y-2">
                 <li>Email: <a href="mailto:booking@hsquareliving.com" className="text-[#A31C44] hover:underline">booking@hsquareliving.com</a></li>
-                <li>Phone: <a href="tel:+919090151524" className="text-[#A31C44] hover:underline">+91 9090151524</a></li>
+                <li>Phone: <a href="tel:+917400455087" className="text-[#A31C44] hover:underline">+91 7400455087</a></li>
               </ul>
             </div>
             

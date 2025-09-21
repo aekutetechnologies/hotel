@@ -12,9 +12,9 @@ export function CookieConsent({ theme = "hotel" }: CookieConsentProps) {
   const [showBanner, setShowBanner] = useState(false)
 
   // Theme colors
-  const primaryColor = theme === "hotel" ? "#A31C44" : "#343F52"
+  const primaryColor = theme === "hotel" ? "#A31C44" : "#A31C44"
   const hoverColor = theme === "hotel" ? "#8a1838" : "#242e3c"
-  const primaryColorClass = theme === "hotel" ? "bg-[#A31C44] hover:bg-[#8a1838]" : "bg-[#343F52] hover:bg-[#242e3c]"
+  const primaryColorClass = theme === "hotel" ? "bg-[#A31C44] hover:bg-[#8a1838]" : "bg-[#A31C44] hover:bg-[#242e3c]"
 
   useEffect(() => {
     // Check if user has already made a choice

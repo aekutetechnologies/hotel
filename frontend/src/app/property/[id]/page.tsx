@@ -4,9 +4,11 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { Header } from '@/components/Header'
 import Footer from '@/components/Footer'
+import InlineSearchForm from '@/components/InlineSearchForm'
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Star, MapPin, ChevronLeft, ChevronRight, Wifi, Coffee, Tv, Car, Utensils, Building2, BatteryCharging, Dumbbell, BellRing, ShieldCheck, UserRoundCheck, Beer, Soup, Building, Heater, ChefHat, AirVent, ClipboardList, FileCheck, CheckCircle2 } from 'lucide-react'
+import { Star, MapPin, ChevronLeft, ChevronRight, ClipboardList, FileCheck, CheckCircle2, Building2 } from 'lucide-react'
+import { getAmenityIcon } from '@/lib/amenityIconMap'
 import Image from 'next/image'
 import { Property, Room } from '@/types/property'
 import { fetchProperty } from '@/lib/api/fetchProperty'
@@ -88,7 +90,7 @@ export default function PropertyDetails() {
   const params = useParams()
   const router = useRouter()
   const searchParams = useSearchParams()
-  
+
   // Use try-catch block to handle any errors in parsing params
   let propertyId = 0;
   try {
@@ -100,18 +102,20 @@ export default function PropertyDetails() {
   } catch (err) {
     console.error("Error parsing property ID:", err);
   }
-  
-  const bookingType = searchParams.get('bookingType') || 'daily'
+
+  const rawBookingType = searchParams.get('bookingType') || 'daily'
+  const bookingType = rawBookingType.includes('hour') ? 'hourly' : rawBookingType.includes('month') ? 'monthly' : rawBookingType.includes('year') ? 'yearly' : 'daily'
+  const propertyType = (searchParams.get('propertyType') || '').toLowerCase() || 'hotel'
   const checkInDateParam = searchParams.get('checkInDate')
   const checkOutDateParam = searchParams.get('checkOutDate')
   const checkInTimeParam = searchParams.get('checkInTime')
   const checkOutTimeParam = searchParams.get('checkOutTime')
   const monthsParam = searchParams.get('months')
-  
+
   let selectedGuests = null;
   let selectedRoomsCount = null;
   let months = 1;
-  
+
   try {
     selectedGuests = searchParams.get('guests') ? Number(searchParams.get('guests')) : null;
     selectedRoomsCount = searchParams.get('rooms') ? Number(searchParams.get('rooms')) : null;
@@ -148,18 +152,18 @@ export default function PropertyDetails() {
       if (checkInTimeParam && !checkInTimeParam.includes(':')) {
         setCheckInTime(`${checkInTimeParam}:00`);
       }
-      
+
       if (checkOutTimeParam && !checkOutTimeParam.includes(':')) {
         setCheckOutTime(`${checkOutTimeParam}:00`);
       }
-      
+
       // If we don't have time params, set defaults
       if (!checkInTimeParam) {
         const now = new Date();
         const nextHour = (now.getHours() + 1) % 24;
         setCheckInTime(`${nextHour}:00`);
       }
-      
+
       if (!checkOutTimeParam) {
         if (checkInTimeParam) {
           const hour = parseInt(checkInTimeParam);
@@ -180,7 +184,7 @@ export default function PropertyDetails() {
       // If rooms count is specified in URL but no specific rooms are selected yet
       const totalSelected = Array.from(selectedRooms.values())
         .reduce((sum, room) => sum + (room.quantity || 0), 0);
-        
+
       if (totalSelected === 0 && selectedRoomsCount > 0) {
         // Auto-select the first room with the count from URL
         setSelectedRooms(prevSelected => {
@@ -191,9 +195,9 @@ export default function PropertyDetails() {
             const roomId = firstRoom.id.toString();
             const currentRoom = updatedRooms.get(roomId);
             if (currentRoom) {
-              updatedRooms.set(roomId, { 
-                ...currentRoom, 
-                quantity: selectedRoomsCount 
+              updatedRooms.set(roomId, {
+                ...currentRoom,
+                quantity: selectedRoomsCount
               });
             }
           }
@@ -224,31 +228,31 @@ export default function PropertyDetails() {
   // Wrap fetchProperty call in a try-catch block
   useEffect(() => {
     console.log("Fetching property with ID:", propertyId.toString());
-    
+
     try {
       fetchProperty(propertyId.toString())
         .then((data) => {
           console.log("Property data loaded:", data);
           setProperty(data as ExtendedProperty);
-          
+
           // Initialize room image indices
           if (data && data.rooms && data.rooms.length > 0) {
             // Create an initial state for the room image indices
             const initialIndices: { [key: string]: number } = {};
             let initialRoomSelections = new Map<string, ExtendedRoom>();
-            
+
             // Try to restore saved room selections from session storage
             try {
               const savedSelectionsString = sessionStorage.getItem(`roomSelections_${propertyId}`);
               if (savedSelectionsString) {
                 const savedSelections = JSON.parse(savedSelectionsString);
-                
+
                 // Convert the saved object back to a Map
                 initialRoomSelections = new Map();
                 data.rooms.forEach((room: any) => {
                   const roomId = room.id.toString();
                   initialIndices[roomId] = 0;
-                  
+
                   // Create extended room with saved quantity if available
                   const savedQuantity = savedSelections[roomId] || 0;
                   initialRoomSelections.set(roomId, {
@@ -261,7 +265,7 @@ export default function PropertyDetails() {
                 data.rooms.forEach((room: any) => {
                   initialIndices[room.id.toString()] = 0;
                   // Initialize each room with quantity 0
-                  const extendedRoom = {...room, quantity: 0} as ExtendedRoom;
+                  const extendedRoom = { ...room, quantity: 0 } as ExtendedRoom;
                   initialRoomSelections.set(room.id.toString(), extendedRoom);
                 });
               }
@@ -271,14 +275,14 @@ export default function PropertyDetails() {
               data.rooms.forEach((room: any) => {
                 initialIndices[room.id.toString()] = 0;
                 // Initialize each room with quantity 0
-                const extendedRoom = {...room, quantity: 0} as ExtendedRoom;
+                const extendedRoom = { ...room, quantity: 0 } as ExtendedRoom;
                 initialRoomSelections.set(room.id.toString(), extendedRoom);
               });
             }
-            
+
             setCurrentRoomImageIndices(initialIndices);
             setSelectedRooms(initialRoomSelections);
-            
+
             // Select the first room
             if (data.rooms.length > 0) {
               setSelectedRoom(data.rooms[0] as ExtendedRoom);
@@ -298,10 +302,10 @@ export default function PropertyDetails() {
   if (!property) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <LoadingIndicator 
-          variant="dots" 
-          size="md" 
-          text="Loading property details..." 
+        <LoadingIndicator
+          variant="dots"
+          size="md"
+          text="Loading property details..."
         />
       </div>
     );
@@ -344,15 +348,15 @@ export default function PropertyDetails() {
       e.preventDefault();
       e.stopPropagation();
     }
-    
+
     setCurrentRoomImageIndices((prev) => {
       const currentIndex = prev[roomId] || 0;
       const roomImages = property?.rooms?.find(room => room.id.toString() === roomId)?.images || [];
       const maxIndex = roomImages.length - 1;
-      
+
       // Calculate next index with boundary check
       const nextIndex = currentIndex >= maxIndex ? 0 : currentIndex + 1;
-      
+
       return {
         ...prev,
         [roomId]: nextIndex
@@ -366,15 +370,15 @@ export default function PropertyDetails() {
       e.preventDefault();
       e.stopPropagation();
     }
-    
+
     setCurrentRoomImageIndices((prev) => {
       const currentIndex = prev[roomId] || 0;
       const roomImages = property?.rooms?.find(room => room.id.toString() === roomId)?.images || [];
       const maxIndex = roomImages.length - 1;
-      
+
       // Calculate previous index with boundary check
       const prevIndex = currentIndex <= 0 ? maxIndex : currentIndex - 1;
-      
+
       return {
         ...prev,
         [roomId]: prevIndex
@@ -388,45 +392,45 @@ export default function PropertyDetails() {
       e.preventDefault();
       e.stopPropagation();
     }
-    
+
     setSelectedRooms(prevSelected => {
       const updatedRooms = new Map(prevSelected);
       const currentRoom = updatedRooms.get(roomId);
-      
+
       if (currentRoom) {
         // Calculate new quantity with limits (0 minimum, 5 maximum)
         const currentQuantity = currentRoom.quantity || 0;
         const newQuantity = Math.max(0, Math.min(5, currentQuantity + increment));
-        
+
         // Only proceed if there's an actual change
         if (newQuantity !== currentQuantity) {
           updatedRooms.set(roomId, { ...currentRoom, quantity: newQuantity });
-          
+
           // Save updated selections to session storage
           const roomSelectionsObject: Record<string, number> = {};
           updatedRooms.forEach((room, id) => {
             roomSelectionsObject[id] = room.quantity || 0;
           });
           sessionStorage.setItem(`roomSelections_${propertyId}`, JSON.stringify(roomSelectionsObject));
-          
+
           // Calculate change in total rooms for URL update
           const effectiveIncrement = newQuantity - currentQuantity;
-          
+
           // Update the search params with the total selected rooms
           const updatedTotalRooms = Array.from(updatedRooms.values())
             .reduce((sum, room) => sum + (room.quantity || 0), 0);
-          
+
           // Create new URLSearchParams object with current params
           const newSearchParams = new URLSearchParams(searchParams.toString());
           newSearchParams.set('rooms', Math.max(1, updatedTotalRooms).toString());
-          
+
           // Update the URL without reloading the page
           const url = new URL(window.location.href);
           url.search = newSearchParams.toString();
           window.history.pushState({}, '', url);
         }
       }
-      
+
       return updatedRooms;
     });
   };
@@ -441,6 +445,9 @@ export default function PropertyDetails() {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-grow container mx-auto px-4 py-8">
+        <div className="mb-6">
+          <InlineSearchForm />
+        </div>
         <style jsx global>{`
           .scrollbar-hidden {
             -ms-overflow-style: none;
@@ -483,13 +490,13 @@ export default function PropertyDetails() {
                 ₹{(() => {
                   // Find lowest priced room
                   if (!property.rooms || property.rooms.length === 0) return 0;
-                  
+
                   const prices = property.rooms.map(room => {
                     if (isHostel) {
                       if (room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
                         const basePrice = parseFloat(room.monthly_rate);
-                      const discount = parseFloat(String(room.discount || '0'));
-                      return basePrice * (1 - discount / 100);
+                        const discount = parseFloat(String(room.discount || '0'));
+                        return basePrice * (1 - discount / 100);
                       } else if (room.yearly_rate && parseFloat(room.yearly_rate) > 0) {
                         const basePrice = parseFloat(room.yearly_rate);
                         const discount = parseFloat(String(room.discount || '0'));
@@ -498,14 +505,14 @@ export default function PropertyDetails() {
                         return parseFloat('0');
                       }
                     } else {
-                      const basePrice = bookingType === 'hourly' 
-                        ? parseFloat(room.hourly_rate || '0') 
+                      const basePrice = bookingType === 'hourly'
+                        ? parseFloat(room.hourly_rate || '0')
                         : parseFloat(room.daily_rate || '0');
                       const discount = parseFloat(String(room.discount || '0'));
                       return basePrice * (1 - discount / 100);
                     }
                   });
-                  
+
                   return Math.min(...prices).toFixed(0);
                 })()}
               </span>
@@ -517,7 +524,7 @@ export default function PropertyDetails() {
               <span className="text-xs text-gray-500">{totalSelectedRooms} room{totalSelectedRooms > 1 ? 's' : ''} selected</span>
             )}
           </div>
-          <Button 
+          <Button
             onClick={() => document.querySelector('.lg\\:col-span-1')?.scrollIntoView({ behavior: 'smooth' })}
             className="bg-[#B11E43] hover:bg-[#8f1836] text-white"
           >
@@ -540,28 +547,28 @@ export default function PropertyDetails() {
             {property.discount && (
               <Badge variant="outline" className="bg-green-50 text-green-700">
                 {property.discount}% OFF
-            </Badge>
+              </Badge>
             )}
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="bg-green-50 border-[#B11E43]">
                 <Star className="h-4 w-4 text-[#B11E43] fill-current mr-1" />
-                {property.reviews && property.reviews.length > 0 
-                  ? (property.reviews.reduce((sum, review) => sum + review.rating, 0) / property.reviews.length).toFixed(1) 
+                {property.reviews && property.reviews.length > 0
+                  ? (property.reviews.reduce((sum, review) => sum + review.rating, 0) / property.reviews.length).toFixed(1)
                   : 'New'}
               </Badge>
               <span className="text-sm text-gray-600">
-                {property.reviews && property.reviews.length > 0 
-                  ? `${property.reviews.length} ${property.reviews.length === 1 ? 'review' : 'reviews'}` 
+                {property.reviews && property.reviews.length > 0
+                  ? `${property.reviews.length} ${property.reviews.length === 1 ? 'review' : 'reviews'}`
                   : 'No reviews yet'}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Tab Navigation */}
+        {/* Tab Navigation
         <div className="mb-8 border-b border-gray-200 overflow-x-auto scrollbar-hidden">
           <div className="flex min-w-max">
-            <button 
+            <button
               onClick={(e) => {
                 e.preventDefault();
                 document.getElementById('overview')?.scrollIntoView({ behavior: 'smooth' });
@@ -570,7 +577,7 @@ export default function PropertyDetails() {
             >
               Overview
             </button>
-            <button 
+            <button
               onClick={(e) => {
                 e.preventDefault();
                 document.getElementById('facilities')?.scrollIntoView({ behavior: 'smooth' });
@@ -579,7 +586,7 @@ export default function PropertyDetails() {
             >
               Amenities
             </button>
-            <button 
+            <button
               onClick={(e) => {
                 e.preventDefault();
                 document.getElementById('prices')?.scrollIntoView({ behavior: 'smooth' });
@@ -588,7 +595,7 @@ export default function PropertyDetails() {
             >
               Info & prices
             </button>
-            <button 
+            <button
               onClick={(e) => {
                 e.preventDefault();
                 document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth' });
@@ -597,7 +604,7 @@ export default function PropertyDetails() {
             >
               Reviews ({property.reviews?.length || 0})
             </button>
-            <button 
+            <button
               onClick={(e) => {
                 e.preventDefault();
                 document.getElementById('rules')?.scrollIntoView({ behavior: 'smooth' });
@@ -607,7 +614,7 @@ export default function PropertyDetails() {
               Rules
             </button>
           </div>
-        </div>
+        </div> */}
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -624,35 +631,34 @@ export default function PropertyDetails() {
                   className="object-cover"
                   priority
                 />
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/50" />
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent" />
                 <div className="absolute bottom-4 right-4 flex space-x-2">
-                <Button
-                  size="icon"
+                  <Button
+                    size="icon"
                     variant="default"
                     onClick={() => setCurrentImageIndex(prev => (prev > 0 ? prev - 1 : property.images.length - 1))}
                     className="h-8 w-8 rounded-full bg-white/80 text-[#B11E43] hover:bg-white hover:text-[#8f1836]"
-                >
+                  >
                     <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="icon"
+                  </Button>
+                  <Button
+                    size="icon"
                     variant="default"
                     onClick={() => setCurrentImageIndex(prev => (prev < property.images.length - 1 ? prev + 1 : 0))}
                     className="h-8 w-8 rounded-full bg-white/80 text-[#B11E43] hover:bg-white hover:text-[#8f1836]"
-                >
+                  >
                     <ChevronRight className="h-4 w-4" />
-                </Button>
+                  </Button>
                 </div>
               </div>
-              
+
               {/* Image thumbnails */}
               <div className="flex gap-2 mt-2 overflow-x-auto pb-2 scrollbar-hidden">
                 {property.images.map((image, index) => (
                   <button
                     key={`image-thumbnail-${image.id || index}`}
-                    className={`relative w-20 h-16 rounded-md overflow-hidden transition-all ${
-                      currentImageIndex === index ? 'ring-2 ring-primary' : 'opacity-80'
-                    }`}
+                    className={`relative w-20 h-16 rounded-md overflow-hidden transition-all ${currentImageIndex === index ? 'ring-2 ring-primary' : 'opacity-80'
+                      }`}
                     onClick={() => setCurrentImageIndex(index)}
                   >
                     <Image
@@ -669,41 +675,24 @@ export default function PropertyDetails() {
             {/* Amenities */}
             <section id="facilities">
               <h2 className="text-2xl font-semibold mb-4">Amenities</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-8">
+              <div className="grid grid-cols-12 sm:grid-cols-16 md:grid-cols-24 gap-0.5 mt-4">
                 {property.amenities.map((amenity, index) => {
-                  const amenityIcons: { [key: string]: React.ReactNode } = {
-                    "Security": <ShieldCheck className="h-5 w-5 text-[#B11E43]" />,
-                    "Caretaker": <UserRoundCheck className="h-5 w-5 text-[#B11E43]" />,
-                    "Reception": <BellRing className="h-5 w-5 text-[#B11E43]" />,
-                    "Bar": <Beer className="h-5 w-5 text-[#B11E43]" />,
-                    "Gym": <Dumbbell className="h-5 w-5 text-[#B11E43]" />,
-                    "In-house Restaurant": <Soup className="h-5 w-5 text-[#B11E43]" />,
-                    "Elevator": <Building className="h-5 w-5 text-[#B11E43]" />,
-                    "Power backup": <BatteryCharging className="h-5 w-5 text-[#B11E43]" />,
-                    "Geyser": <Heater className="h-5 w-5 text-[#B11E43]" />,
-                    "Kitchen": <ChefHat className="h-5 w-5 text-[#B11E43]" />,
-                    "Free Wifi": <Wifi className="h-5 w-5 text-[#B11E43]" />,
-                    "AC": <AirVent className="h-5 w-5 text-[#B11E43]" />,
-                    "TV": <Tv className="h-5 w-5 text-[#B11E43]" />,
-                    "Coffee": <Coffee className="h-5 w-5 text-[#B11E43]" />,
-                    "Utensils": <Utensils className="h-5 w-5 text-[#B11E43]" />,
-                  }
-                  const IconComponent = amenityIcons[(amenity.name as string)] || null
-
-                  // Create a guaranteed unique key
-                  const amenityKey = amenity.id 
-                    ? `amenity-id-${amenity.id}` 
-                    : amenity.name 
-                      ? `amenity-name-${amenity.name}` 
+                  const amenityKey = amenity.id
+                    ? `amenity-id-${amenity.id}`
+                    : amenity.name
+                      ? `amenity-name-${amenity.name}`
                       : `amenity-index-${index}`;
 
+                  const Icon = getAmenityIcon(amenity.name as string)
+
                   return (
-                    <div 
-                      key={amenityKey} 
-                      className="flex items-center gap-2 p-3 sm:p-4 shadow-lg rounded-xl bg-white"
+                    <div
+                      key={amenityKey}
+                      className="flex items-center justify-center p-0.5 rounded bg-white"
+                      title={amenity.name || 'Unknown amenity'}
+                      aria-label={amenity.name || 'Unknown amenity'}
                     >
-                      {IconComponent}
-                      <span className="text-sm sm:text-base">{amenity.name || 'Unknown amenity'}</span>
+                      {Icon}
                     </div>
                   )
                 })}
@@ -718,7 +707,7 @@ export default function PropertyDetails() {
                   const roomId = room.id.toString();
                   const selectedRoom = selectedRooms.get(roomId);
                   const quantity = selectedRoom?.quantity || 0;
-                  
+
                   return (
                     <div key={roomId} className="shadow-lg rounded-xl p-3 sm:p-4 bg-white">
                       <div className="flex flex-col sm:flex-row sm:space-x-4">
@@ -769,7 +758,7 @@ export default function PropertyDetails() {
                               <div>
                                 <h3 className="text-xl font-semibold mb-2">{'name' in room ? room.name : (room as ExtendedRoom).occupancyType}</h3>
                                 <p className="text-gray-600 mb-2">{'size' in room ? `Room size: ${room.size} sq. ft` : `Available beds: ${(room as ExtendedRoom).availableBeds}/${(room as ExtendedRoom).totalBeds} sq. ft`}</p>
-                                
+
                                 {/* Room Amenities and Features */}
                                 <div className="text-sm text-gray-700 mb-3">
                                   <div className="flex flex-wrap gap-x-4 gap-y-2">
@@ -816,9 +805,9 @@ export default function PropertyDetails() {
                                       if (isHostel) {
                                         if (room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
                                           const basePrice = parseFloat(room.monthly_rate);
-                                        const discount = parseFloat(String(room.discount || '0'));
-                                        if (isNaN(basePrice) || isNaN(discount)) return 0;
-                                        return (basePrice * (1 - discount / 100)).toFixed(0);
+                                          const discount = parseFloat(String(room.discount || '0'));
+                                          if (isNaN(basePrice) || isNaN(discount)) return 0;
+                                          return (basePrice * (1 - discount / 100)).toFixed(0);
                                         } else if (room.yearly_rate && parseFloat(room.yearly_rate) > 0) {
                                           const basePrice = parseFloat(room.yearly_rate);
                                           const discount = parseFloat(String(room.discount || '0'));
@@ -828,8 +817,8 @@ export default function PropertyDetails() {
                                           return parseFloat('0');
                                         }
                                       } else {
-                                        const basePrice = bookingType === 'hourly' 
-                                          ? parseFloat(room.hourly_rate || '0') 
+                                        const basePrice = bookingType === 'hourly'
+                                          ? parseFloat(room.hourly_rate || '0')
                                           : parseFloat(room.daily_rate || '0');
                                         const discount = parseFloat(String(room.discount || '0'));
                                         if (isNaN(basePrice) || isNaN(discount)) return 0;
@@ -853,8 +842,8 @@ export default function PropertyDetails() {
                                           return parseFloat('0');
                                         }
                                       } else {
-                                        return bookingType === 'hourly' 
-                                          ? parseFloat(room.hourly_rate || '0').toFixed(0) 
+                                        return bookingType === 'hourly'
+                                          ? parseFloat(room.hourly_rate || '0').toFixed(0)
                                           : parseFloat(room.daily_rate || '0').toFixed(0);
                                       }
                                     } catch (err) {
@@ -871,7 +860,7 @@ export default function PropertyDetails() {
                               <div className="flex items-center justify-end">
                                 <Button
                                   onClick={(e) => handleRoomQuantityChange(roomId, -1, e)}
-                                  variant="neutral" 
+                                  variant="neutral"
                                   size="icon"
                                   className="h-8 w-8"
                                   disabled={quantity <= 0}
@@ -932,7 +921,7 @@ export default function PropertyDetails() {
                 <div className="p-4 sm:p-6 bg-white shadow-lg rounded-xl">
                   <h3 className="text-xl font-semibold mb-4">Rules & Policies</h3>
                   <ul className="space-y-2">
-                      {property.rules.map((rule, index) => (
+                    {property.rules.map((rule, index) => (
                       <li key={rule.id || `rule-${index}`} className="flex items-start">
                         <ClipboardList className="h-5 w-5 mr-2 text-[#B11E43] flex-shrink-0 mt-0.5" />
                         <span className="text-sm sm:text-base">{rule.name}</span>
@@ -940,17 +929,17 @@ export default function PropertyDetails() {
                     ))}
                   </ul>
                 </div>
-                
+
                 <div className="p-4 sm:p-6 bg-white shadow-lg rounded-xl">
                   <h3 className="text-xl font-semibold mb-4">Documentation Required</h3>
-                  <ul className="space-y-2">
-                      {property.documentation.map((doc, index) => (
-                      <li key={doc.id || `doc-${index}`} className="flex items-start">
-                        <FileCheck className="h-5 w-5 mr-2 text-[#B11E43] flex-shrink-0 mt-0.5" />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {property.documentation.map((doc, index) => (
+                      <div key={doc.id || `doc-${index}`} className="flex items-start gap-2">
+                        <FileCheck className="h-5 w-5 text-[#B11E43] flex-shrink-0 mt-0.5" />
                         <span className="text-sm sm:text-base">{doc.name}</span>
-                      </li>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 </div>
               </div>
             </section>

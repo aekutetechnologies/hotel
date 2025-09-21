@@ -15,7 +15,7 @@ const Footer = ({ sectionType }: FooterProps) => {
   return (
     <footer
       className={`text-white py-6 ${
-        sectionType === "hotels" ? "bg-[#A31C44]" : "bg-[#343F52]"
+        sectionType === "hotels" ? "bg-[#A31C44]" : "bg-[#A31C44]"
       }`}
     >
       <div className="container mx-auto px-3">
@@ -129,7 +129,7 @@ const Footer = ({ sectionType }: FooterProps) => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                 </svg>
-                <span>+919090151524</span>
+                <span>+917400455087</span>
               </li>
               <li className="flex items-start gap-2 hover:text-white transition-all duration-200">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">

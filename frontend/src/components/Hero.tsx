@@ -189,44 +189,42 @@ export function HeroSection() {
         </div>
 
         <Card className="w-full max-w-6xl mx-auto p-6 bg-white/95 backdrop-blur-sm shadow-lg">
-            {/* Travel Type Tabs */}
-            <div className="flex justify-center mb-6 text-sm">
-              <div className="inline-flex rounded-lg p-1" style={{ backgroundColor: "rgba(255, 255, 255, 0.95)" }}>
-                <button
-                  className={`px-4 py-2 rounded-lg transition-colors ${
-                    accommodationType === "hotel" ? "bg-gray-800 text-white" : "text-red-600 hover:bg-gray-100"
+          {/* Travel Type Tabs */}
+          <div className="flex justify-center mb-6 text-sm">
+            <div className="inline-flex rounded-lg p-1" style={{ backgroundColor: "rgba(255, 255, 255, 0.95)" }}>
+              <button
+                className={`px-4 py-2 rounded-lg transition-colors ${accommodationType === "hotel" ? "bg-gray-800 text-white" : "text-red-600 hover:bg-gray-100"
                   }`}
-                  style={{ backgroundColor: accommodationType === "hotel" ? "#1f2937" : "rgba(255, 255, 255, 0.95)" }}
-                  onClick={() => setAccommodationType("hotel")}
-                >
-                  Hotel
-                </button>
-                <button
-                  className={`px-4 py-2 rounded-lg transition-colors ${
-                    accommodationType === "hostel" ? "bg-gray-800 text-white" : "text-red-600 hover:bg-gray-100"
-                  }`}
-                  style={{ backgroundColor: accommodationType === "hostel" ? "#1f2937" : "rgba(255, 255, 255, 0.95)" }}
-                  onClick={() => setAccommodationType("hostel")}
-                >
-                  Hostel
-                </button>
-              </div>
-            </div>
-
-            {/* Search Form */}
-            <div className="space-y-4">
-              <div
-                className={`grid gap-4 ${accommodationType === "hostel" ? "grid-cols-1 md:grid-cols-3" : "grid-cols-1 md:grid-cols-4"}`}
+                style={{ backgroundColor: accommodationType === "hotel" ? "#1f2937" : "rgba(255, 255, 255, 0.95)" }}
+                onClick={() => setAccommodationType("hotel")}
               >
-                {/* Location */}
-                <div className={`relative ${accommodationType === "hostel" ? "md:col-span-1" : ""}`}>
-                  <label className="text-xs text-gray-500 mb-1 block">Location</label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-                    <input
+                Hotel
+              </button>
+              <button
+                className={`px-4 py-2 rounded-lg transition-colors ${accommodationType === "hostel" ? "bg-gray-800 text-white" : "text-red-600 hover:bg-gray-100"
+                  }`}
+                style={{ backgroundColor: accommodationType === "hostel" ? "#1f2937" : "rgba(255, 255, 255, 0.95)" }}
+                onClick={() => setAccommodationType("hostel")}
+              >
+                Hostel
+              </button>
+            </div>
+          </div>
+
+          {/* Search Form */}
+          <div className="space-y-4">
+            <div
+              className={`grid gap-4 ${accommodationType === "hostel" ? "grid-cols-1 md:grid-cols-3" : "grid-cols-1 md:grid-cols-4"}`}
+            >
+              {/* Location */}
+              <div className={`relative ${accommodationType === "hostel" ? "md:col-span-1" : ""}`}>
+                <label className="text-xs text-gray-500 mb-1 block">Location</label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                  <input
                     ref={inputRef}
-                      type="text"
-                      className="w-full pl-9 pr-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 truncate h-10"
+                    type="text"
+                    className="w-full pl-9 pr-4 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 truncate h-10"
                     value={inputValue}
                     onChange={handleLocationInputChange}
                     onFocus={handleInputFocus}
@@ -248,98 +246,98 @@ export function HeroSection() {
                         onClick={() => handleLocationSelect(prediction.name)}
                       >
                         {prediction.name}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
 
-                {/* Check In */}
-                <div className={accommodationType === "hostel" ? "md:col-span-1" : ""}>
-                  <label className="text-xs text-gray-500 mb-1 block">Check in</label>
+              {/* Check In */}
+              <div className={accommodationType === "hostel" ? "md:col-span-1" : ""}>
+                <label className="text-xs text-gray-500 mb-1 block">Check in</label>
                 <DatePicker onChange={handleCheckInDateChange} />
-                </div>
+              </div>
 
-                {/* Check Out / Time Selection / Months */}
-                <div className={accommodationType === "hostel" ? "md:col-span-1" : ""}>
-                  {accommodationType === "hotel" && bookingType === "daily" && (
-                    <>
-                      <label className="text-xs text-gray-500 mb-1 block">Check out</label>
+              {/* Check Out / Time Selection / Months */}
+              <div className={accommodationType === "hostel" ? "md:col-span-1" : ""}>
+                {accommodationType === "hotel" && bookingType === "daily" && (
+                  <>
+                    <label className="text-xs text-gray-500 mb-1 block">Check out</label>
                     <DatePicker onChange={handleCheckOutDateChange} />
-                    </>
-                  )}
+                  </>
+                )}
                 {accommodationType === "hotel" && bookingType === "hourly" && <HourlyTimeSelector onChange={handleCheckInTimeChange} />}
-                  {accommodationType === "hostel" && (
-                    <>
-                      <label className="text-xs text-gray-500 mb-1 block">Duration</label>
-                      <Select defaultValue="1">
-                        <SelectTrigger className="w-full h-10">
-                          <SelectValue placeholder="Select months" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="1">1 month</SelectItem>
-                          <SelectItem value="2">2 months</SelectItem>
-                          <SelectItem value="3">3 months</SelectItem>
-                          <SelectItem value="6">6 months</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </>
-                  )}
-                </div>
+                {accommodationType === "hostel" && (
+                  <>
+                    <label className="text-xs text-gray-500 mb-1 block">Duration</label>
+                    <Select defaultValue="1">
+                      <SelectTrigger className="w-full h-10">
+                        <SelectValue placeholder="Select months" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">1 month</SelectItem>
+                        <SelectItem value="2">2 months</SelectItem>
+                        <SelectItem value="3">3 months</SelectItem>
+                        <SelectItem value="6">6 months</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </>
+                )}
+              </div>
 
-                {/* Rooms and Guests */}
-                {accommodationType === "hotel" && (
-                  <div>
-                    <label className="text-xs text-gray-500 mb-1 block">Rooms & Guests</label>
-                    <RoomGuestSelector
+              {/* Rooms and Guests */}
+              {accommodationType === "hotel" && (
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Rooms & Guests</label>
+                  <RoomGuestSelector
                     onSelect={handleRoomGuestSelect}
                     initialRooms={rooms}
                     initialGuests={guests}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Bottom Row */}
-            <div className="flex items-center justify-between mt-4">
-              {/* Radio Buttons (only shown for Hotel) */}
-              {accommodationType === "hotel" && (
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      id="hourly"
-                      name="booking-type"
-                      checked={bookingType === "hourly"}
-                      onChange={() => setBookingType("hourly")}
-                      className="w-4 h-4 text-black border-gray-300 focus:ring-black"
-                    />
-                    <label htmlFor="hourly" className="text-sm font-medium text-red-600">
-                      Hourly
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      id="daily"
-                      name="booking-type"
-                      checked={bookingType === "daily"}
-                      onChange={() => setBookingType("daily")}
-                      className="w-4 h-4 text-black border-gray-300 focus:ring-black"
-                    />
-                    <label htmlFor="daily" className="text-sm font-medium text-red-600">
-                      Fulltime
-                    </label>
-                  </div>
+                  />
                 </div>
               )}
-
-              {/* Search Button */}
-            <Button className={`px-8 bg-red-600 hover:bg-red-700 ${accommodationType === "hostel" ? "ml-auto" : ""}`} onClick={handleSearch}>
-                Search
-              </Button>
             </div>
+          </div>
+
+          {/* Bottom Row */}
+          <div className="flex items-center justify-between mt-4">
+            {/* Radio Buttons (only shown for Hotel) */}
+            {accommodationType === "hotel" && (
+              <div className="flex items-center gap-4">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    id="hourly"
+                    name="booking-type"
+                    checked={bookingType === "hourly"}
+                    onChange={() => setBookingType("hourly")}
+                    className="w-4 h-4 text-black border-gray-300 focus:ring-black"
+                  />
+                  <label htmlFor="hourly" className="text-sm font-medium text-red-600">
+                    Hourly
+                  </label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    id="daily"
+                    name="booking-type"
+                    checked={bookingType === "daily"}
+                    onChange={() => setBookingType("daily")}
+                    className="w-4 h-4 text-black border-gray-300 focus:ring-black"
+                  />
+                  <label htmlFor="daily" className="text-sm font-medium text-red-600">
+                    Fulltime
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {/* Search Button */}
+            <Button className={`px-8 bg-red-600 hover:bg-red-700 ${accommodationType === "hostel" ? "ml-auto" : ""}`} onClick={handleSearch}>
+              Search
+            </Button>
+          </div>
         </Card>
       </div>
       <style jsx>{`

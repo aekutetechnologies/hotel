@@ -28,7 +28,7 @@ export function TestimonialsSection({
           <h2
             className={cn(
               "max-w-[720px] text-3xl font-semibold leading-tight sm:text-5xl sm:leading-tight font-rock-salt",
-              theme === "hotel" ? "text-[#A31C44]" : "text-[#2A2B2E]",
+              theme === "hotel" ? "text-[#A31C44]" : "text-[#A31C44]",
             )}
           >
             {title}

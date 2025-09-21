@@ -26,14 +26,14 @@ export default function TestimonialSection({ testimonials, theme }: any) {
       starInactive: "text-[#A31C44]",
     },
     grey: {
-      primary: "bg-[#2A2B2E]",
+      primary: "bg-[#A31C44]",
       secondary: "bg-[#1A1B1E]",
-      accent: "text-[#2A2B2E]",
+      accent: "text-[#A31C44]",
       light: "bg-[#D1D2D4]",
       text: "text-[#E8E9F1]",
-      buttonText: "text-[#2A2B2E]",
+      buttonText: "text-[#A31C44]",
       starActive: "text-white",
-      starInactive: "text-[#2A2B2E]",
+      starInactive: "text-[#A31C44]",
     },
   };
 

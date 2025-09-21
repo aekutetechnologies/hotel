@@ -381,7 +381,7 @@ export function HomeHero({
         {/* Hostel Section - Right */}
         <motion.section
           key="hostels"
-          className="w-full md:w-1/2 bg-gradient-to-b from-[#343F52] to-[#1A1B1E] text-white relative overflow-hidden cursor-pointer"
+          className="w-full md:w-1/2 bg-gradient-to-b from-[#A31C44] to-[#1A1B1E] text-white relative overflow-hidden cursor-pointer"
           variants={sectionVariants}
           initial="initial"
           animate={

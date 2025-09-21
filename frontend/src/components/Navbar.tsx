@@ -1,10 +1,10 @@
 "use client"
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CgDetailsMore } from "react-icons/cg";
 import { RxCross2 } from "react-icons/rx";
-import { ArrowRight, Facebook, Instagram, Linkedin, PhoneCall } from "lucide-react";
+import { ArrowRight, Facebook, Instagram, Linkedin, PhoneCall, User } from "lucide-react";
 import Image from "next/image";
 import { ProfileDropdown } from "./profile-dropdown";
 import { NewButton } from "./ui/new-button";
@@ -21,12 +21,13 @@ interface NavbarProps {
   handleLoginClick: () => void;
   setShowDetailSection: (section: string) => void;
   isClosed: boolean;
-  currentSection?: "hotel" | "hostel";
+  // made generic so we can support other sections like `appartment` and `hcommunity`
+  currentSection?: string;
   onNavModalChange?: (isOpen: boolean) => void;
   isDetailPage?: boolean;
 }
 
-const phoneNumber = "+91-9090151524"
+const phoneNumber = "+91-7400455087"
 
 const Navbar: React.FC<NavbarProps> = ({
   isLoggedIn,
@@ -46,6 +47,80 @@ const Navbar: React.FC<NavbarProps> = ({
   const [offers, setOffers] = useState<any[]>([]);
   const [isLoadingLocations, setIsLoadingLocations] = useState(false);
   const [isLoadingOffers, setIsLoadingOffers] = useState(false);
+
+  // helper to determine active/highlighted section (supports pluralization mismatches)
+  const isActiveSection = (key: string) => {
+    const cs = (currentSection || "").toLowerCase();
+    return cs.includes(key.toLowerCase());
+  };
+
+  const handleSectionClick = (sendKey: string) => {
+    // sendKey is the value expected by parent (e.g. 'hotels'|'hostels'|'appartment'|'hcommunity')
+    setShowDetailSection(sendKey);
+    // close menu for a cleaner UX
+    handleNavModalToggle(false);
+  };
+
+  // Guest dropdown component (inline) ------------------------------------------------------
+  const GuestDropdown: React.FC = () => {
+    const [open, setOpen] = useState(false);
+    const ref = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+      const onDocClick = (e: MouseEvent) => {
+        if (!ref.current) return;
+        if (e.target instanceof Node && !ref.current.contains(e.target)) {
+          setOpen(false);
+        }
+      };
+      document.addEventListener('click', onDocClick);
+      return () => document.removeEventListener('click', onDocClick);
+    }, []);
+
+    return (
+      <>
+        <div ref={ref}>
+          <button
+            aria-label="open menu"
+            onClick={() => setOpen(v => !v)}
+            className={`flex items-center gap-2 p-2 rounded-full border ${getMenuTextColor()} hover:bg-gray-100/50`}
+          >
+            {/* three small bars on the left to indicate options */}
+            <span className="flex flex-col gap-1">
+              <span className="w-4 h-[2px] bg-current block" />
+              <span className="w-4 h-[2px] bg-current block" />
+              <span className="w-4 h-[2px] bg-current block" />
+            </span>
+            <User className="w-5 h-5" />
+          </button>
+          {open && (
+            <div className={`absolute right-0 top-full mt-2 w-64 bg-white shadow-lg rounded-md z-50 ${navModal ? 'text-white bg-black/50' : ''}`} style={{ minWidth: 220 }}>
+              <div className="p-2">
+                <div className="border-b pb-2 mb-2">
+                  <button
+                    onClick={() => { setOpen(false); handleLoginClick(); }}
+                    className="w-full text-left px-2 py-2 rounded hover:bg-gray-100"
+                  >
+                    Login / Signup
+                  </button>
+                </div>
+
+                <div className="mb-2 pt-2">
+                  <p className="text-xs uppercase text-gray-500 px-2 mb-1">Quick links</p>
+                  <Link href="/about" onClick={() => setOpen(false)} className="w-full block text-left px-2 py-2 rounded hover:bg-gray-100">About Us</Link>
+                  <Link href="/team" onClick={() => setOpen(false)} className="w-full block text-left px-2 py-2 rounded hover:bg-gray-100">Team</Link>
+                  <Link href="/partner-with-us" onClick={() => setOpen(false)} className="w-full block text-left px-2 py-2 rounded hover:bg-gray-100">Partner With Us</Link>
+                  <Link href="/events" onClick={() => setOpen(false)} className="w-full block text-left px-2 py-2 rounded hover:bg-gray-100">Events</Link>
+                  <Link href="/blogs" onClick={() => setOpen(false)} className="w-full block text-left px-2 py-2 rounded hover:bg-gray-100">Blogs</Link>
+                  <Link href="/careers" onClick={() => setOpen(false)} className="w-full block text-left px-2 py-2 rounded hover:bg-gray-100">Career</Link>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </>
+    );
+  };
 
   // Handle navModal state change and notify parent
   const handleNavModalToggle = (isOpen: boolean) => {
@@ -127,9 +202,9 @@ const Navbar: React.FC<NavbarProps> = ({
   const getBackgroundStyle = () => {
     if (!navModal) return "bg-white";
 
-    return currentSection === "hotel" 
-      ? "bg-gradient-to-b from-[#7A1633] via-[#A31C44] to-[#C93A5E] backdrop-blur-sm" 
-      : "bg-gradient-to-b from-[#232A39] via-[#343F52] to-[#4E5D79] backdrop-blur-sm";
+    return currentSection === "hotel"
+      ? "bg-gradient-to-b from-[#7A1633] via-[#A31C44] to-[#C93A5E] backdrop-blur-sm"
+      : "bg-gradient-to-b from-[#232A39] via-[#A31C44] to-[#4E5D79] backdrop-blur-sm";
   };
 
   // Text color for menu items
@@ -140,26 +215,25 @@ const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <motion.div
-      className={`w-full shadow-lg max-w-[100vw] overflow-x-hidden
+      className={`w-full shadow-lg max-w-[100vw] overflow-visible overflow-x-hidden
       ${getBackgroundStyle()}`}
-      initial={{ height: "70px" }}
-      animate={{ 
+      animate={{
         height: navModal ? "100vh" : "70px"
       }}
       transition={{ duration: 0.5, ease: "easeInOut" }}
     >
       <div className="flex justify-between items-center px-4 md:px-6 py-2 max-w-screen-2xl mx-auto w-full h-[70px]">
         <div className="flex items-center gap-4">
-          <motion.button
+          {/* <motion.button
             onClick={() => handleNavModalToggle(!navModal)}
             animate={{ rotate: navModal ? 90 : 0 }}
             transition={{ duration: 0.3 }}
             className={getMenuTextColor()}
           >
             {navModal ? <RxCross2 size={24} /> : <CgDetailsMore size={24} />}
-          </motion.button>
+          </motion.button> */}
           {/* Logo with conditional redirect logic */}
-          <Link 
+          <Link
             href="/"
           >
             <Image
@@ -171,6 +245,45 @@ const Navbar: React.FC<NavbarProps> = ({
               priority
             />
           </Link>
+
+        </div>
+
+        {/* Centered section switches */}
+        <div className="hidden md:flex items-center justify-center flex-1">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => handleSectionClick('hostels')}
+              className={`px-3 py-1 rounded-md transition-colors text-sm font-medium ${isActiveSection('hostel') || isActiveSection('hostels') ? 'bg-[#FFEEF0] text-[#7A1633]' : getMenuTextColor()}`}
+            >
+              Hostels
+            </button>
+            <button
+              onClick={() => handleSectionClick('hotels')}
+              className={`px-3 py-1 rounded-md transition-colors text-sm font-medium ${isActiveSection('hotel') || isActiveSection('hotels') ? 'bg-[#FFEEF0] text-[#7A1633]' : getMenuTextColor()}`}
+            >
+              Hotels
+            </button>
+
+            <div className="relative">
+              <button
+                // coming soon - non-clickable
+                onClick={() => { }}
+                className={`px-3 py-1 rounded-md transition-colors text-sm font-medium ${isActiveSection('appartment') ? 'bg-[#FFEEF0] text-[#7A1633]' : getMenuTextColor()}`}
+              >
+                Apartment
+              </button>
+              {/* <span className={`absolute -top-2 -right-10 text-xs px-2 py-0.5 rounded-full ${navModal ? 'bg-white/20 text-white' : 'text-[#7A1633]'}`}>Coming soon</span> */}
+            </div>
+
+            <div className="relative">
+              <button
+                onClick={() => { }}
+                className={`px-3 py-1 rounded-md transition-colors text-sm font-medium ${isActiveSection('hcommunity') ? 'bg-[#FFEEF0] text-[#7A1633]' : getMenuTextColor()}`}
+              >
+                Housing Community
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="flex items-center gap-4">
@@ -181,18 +294,12 @@ const Navbar: React.FC<NavbarProps> = ({
               <span className="text-xs text-gray-500">Call us to Book now</span>
             </div>
           </Link>
-          
+
           {isLoggedIn ? (
             <ProfileDropdown userName={userName} onLogout={handleLogout} />
           ) : (
-            <NewButton
-              variant="default"
-              onClick={handleLoginClick}
-              size="sm"
-            >
-              <LogIn className="w-5 h-5 mr-2" />
-              <span>Login / Signup</span>
-            </NewButton>
+            // Guest dropdown: icon-only button that shows login + nav options
+            <GuestDropdown />
           )}
         </div>
       </div>
@@ -211,7 +318,7 @@ const Navbar: React.FC<NavbarProps> = ({
               {/* Left Nav Panel */}
               <div className="w-full md:w-1/2 flex flex-col justify-start pt-8 md:pt-16 items-start pl-8 md:pl-16 lg:pl-24 gap-7">
                 {/* Switch to Hotel/Hostel */}
-                <div 
+                <div
                   onClick={handleSwitchSection}
                   className={`flex items-center justify-between w-full md:w-3/4 cursor-pointer group transition-all duration-300 text-white
                     hover:translate-x-2`}
@@ -221,9 +328,9 @@ const Navbar: React.FC<NavbarProps> = ({
                   </span>
                   <ArrowRight className="h-7 w-7 md:h-8 md:w-8 lg:h-9 lg:w-9 transition-transform group-hover:translate-x-1" />
                 </div>
-                
+
                 {/* Locations */}
-                <div 
+                <div
                   onClick={() => handleToggleSubmenu('locations')}
                   className={`flex items-center justify-between w-full md:w-3/4 cursor-pointer group transition-all duration-300 text-white
                     hover:translate-x-2 ${activeSubmenu === 'locations' ? 'translate-x-2' : ''}`}
@@ -236,9 +343,9 @@ const Navbar: React.FC<NavbarProps> = ({
                     <ArrowRight className="h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 transition-transform group-hover:translate-x-1" />
                   </motion.div>
                 </div>
-                
+
                 {/* Offers */}
-                <div 
+                <div
                   onClick={() => handleToggleSubmenu('offers')}
                   className={`flex items-center justify-between w-full md:w-3/4 cursor-pointer group transition-all duration-300 text-white
                     hover:translate-x-2 ${activeSubmenu === 'offers' ? 'translate-x-2' : ''}`}
@@ -251,9 +358,9 @@ const Navbar: React.FC<NavbarProps> = ({
                     <ArrowRight className="h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 transition-transform group-hover:translate-x-1" />
                   </motion.div>
                 </div>
-                
+
                 {/* About hsquare */}
-                <div 
+                <div
                   onClick={() => handleToggleSubmenu('about')}
                   className={`flex items-center justify-between w-full md:w-3/4 cursor-pointer group transition-all duration-300 text-white
                     hover:translate-x-2 ${activeSubmenu === 'about' ? 'translate-x-2' : ''}`}
@@ -267,7 +374,7 @@ const Navbar: React.FC<NavbarProps> = ({
                   </motion.div>
                 </div>
               </div>
-              
+
               {/* Right Content Panel - Desktop */}
               <AnimatePresence mode="wait">
                 {activeSubmenu ? (
@@ -291,8 +398,8 @@ const Navbar: React.FC<NavbarProps> = ({
                         ) : locations && locations.length > 0 ? (
                           <div className="grid grid-cols-1 gap-1">
                             {locations.map((location, index) => (
-                              <div 
-                                key={index} 
+                              <div
+                                key={index}
                                 className="text-xl md:text-2xl py-3 px-4 hover:bg-white/10 rounded-lg cursor-pointer transition-all duration-300 hover:translate-x-2"
                               >
                                 {location}
@@ -306,7 +413,7 @@ const Navbar: React.FC<NavbarProps> = ({
                         )}
                       </div>
                     )}
-                    
+
                     {/* Offers Content */}
                     {activeSubmenu === 'offers' && (
                       <div className="p-6 text-white">
@@ -319,8 +426,8 @@ const Navbar: React.FC<NavbarProps> = ({
                         ) : offers && offers.length > 0 ? (
                           <div className="grid grid-cols-1 gap-6">
                             {offers.map((offer, index) => (
-                              <div 
-                                key={index} 
+                              <div
+                                key={index}
                                 className="bg-white/10 rounded-lg p-5 hover:translate-y-[-5px] transition-all duration-300"
                               >
                                 <h3 className="text-xl md:text-2xl font-bold mb-2">{offer.title}</h3>
@@ -335,40 +442,40 @@ const Navbar: React.FC<NavbarProps> = ({
                         )}
                       </div>
                     )}
-                    
+
                     {/* About hsquare Content */}
                     {activeSubmenu === 'about' && (
                       <div className="p-6 text-white">
                         <h2 className="text-2xl md:text-3xl font-bold mb-6">About hsquare</h2>
                         <div className="grid grid-cols-1 gap-1">
-                          <Link 
+                          <Link
                             href="/careers"
                             className="text-xl md:text-2xl py-3 px-4 hover:bg-white/10 rounded-lg cursor-pointer transition-all duration-300 hover:translate-x-2"
                             onClick={() => setNavModal(false)}
                           >
                             Careers
                           </Link>
-                          <a 
+                          <a
                             href="mailto:booking@hsquareliving.com"
                             className="text-xl md:text-2xl py-3 px-4 hover:bg-white/10 rounded-lg cursor-pointer transition-all duration-300 hover:translate-x-2"
                           >
                             Contact Us
                           </a>
-                          <Link 
+                          <Link
                             href="/terms-and-conditions"
                             className="text-xl md:text-2xl py-3 px-4 hover:bg-white/10 rounded-lg cursor-pointer transition-all duration-300 hover:translate-x-2"
                             onClick={() => setNavModal(false)}
                           >
                             Terms & Conditions
                           </Link>
-                          <Link 
+                          <Link
                             href="/cancellation-policy"
                             className="text-xl md:text-2xl py-3 px-4 hover:bg-white/10 rounded-lg cursor-pointer transition-all duration-300 hover:translate-x-2"
                             onClick={() => setNavModal(false)}
                           >
                             Cancellation Policy
                           </Link>
-                          <Link 
+                          <Link
                             href="/privacy-policy"
                             className="text-xl md:text-2xl py-3 px-4 hover:bg-white/10 rounded-lg cursor-pointer transition-all duration-300 hover:translate-x-2"
                             onClick={() => setNavModal(false)}
@@ -413,7 +520,7 @@ const Navbar: React.FC<NavbarProps> = ({
                   </motion.div>
                 )}
               </AnimatePresence>
-              
+
               {/* Mobile Content Panel */}
               <AnimatePresence>
                 {activeSubmenu && (
@@ -437,8 +544,8 @@ const Navbar: React.FC<NavbarProps> = ({
                         ) : locations && locations.length > 0 ? (
                           <div className="grid grid-cols-1 gap-1 max-h-[calc(100vh-300px)] overflow-y-auto">
                             {locations.map((location, index) => (
-                              <div 
-                                key={index} 
+                              <div
+                                key={index}
                                 className="text-lg py-2 px-2 hover:bg-white/10 rounded-lg cursor-pointer transition-all duration-300"
                               >
                                 {location}
@@ -452,7 +559,7 @@ const Navbar: React.FC<NavbarProps> = ({
                         )}
                       </div>
                     )}
-                    
+
                     {/* Offers Content */}
                     {activeSubmenu === 'offers' && (
                       <div className="text-white">
@@ -465,8 +572,8 @@ const Navbar: React.FC<NavbarProps> = ({
                         ) : offers && offers.length > 0 ? (
                           <div className="grid grid-cols-1 gap-4 max-h-[calc(100vh-300px)] overflow-y-auto">
                             {offers.map((offer, index) => (
-                              <div 
-                                key={index} 
+                              <div
+                                key={index}
                                 className="bg-white/10 rounded-lg p-4 hover:bg-white/20 transition-all duration-300"
                               >
                                 <h3 className="text-lg font-bold mb-1">{offer.title}</h3>
@@ -481,40 +588,40 @@ const Navbar: React.FC<NavbarProps> = ({
                         )}
                       </div>
                     )}
-                    
+
                     {/* About hsquare Content */}
                     {activeSubmenu === 'about' && (
                       <div className="text-white">
                         <h3 className="text-xl font-bold mb-4 border-b border-white/20 pb-2">About hsquare</h3>
                         <div className="grid grid-cols-1 gap-1 max-h-[calc(100vh-300px)] overflow-y-auto">
-                          <Link 
+                          <Link
                             href="/careers"
                             className="text-lg py-2 px-2 hover:bg-white/10 rounded-lg cursor-pointer transition-all duration-300"
                             onClick={() => setNavModal(false)}
                           >
                             Careers
                           </Link>
-                          <a 
+                          <a
                             href="mailto:booking@hsquareliving.com"
                             className="text-lg py-2 px-2 hover:bg-white/10 rounded-lg cursor-pointer transition-all duration-300"
                           >
                             Contact Us
                           </a>
-                          <Link 
+                          <Link
                             href="/terms-and-conditions"
                             className="text-lg py-2 px-2 hover:bg-white/10 rounded-lg cursor-pointer transition-all duration-300"
                             onClick={() => setNavModal(false)}
                           >
                             Terms & Conditions
                           </Link>
-                          <Link 
+                          <Link
                             href="/cancellation-policy"
                             className="text-lg py-2 px-2 hover:bg-white/10 rounded-lg cursor-pointer transition-all duration-300"
                             onClick={() => setNavModal(false)}
                           >
                             Cancellation Policy
                           </Link>
-                          <Link 
+                          <Link
                             href="/privacy-policy"
                             className="text-lg py-2 px-2 hover:bg-white/10 rounded-lg cursor-pointer transition-all duration-300"
                             onClick={() => setNavModal(false)}
@@ -541,7 +648,7 @@ const Navbar: React.FC<NavbarProps> = ({
                   </motion.div>
                 )}
               </AnimatePresence>
-              
+
               {/* Mobile Logo (when no submenu is active) */}
               {!activeSubmenu && (
                 <div className="md:hidden mt-auto mb-12 flex justify-center w-full">

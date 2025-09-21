@@ -12,6 +12,7 @@ import SocialSection from "@/components/SocialSection";
 import TestimonialSection from "@/components/testimonial-section";
 import { HeroSection } from "./HeroSection";
 import Footer from "./Footer";
+import WhatsApp from "@/components/WhatsApp";
 import { usePathname } from "next/navigation";
 
 interface DetailSectionProps {
@@ -52,25 +53,25 @@ export function DetailSection({
   const detailSectionRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
   const [isNavModalOpen, setIsNavModalOpen] = useState(false);
-  
+
   // Value for shine animation
   const shineAngle = useMotionValue(15);
-  
+
   // Make the shine angle update based on scroll
   useEffect(() => {
     const unsubscribeY = scrollY.onChange(latest => {
       // Cycle the shine angle based on scroll position
       shineAngle.set((latest % 200) / 5);
     });
-    
+
     return () => {
       unsubscribeY();
     };
   }, [scrollY, shineAngle]);
-  
+
   // Rotate the sticker based on scroll
   const rotate = useTransform(scrollY, [0, 1000], [0, 360]);
-  
+
   // Spring animation for smoother rotation
   const springRotate = useSpring(rotate, { damping: 20, stiffness: 100 });
 
@@ -82,7 +83,7 @@ export function DetailSection({
   const handleLogout = () => {
     // Clear all localStorage items
     localStorage.clear()
-    
+
     // Redirect to home page (reload)
     window.location.href = "/"
   };
@@ -110,11 +111,11 @@ export function DetailSection({
 
   const scrollToTop = () => {
     console.log("Scrolling to top");
-    
+
     // Try multiple selector approaches to ensure we find the right element
     // First try our specific content container
     const contentElement = document.querySelector('.overflow-y-auto.h-full.scrollbar-hide');
-    
+
     if (contentElement) {
       contentElement.scrollTo({
         top: 0,
@@ -122,7 +123,7 @@ export function DetailSection({
       });
       return;
     }
-    
+
     // Try the main detail section container
     if (detailSectionRef.current) {
       detailSectionRef.current.scrollTo({
@@ -131,13 +132,13 @@ export function DetailSection({
       });
       return;
     }
-    
+
     // Fallback to window scroll as a last resort
     window.scrollTo({
       top: 0,
       behavior: 'smooth'
     });
-    
+
     // Additionally, try to focus the search form if it exists
     setTimeout(() => {
       const searchForm = document.querySelector('form');
@@ -152,18 +153,18 @@ export function DetailSection({
 
   // Create a pulse animation
   const [isPulsing, setIsPulsing] = useState(false);
-  
+
   useEffect(() => {
     // Start pulsing animation after delay
     const pulseTimer = setTimeout(() => {
       setIsPulsing(true);
     }, 3000);
-    
+
     return () => clearTimeout(pulseTimer);
   }, []);
 
   // Themed colors based on section type
-  const primaryColor = sectionType === "hotels" ? "#A31C44" : "#343F52";
+  const primaryColor = sectionType === "hotels" ? "#A31C44" : "#A31C44";
   const accentColor = sectionType === "hotels" ? "#FF3A5E" : "#475569";
   const borderColor = sectionType === "hotels" ? "#FF9BAC" : "#64748B";
 
@@ -180,126 +181,8 @@ export function DetailSection({
       exit={{ opacity: 0 }}
       onClick={onClose}
     >
-      {/* Book Now Sticker - Only visible when navModal is closed */}
-      {!isNavModalOpen && (
-        <motion.div 
-          className="fixed right-8 top-1/2 z-[60] transform -translate-y-1/2"
-          initial={{ opacity: 0, scale: 0, x: 100 }}
-          animate={{ opacity: 1, scale: 1, x: 0 }}
-          transition={{ 
-            delay: 2, 
-            duration: 0.6,
-            type: "spring",
-            stiffness: 200,
-            damping: 15
-          }}
-          onClick={(e) => {
-            e.stopPropagation(); // Prevent click from bubbling to parent
-            scrollToTop();
-          }}
-        >
-          <motion.div 
-            className="relative cursor-pointer w-auto"
-            style={{ rotate: springRotate }}
-            animate={isPulsing ? { 
-              scale: [1, 1.05, 1],
-              transition: { 
-                repeat: Infinity, 
-                repeatType: "loop", 
-                duration: 2,
-                ease: "easeInOut" 
-              }
-            } : {}}
-            whileHover={{ scale: 1.1, rotate: [null, -10, 10, 0] }}
-            whileTap={{ scale: 0.9 }}
-          >
-            {/* The sticker text with styling */}
-            <div 
-              className="sticker relative text-center" 
-              style={{
-                fontFamily: "'Arial', sans-serif",
-                fontStyle: "italic",
-                fontWeight: 900,
-                fontSize: "36px", 
-                lineHeight: "0.9",
-                textTransform: "uppercase",
-                padding: "8px",
-              }}
-            >
-              {/* Themed gradient text with enhanced shine effect */}
-              <motion.div
-                animate={{ 
-                  textShadow: isPulsing ? [
-                    "0.05em 0.05em 0.02em rgba(0,0,0,0.5)",
-                    "0.07em 0.07em 0.03em rgba(0,0,0,0.7)",
-                    "0.05em 0.05em 0.02em rgba(0,0,0,0.5)"
-                  ] : "0.05em 0.05em 0.02em rgba(0,0,0,0.5)",
-                  transition: { 
-                    repeat: Infinity, 
-                    duration: 2 
-                  }
-                }}
-                style={{
-                  backgroundImage: `
-                    linear-gradient(
-                      ${shineAngle}deg, 
-                      rgba(255,255,255,0) 0%, 
-                      rgba(255,255,255,0) 40%, 
-                      rgba(255,255,255,0.98) 49.5%, 
-                      rgba(255,255,255,0.98) 50.5%, 
-                      rgba(255,255,255,0) 60%, 
-                      rgba(255,255,255,0)
-                    ),
-                    linear-gradient(
-                      to right, 
-                      ${primaryColor}, 
-                      ${accentColor}, 
-                      ${primaryColor}, 
-                      ${accentColor}, 
-                      ${primaryColor}
-                    )
-                  `,
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  textShadow: "0.05em 0.05em 0.02em rgba(0,0,0,0.5)",
-                  position: "relative",
-                  zIndex: 2,
-                  display: "inline-block",
-                  transform: "rotate(-8deg)",
-                }}
-              >
-                BOOK<br/>NOW
-              </motion.div>
-              
-              {/* White outline behind text */}
-              <div
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  WebkitTextStroke: `0.15em ${borderColor}`,
-                  color: "transparent",
-                  fontFamily: "inherit",
-                  fontStyle: "inherit",
-                  fontWeight: "inherit",
-                  fontSize: "inherit",
-                  lineHeight: "inherit",
-                  textTransform: "inherit",
-                  zIndex: 1,
-                  transform: "rotate(-8deg)",
-                }}
-              >
-                BOOK<br/>NOW
-              </div>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
+      {/* WhatsApp floating chat (replaces Book Now sticker) */}
+      {!isNavModalOpen && <WhatsApp />}
 
       <motion.div
         ref={detailSectionRef}
@@ -322,15 +205,15 @@ export function DetailSection({
         {/* Fixed position navbars */}
         <div className="fixed top-0 left-0 right-0 z-50 flex flex-col w-full">
           {/* Add Navbar at the top */}
-          {isClosed && (
+          {/* {isClosed && (
             <div className="w-full">
               <AddNavbar
                 type={getSingularType(sectionType)}
                 onClose={() => setIsClosed(false)}
               />
             </div>
-          )}
-          
+          )} */}
+
           {/* Main Navbar below */}
           <div className="w-full">
             <Navbar
@@ -350,10 +233,10 @@ export function DetailSection({
         </div>
 
         {/* Content with appropriate top margin */}
-        <div 
-          className="overflow-y-auto h-full scrollbar-hide" 
-          style={{ 
-            marginTop: isClosed ? '110px' : '70px',
+        <div
+          className="overflow-y-auto h-full scrollbar-hide"
+          style={{
+            marginTop: '70px',
             scrollbarWidth: 'none',
             msOverflowStyle: 'none'
           }}
@@ -362,7 +245,7 @@ export function DetailSection({
           <HeroSection sectionType={sectionType} />
 
           {/* Place Cards - further reducing vertical spacing with larger negative margin */}
-          <div className="mt-[-8rem]">
+          <div className="mt-[4rem]">
             <PlaceCard type={getSingularType(sectionType)} />
           </div>
 
@@ -393,7 +276,7 @@ export function DetailSection({
           <Footer sectionType={sectionType} />
         </div>
       </motion.div>
-      
+
     </motion.div>
   );
 }

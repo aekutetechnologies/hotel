@@ -21,7 +21,7 @@ const Features = ({sectionType}:FeaturesSectionProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const image = sectionType === "hotels" ? images : hostelImages;
-  const themeColor = sectionType === "hotels" ? "#A31C44" : "#343F52";
+  const themeColor = sectionType === "hotels" ? "#A31C44" : "#A31C44";
   
   const phrases = sectionType === "hotels" 
     ? ["Exceptional Comfort", "Memorable Moments", "Culinary Delights"] 

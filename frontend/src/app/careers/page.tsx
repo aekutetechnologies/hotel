@@ -115,7 +115,7 @@ export default function CareersPage() {
               are dedicated to creating exceptional guest experiences.
             </p>
             
-            <h2 className="text-2xl font-bold mb-4 text-[#343F52]">Why Work With Us?</h2>
+            <h2 className="text-2xl font-bold mb-4 text-[#A31C44]">Why Work With Us?</h2>
             
             <div className="grid md:grid-cols-2 gap-6 mb-12">
               <div className="bg-white p-6 rounded-lg shadow-md">
@@ -140,7 +140,7 @@ export default function CareersPage() {
             </div>
             
             <div className="bg-white p-8 rounded-lg shadow-md mb-12">
-              <h2 className="text-2xl font-bold mb-6 text-[#343F52]">Submit Your Application</h2>
+              <h2 className="text-2xl font-bold mb-6 text-[#A31C44]">Submit Your Application</h2>
               <p className="mb-6">
                 We're always looking for talented individuals to join our team. Please fill out the form below to submit your application.
               </p>

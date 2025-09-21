@@ -121,7 +121,7 @@ export function generatePDFInvoice(booking: BookingData) {
   doc.text('GSTIN: 27AAFCH4874P1Z3', 15, 45); // Add your actual GST number
   doc.text('4R8P+FHV, Juhu Galli, Andheri West', 15, 50);
   doc.text('Mumbai, Maharashtra 400049', 15, 55);
-  doc.text('booking@hsquareliving.com | +919090151524', 15, 60);
+  doc.text('booking@hsquareliving.com | +917400455087', 15, 60);
   
   // Add horizontal line
   doc.setDrawColor(220, 220, 220);

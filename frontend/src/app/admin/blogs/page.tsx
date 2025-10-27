@@ -70,8 +70,7 @@ export default function AdminBlogsPage() {
     // Search filter
     if (searchTerm) {
       filtered = filtered.filter(blog =>
-        blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        blog.excerpt.toLowerCase().includes(searchTerm.toLowerCase())
+        blog.title.toLowerCase().includes(searchTerm.toLowerCase())
       )
     }
 
@@ -249,9 +248,6 @@ export default function AdminBlogsPage() {
                         <h2 className="text-xl font-semibold text-gray-900 mb-1">
                           {blog.title}
                         </h2>
-                        <p className="text-gray-600 text-sm line-clamp-2">
-                          {blog.excerpt}
-                        </p>
                       </div>
                       <div className="flex gap-2">
                         {blog.is_published ? (

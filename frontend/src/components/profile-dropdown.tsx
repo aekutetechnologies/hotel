@@ -63,9 +63,16 @@ export function ProfileDropdown({ onLogout, userName }: ProfileDropdownProps) {
   }
 
   // Close dropdown when clicking outside
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (triggerRef.current && !triggerRef.current.contains(event.target as Node)) {
+      if (!triggerRef.current) return;
+      
+      const isClickOnButton = triggerRef.current.contains(event.target as Node);
+      const isClickOnDropdown = dropdownRef.current?.contains(event.target as Node);
+      
+      if (!isClickOnButton && !isClickOnDropdown) {
         setIsOpen(false)
       }
     }
@@ -98,35 +105,38 @@ export function ProfileDropdown({ onLogout, userName }: ProfileDropdownProps) {
       </Button>
       {isOpen && buttonRect && createPortal(
         <div 
+          ref={dropdownRef}
           className="fixed bg-white shadow-lg rounded-md z-[9999] border border-gray-200"
           style={{ 
             width: `${triggerWidth}px`,
             top: buttonRect.bottom + 8,
-            left: buttonRect.right - triggerWidth,
-            right: 'auto'
+            left: Math.max(8, buttonRect.right - triggerWidth),
+            right: 'auto',
+            pointerEvents: 'auto'
           }}
+          onClick={(e) => e.stopPropagation()}
         >
           <div className="p-2">
-            <Link href="/profile" onClick={() => setIsOpen(false)}>
+            <Link href="/profile" onClick={(e) => { console.log("profile clicked"); e.stopPropagation(); setIsOpen(false); }}>
               <div className="cursor-pointer text-base rounded-md my-1 hover:bg-gray-50 px-2 py-2 flex items-center">
                 <User className="mr-2 h-4 w-4" />
                 <span>My Profile</span>
               </div>
             </Link>
-            <Link href="/booking" onClick={() => setIsOpen(false)}>
+            <Link href="/booking" onClick={(e) => { console.log("booking clicked"); e.stopPropagation(); setIsOpen(false); }}>
               <div className="cursor-pointer text-base rounded-md my-1 hover:bg-gray-50 px-2 py-2 flex items-center">
                 <CalendarDays className="mr-2 h-4 w-4" />
                 <span>My Bookings</span>
               </div>
             </Link>
-            <Link href="/favorites" onClick={() => setIsOpen(false)}>
+            <Link href="/favorites" onClick={(e) => { console.log("favorites clicked"); e.stopPropagation(); setIsOpen(false); }}>
               <div className="cursor-pointer text-base rounded-md my-1 hover:bg-gray-50 px-2 py-2 flex items-center">
                 <Heart className="mr-2 h-4 w-4" />
                 <span>My Favorites</span>
               </div>
             </Link>
             <PermissionGuard permission="admin:dashboard:view">
-              <Link href="/admin/dashboard" onClick={() => setIsOpen(false)}>
+              <Link href="/admin/dashboard" onClick={(e) => { console.log("admin dashboard clicked"); e.stopPropagation(); setIsOpen(false); }}>
                 <div className="cursor-pointer text-base rounded-md my-1 hover:bg-gray-50 px-2 py-2 flex items-center">
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Admin Dashboard</span>
@@ -136,7 +146,7 @@ export function ProfileDropdown({ onLogout, userName }: ProfileDropdownProps) {
             <div className="border-t my-2"></div>
             <div 
               className="cursor-pointer text-red-600 rounded-md my-1 hover:bg-red-50 px-2 py-2 flex items-center" 
-              onClick={() => { handleLogout(); setIsOpen(false); }}
+              onClick={(e) => { e.stopPropagation(); handleLogout(); setIsOpen(false); }}
             >
               <LogOut className="mr-2 h-4 w-4" />
               <span>Logout</span>

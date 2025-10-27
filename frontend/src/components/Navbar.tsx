@@ -67,11 +67,16 @@ const Navbar: React.FC<NavbarProps> = ({
     const [open, setOpen] = useState(false);
     const [buttonRect, setButtonRect] = useState<DOMRect | null>(null);
     const ref = useRef<HTMLDivElement | null>(null);
+    const dropdownRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
       const onDocClick = (e: MouseEvent) => {
         if (!ref.current) return;
-        if (e.target instanceof Node && !ref.current.contains(e.target)) {
+        // Check if the click is outside both the button and the dropdown
+        const isClickOnButton = ref.current.contains(e.target as Node);
+        const isClickOnDropdown = dropdownRef.current?.contains(e.target as Node);
+        
+        if (!isClickOnButton && !isClickOnDropdown) {
           setOpen(false);
         }
       };
@@ -105,19 +110,27 @@ const Navbar: React.FC<NavbarProps> = ({
           </button>
           {open && buttonRect && createPortal(
             <div 
+              ref={dropdownRef}
               className={`fixed w-64 bg-white shadow-lg rounded-md z-[9999] ${navModal ? 'text-white bg-black/50' : ''}`} 
               style={{ 
                 minWidth: 220,
                 top: buttonRect.bottom + 8,
-                left: buttonRect.right - 256, // 256px is the width of the dropdown
-                right: 'auto'
+                left: Math.max(8, buttonRect.right - 256), // Ensure it doesn't go off-screen
+                right: 'auto',
+                pointerEvents: 'auto'
               }}
+              onClick={(e) => e.stopPropagation()}
             >
               <div className="p-2">
                 <div className="border-b pb-2 mb-2">
                   <button
-                    onClick={() => { setOpen(false); handleLoginClick(); }}
-                    className="w-full text-left px-2 py-2 rounded hover:bg-gray-100"
+                    onClick={(e) => { 
+                      console.log("Login/Signup clicked");
+                      e.stopPropagation();
+                      setOpen(false); 
+                      handleLoginClick(); 
+                    }}
+                    className="w-full text-left px-2 py-2 rounded hover:bg-gray-100 cursor-pointer"
                   >
                     Login / Signup
                   </button>
@@ -125,12 +138,67 @@ const Navbar: React.FC<NavbarProps> = ({
 
                 <div className="mb-2 pt-2">
                   <p className="text-xs uppercase text-gray-500 px-2 mb-1">Quick links</p>
-                  <Link href="/about" onClick={() => setOpen(false)} className="w-full block text-left px-2 py-2 rounded hover:bg-gray-100">About Us</Link>
-                  <Link href="/team" onClick={() => setOpen(false)} className="w-full block text-left px-2 py-2 rounded hover:bg-gray-100">Team</Link>
-                  <Link href="/partner-with-us" onClick={() => setOpen(false)} className="w-full block text-left px-2 py-2 rounded hover:bg-gray-100">Partner With Us</Link>
-                  <Link href="/events" onClick={() => setOpen(false)} className="w-full block text-left px-2 py-2 rounded hover:bg-gray-100">Events</Link>
-                  <Link href="/blog" onClick={() => setOpen(false)} className="w-full block text-left px-2 py-2 rounded hover:bg-gray-100">Blogs</Link>
-                  <Link href="/careers" onClick={() => setOpen(false)} className="w-full block text-left px-2 py-2 rounded hover:bg-gray-100">Career</Link>
+                  <Link 
+                    href="/about" 
+                    onClick={(e) => {
+                      console.log("About Us clicked");
+                      e.stopPropagation();
+                      setOpen(false);
+                    }} 
+                    className="w-full block text-left px-2 py-2 rounded hover:bg-gray-100 cursor-pointer"
+                  >
+                    About Us
+                  </Link>
+                  <Link 
+                    href="/team" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpen(false);
+                    }} 
+                    className="w-full block text-left px-2 py-2 rounded hover:bg-gray-100 cursor-pointer"
+                  >
+                    Team
+                  </Link>
+                  <Link 
+                    href="/partner-with-us" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpen(false);
+                    }} 
+                    className="w-full block text-left px-2 py-2 rounded hover:bg-gray-100 cursor-pointer"
+                  >
+                    Partner With Us
+                  </Link>
+                  <Link 
+                    href="/events" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpen(false);
+                    }} 
+                    className="w-full block text-left px-2 py-2 rounded hover:bg-gray-100 cursor-pointer"
+                  >
+                    Events
+                  </Link>
+                  <Link 
+                    href="/blog" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpen(false);
+                    }} 
+                    className="w-full block text-left px-2 py-2 rounded hover:bg-gray-100 cursor-pointer"
+                  >
+                    Blogs
+                  </Link>
+                  <Link 
+                    href="/careers" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpen(false);
+                    }} 
+                    className="w-full block text-left px-2 py-2 rounded hover:bg-gray-100 cursor-pointer"
+                  >
+                    Career
+                  </Link>
                 </div>
               </div>
             </div>,

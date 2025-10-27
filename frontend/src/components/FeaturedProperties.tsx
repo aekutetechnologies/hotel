@@ -46,7 +46,7 @@ export function FeaturedProperties({ type = "hostels" }: { type?: "hotels" | "ho
       city: "Vienna",
       name: "Wombat's City Hostel Vienna",
       image:
-        "/images/hostels/hostel_1.jpg",
+        "/images/hostels/hostel_1.png",
       price: 29,
       rating: 4.8,
       reviews: 1250,
@@ -58,7 +58,7 @@ export function FeaturedProperties({ type = "hostels" }: { type?: "hotels" | "ho
       city: "Munich",
       name: "Wombat's Hauptbahnhof",
       image:
-        "/images/hostels/hostel_2.jpg",
+        "/images/hostels/hostel_2.png",
       price: 32,
       rating: 4.9,
       reviews: 980,
@@ -70,7 +70,7 @@ export function FeaturedProperties({ type = "hostels" }: { type?: "hotels" | "ho
       city: "London",
       name: "Wombat's City Hostel London",
       image:
-        "/images/hostels/hostel_3.jpg",
+        "/images/hostels/hostel_3.png",
       price: 35,
       rating: 4.7,
       reviews: 1500,
@@ -82,7 +82,7 @@ export function FeaturedProperties({ type = "hostels" }: { type?: "hotels" | "ho
       city: "Budapest",
       name: "Wombat's City Hostel Budapest",
       image:
-        "/images/hostels/hostel_1.jpg",
+        "/images/hostels/hostel_1.png",
       price: 25,
       rating: 4.6,
       reviews: 890,
@@ -94,7 +94,7 @@ export function FeaturedProperties({ type = "hostels" }: { type?: "hotels" | "ho
       city: "Leipzig",
       name: "Wombat's City Hostel Leipzig",
       image:
-        "/images/hostels/hostel_2.jpg",
+        "/images/hostels/hostel_2.png",
       price: 28,
       rating: 4.7,
       reviews: 760,
@@ -106,7 +106,7 @@ export function FeaturedProperties({ type = "hostels" }: { type?: "hotels" | "ho
       city: "Berlin",
       name: "Wombat's City Hostel Berlin",
       image:
-        "/images/hostels/hostel_3.jpg",
+        "/images/hostels/hostel_3.png",
       price: 30,
       rating: 4.8,
       reviews: 1100,
@@ -118,7 +118,7 @@ export function FeaturedProperties({ type = "hostels" }: { type?: "hotels" | "ho
       city: "Amsterdam",
       name: "Wombat's City Hostel Amsterdam",
       image:
-        "/images/hostels/hostel_1.jpg",
+        "/images/hostels/hostel_1.png",
       price: 34,
       rating: 4.6,
       reviews: 950,
@@ -130,7 +130,7 @@ export function FeaturedProperties({ type = "hostels" }: { type?: "hotels" | "ho
       city: "Prague",
       name: "Wombat's City Hostel Prague",
       image:
-        "/images/hostels/hostel_2.jpg",
+        "/images/hostels/hostel_2.png",
       price: 26,
       rating: 4.7,
       reviews: 870,
@@ -142,7 +142,7 @@ export function FeaturedProperties({ type = "hostels" }: { type?: "hotels" | "ho
       city: "Barcelona",
       name: "Wombat's City Hostel Barcelona",
       image:
-        "/images/hostels/hostel_3.jpg",
+        "/images/hostels/hostel_3.png",
       price: 32,
       rating: 4.9,
       reviews: 1300,
@@ -157,7 +157,7 @@ export function FeaturedProperties({ type = "hostels" }: { type?: "hotels" | "ho
       city: "Paris",
       name: "Grand Hotel Paris",
       image:
-        "/images/hotels/hotel_1.webp",
+        "/images/hotels/hotel_1.png",
       price: 199,
       rating: 4.9,
       reviews: 2250,
@@ -190,7 +190,7 @@ export function FeaturedProperties({ type = "hostels" }: { type?: "hotels" | "ho
       city: "Dubai",
       name: "Palm Luxury Resort",
       image:
-        "/images/hotels/hotel_1.webp",
+        "/images/hotels/hotel_1.png",
       price: 350,
       rating: 4.9,
       reviews: 890,
@@ -223,7 +223,7 @@ export function FeaturedProperties({ type = "hostels" }: { type?: "hotels" | "ho
       city: "Sydney",
       name: "Opera House View Hotel",
       image:
-        "/images/hotels/hotel_1.webp",
+        "/images/hotels/hotel_1.png",
       price: 220,
       rating: 4.7,
       reviews: 950,
@@ -234,7 +234,7 @@ export function FeaturedProperties({ type = "hostels" }: { type?: "hotels" | "ho
       city: "Barcelona",
       name: "Sagrada Familia Hotel",
       image:
-        "/images/hotels/hotel_1.webp",
+        "/images/hotels/hotel_1.png",
       price: 190,
       rating: 4.8,
       reviews: 1100,

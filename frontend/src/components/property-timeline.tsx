@@ -16,7 +16,7 @@ export function PropertyTimeline({ type = "hotel" }: PropertyTimelineProps) {
       content: (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
           <Image
-            src="/images/hotels/hotel_1.webp"
+            src="/images/hotels/hotel_1.png"
             alt="HSquare hotel exterior"
             width={500}
             height={500}
@@ -89,21 +89,21 @@ export function PropertyTimeline({ type = "hotel" }: PropertyTimelineProps) {
       content: (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
           <Image
-            src="/images/hostels/hostel_1.jpg"
+            src="/images/hostels/hostel_1.png"
             alt="HSquare hostel exterior"
             width={500}
             height={500}
             className="rounded-lg object-cover h-48 sm:h-52 md:h-60 w-full shadow-lg"
           />
           <Image
-            src="/images/hostels/hostel_2.jpg"
+            src="/images/hostels/hostel_2.png"
             alt="HSquare common area"
             width={500}
             height={500}
             className="rounded-lg object-cover h-48 sm:h-52 md:h-60 w-full shadow-lg"
           />
           <Image
-            src="/images/hostels/hostel_3.jpg"
+            src="/images/hostels/hostel_3.png"
             alt="HSquare modern corridor"
             width={500}
             height={500}
@@ -120,7 +120,7 @@ export function PropertyTimeline({ type = "hotel" }: PropertyTimelineProps) {
       content: (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
           <Image
-            src="/images/hostels/hostel_7.jpg"
+            src="/images/hostels/hostel_7.png"
             alt="HSquare private room"
             width={500}
             height={500}

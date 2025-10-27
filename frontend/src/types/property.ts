@@ -6,7 +6,8 @@ export interface Property {
   images: { 
     id: number; 
     image?: string;
-    image_url?: string; 
+    image_url?: string;
+    category?: string;
   }[];
   rooms?: {
     id: number;
@@ -29,6 +30,7 @@ export interface Property {
   longitude: string;
   latitude: string;
   discount: string | null;
+  gender_type?: string; // Add gender_type for hostels
   created_at: string;
   updated_at: string;
   is_active: boolean;

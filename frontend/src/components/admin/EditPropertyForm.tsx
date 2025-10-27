@@ -31,6 +31,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { uploadRoomImage } from '@/lib/api/uploadRoomImage'
 import { fetchLocation } from '@/lib/api/fetchLocation'
 import { fetchState } from '@/lib/api/fetchState'
+import { IMAGE_CATEGORIES } from '@/lib/constants/imageCategories'
 
 // Dynamically import the FormMapPicker with no SSR to prevent leaflet errors
 const FormMapPicker = dynamic(() => import('@/components/FormMapPicker').then(mod => mod.FormMapPicker), {
@@ -67,6 +68,7 @@ interface Room {
   number_of_rooms: number;
   amenities: number[] | Amenity[];
   roomImages: { id: string | number; image_url: string }[];
+  gender_type?: 'unisex' | 'male' | 'female' | null;
 }
 
 interface Amenity {
@@ -133,6 +135,7 @@ interface PropertyApiData {
   state: string;
   country: string;
   area: string;
+  gender_type?: string;
 }
 
 const BED_TYPE_CHOICES = [
@@ -145,6 +148,12 @@ const BED_TYPE_CHOICES = [
   { value: 'bunk', label: 'Bunk' },
   { value: 'sofa', label: 'Sofa' },
   { value: 'sofa_bed', label: 'Sofa Bed' },
+];
+
+const GENDER_TYPE_CHOICES = [
+  { value: 'unisex', label: 'Unisex' },
+  { value: 'male', label: 'Male' },
+  { value: 'female', label: 'Female' },
 ];
 
 const COUNTRY_CHOICES = [
@@ -265,12 +274,14 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
   const [name, setName] = useState(initialData.name || '')
   const [description, setDescription] = useState(initialData.description || '')
   // @ts-ignore - Suppressing type errors for images
-  const [images, setImages] = useState<{ id: string; image_url: string }[]>(
+  const [images, setImages] = useState<{ id: string; image_url: string; category: string }[]>(
     initialData.images?.map((image: any) => ({
       id: String(image.id || ''), 
-      image_url: normalizeImageUrl(image)
+      image_url: normalizeImageUrl(image),
+      category: image.category || 'other'
     })) || []
   )
+  const [selectedImageCategory, setSelectedImageCategory] = useState<string>('room')
   const [loading, setLoading] = useState(false)
   const [location, setLocation] = useState({
     address: initialData.location || '',
@@ -344,6 +355,7 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
       typeof doc === 'object' ? Number(doc.id) : Number(doc)
     ) || []
   )
+  const [genderType, setGenderType] = useState<string>(initialData.gender_type || '')
 
   useEffect(() => {
     // Additional logging to help debug image issues
@@ -476,12 +488,12 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
       }
 
       const imageFile = new File([finalBlob], "cropped_image.webp", { type: "image/webp" })
-      const uploadResult = await uploadImage(imageFile)
+      const uploadResult = await uploadImage(imageFile, selectedImageCategory)
       if (uploadResult && uploadResult.id) {
         setImages((prevImages) => [
           ...prevImages,
-          { id: String(uploadResult.id), image_url: uploadResult.image_url }
-        ]) // Store image ID and URL
+          { id: String(uploadResult.id), image_url: uploadResult.image_url, category: selectedImageCategory }
+        ]) // Store image ID, URL, and category
         toast.success("Image uploaded successfully!")
       } else {
         toast.error("Image upload failed, but no ID was returned.")
@@ -493,7 +505,7 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
       setUploadingImages(false) // End image upload loading
       setCropImage(null) // Clear cropImage state
     }
-  }, [setImages, setCropImage, uploadImage])
+  }, [setImages, setCropImage, uploadImage, selectedImageCategory])
 
   const handleRoomCropComplete = useCallback(async (croppedImageBlob: Blob) => {
     setRoomUploadingImages(true);
@@ -586,6 +598,12 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
     setImages(prev => prev.filter((_, i) => i !== index))
   }
 
+  const updateImageCategory = (index: number, newCategory: string) => {
+    setImages(prev => prev.map((img, i) => 
+      i === index ? { ...img, category: newCategory } : img
+    ))
+  }
+
   const removeRoomImage = (roomIndex: number, imageIndex: number) => {
     setRooms(prevRooms => {
       const updatedRooms = [...prevRooms];
@@ -646,7 +664,7 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
         location: location.address,
         latitude: location.latitude,
         longitude: location.longitude,
-        images: images.map(img => Number(img.id)), // Send only image IDs
+        images: images.map(img => ({ id: Number(img.id), category: img.category })), // Send image objects with category
         amenities: selectedAmenities,
         rules: selectedPolicies,
         documentation: selectedDocumentation,
@@ -656,6 +674,7 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
         state,
         country,
         area,
+        ...(propertyType === 'hostel' && genderType && { gender_type: genderType }),
       };
 
       console.log(`Updating property ${initialData.id}: ${name}`);
@@ -690,6 +709,7 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
         security_deposit: false,
         number_of_rooms: 0,
         roomImages: [],
+        gender_type: null,
       }
     ])
   }
@@ -944,6 +964,28 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
                 placeholder="Enter Location Name"
               />
             </div>
+            {propertyType === 'hostel' && (
+              <div className="space-y-2">
+                <RequiredHostelLabel>
+                  <Label htmlFor="genderType">Gender Type</Label>
+                </RequiredHostelLabel>
+                <Select
+                  value={genderType}
+                  onValueChange={(value) => setGenderType(value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select gender type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {GENDER_TYPE_CHOICES.map((genderTypeOption) => (
+                      <SelectItem key={genderTypeOption.value} value={genderTypeOption.value}>
+                        {genderTypeOption.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="space-y-2">
               <RequiredLabel>
                 <Label htmlFor="latitude">Latitude</Label>
@@ -1017,28 +1059,66 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
           <h3 className="text-lg font-semibold mb-4">
             <RequiredLabel>Property Images</RequiredLabel>
           </h3>
+          <div className="mb-4">
+            <Label htmlFor="image-category">Select Category for Next Image</Label>
+            <Select
+              value={selectedImageCategory}
+              onValueChange={(value) => setSelectedImageCategory(value)}
+            >
+              <SelectTrigger className="w-full md:w-64">
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                {IMAGE_CATEGORIES.map((category) => (
+                  <SelectItem key={category.value} value={category.value}>
+                    {category.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {images.map((image, index) => (
-              <div key={index} className="relative aspect-[4/3]">
-                <img
-                  src={image.image_url}
-                  alt={`Property ${index + 1}`}
-                  className="w-full h-full object-cover rounded-lg"
-                  onError={(e) => {
-                    console.error("Image load error for URL:", image.image_url);
-                    (e.target as HTMLImageElement).src = "/placeholder-image.jpg";
-                  }}
-                  loading="lazy"
-                />
-                <Button
-                  type="button"
-                  variant="neutral"
-                  size="icon"
-                  className="absolute top-2 right-2"
-                  onClick={() => removeImage(index)}
+              <div key={index} className="space-y-2">
+                <div className="relative aspect-[4/3]">
+                  <img
+                    src={image.image_url}
+                    alt={`Property ${index + 1}`}
+                    className="w-full h-full object-cover rounded-lg"
+                    onError={(e) => {
+                      console.error("Image load error for URL:", image.image_url);
+                      (e.target as HTMLImageElement).src = "/placeholder-image.jpg";
+                    }}
+                    loading="lazy"
+                  />
+                  <div className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                    {IMAGE_CATEGORIES.find(cat => cat.value === image.category)?.label || 'Other'}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="neutral"
+                    size="icon"
+                    className="absolute top-2 right-2"
+                    onClick={() => removeImage(index)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <Select
+                  value={image.category}
+                  onValueChange={(value) => updateImageCategory(index, value)}
                 >
-                  <X className="h-4 w-4" />
-                </Button>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {IMAGE_CATEGORIES.map((category) => (
+                      <SelectItem key={category.value} value={category.value}>
+                        {category.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             ))}
             <label className="border-2 border-dashed rounded-lg aspect-[4/3] flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50">

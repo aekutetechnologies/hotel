@@ -90,23 +90,47 @@ const PlaceCard = ({ type = "hotel" }: placeCardProps) => {
                 <p className="text-gray-500">No {type} properties found</p>
               </div>
             ) : (
-              currentProperties.map((property) => (
-                <div key={property.id} className="flex flex-col items-start">
-                  <Link href={`/property/${property.id}`} className="group block">
-                    {/* Full Image Card */}
-                    <div className="relative w-full max-w-[280px] h-[380px] rounded-xl overflow-hidden transition-transform duration-300 group-hover:scale-[1.02] group-hover:shadow-2xl">
-                      <Image
-                        src={property.images?.[0]?.image || "/images/placeholder.jpg"}
-                        alt={property.name}
-                        width={400}
-                        height={400}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute top-3 left-3 bg-yellow-300 text-black font-semibold text-sm px-3 py-1 rounded">
-                        {property.property_type || "Zen zone"}
+              currentProperties.map((property) => {
+                // Generate dates based on property type
+                const today = new Date();
+                const checkInDate = new Date(today);
+                let checkOutDate = new Date(today);
+                
+                if (type === "hotel") {
+                  // For hotels: check-out after 1 day
+                  checkOutDate.setDate(checkOutDate.getDate() + 1);
+                } else {
+                  // For hostels: check-out after 1 month
+                  checkOutDate.setMonth(checkOutDate.getMonth() + 1);
+                }
+                
+                // Format dates as YYYY-MM-DD
+                const formatDate = (date: Date) => {
+                  const year = date.getFullYear();
+                  const month = String(date.getMonth() + 1).padStart(2, '0');
+                  const day = String(date.getDate()).padStart(2, '0');
+                  return `${year}-${month}-${day}`;
+                };
+                
+                const propertyUrl = `/property/${property.id}?location=${property.location || 'Mumbai'}&propertyType=${property.property_type}&bookingType=${type === 'hotel' ? 'daily' : 'monthly'}&checkInDate=${formatDate(checkInDate)}&checkOutDate=${formatDate(checkOutDate)}&rooms=1&guests=1`;
+                
+                return (
+                  <div key={property.id} className="flex flex-col items-start">
+                    <Link href={propertyUrl} className="group block">
+                      {/* Full Image Card */}
+                      <div className="relative w-full max-w-[280px] h-[380px] rounded-xl overflow-hidden transition-transform duration-300 group-hover:scale-[1.02] group-hover:shadow-2xl">
+                        <Image
+                          src={property.images?.[0]?.image || "/images/placeholder.jpg"}
+                          alt={property.name}
+                          width={400}
+                          height={400}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute top-3 left-3 bg-[#A31C44] text-white font-semibold text-sm px-3 py-1 rounded">
+                          {property.property_type || "Zen zone"}
+                        </div>
                       </div>
-                    </div>
-                  </Link>
+                    </Link>
 
                   {/* Text Info Below Image */}
                   <div className="mt-4 px-1">
@@ -115,7 +139,8 @@ const PlaceCard = ({ type = "hotel" }: placeCardProps) => {
                     </h3>
                   </div>
                 </div>
-              ))
+              );
+              })
             )}
           </div>
 

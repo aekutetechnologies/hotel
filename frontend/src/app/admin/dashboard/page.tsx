@@ -9,8 +9,6 @@ import {
   Users, 
   Hotel, 
   Home, 
-  ArrowUp, 
-  ArrowDown, 
   Calendar, 
   CreditCard, 
   ShoppingBag, 

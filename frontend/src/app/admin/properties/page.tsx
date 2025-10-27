@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Button } from "@/components/ui/button"
-import { Plus, Edit, Trash2, Eye, Search } from 'lucide-react'
+import { Plus, Edit, Trash2, Search } from 'lucide-react'
 import Link from 'next/link'
 import { PermissionGuard } from '@/components/PermissionGuard'
 import { usePermissions } from '@/hooks/usePermissions'
@@ -59,6 +59,7 @@ export default function Properties() {
     }
 
     loadProperties()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded])
 
   const handleDelete = async (id: number) => {

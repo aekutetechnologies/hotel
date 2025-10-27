@@ -6,4 +6,5 @@ from .models import *
 
 admin.site.register(Booking)
 admin.site.register(BookingDocument)
+admin.site.register(HostelVisit)
 

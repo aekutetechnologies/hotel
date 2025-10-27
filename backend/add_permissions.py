@@ -229,6 +229,22 @@ permissions = [
     {
         'name': 'reply:delete',
         'description': 'Delete replies.'
+    },
+    {
+        'name': 'blog_create',
+        'description': 'Create new blog posts and manage blog categories/tags.'
+    },
+    {
+        'name': 'blog_edit',
+        'description': 'Edit existing blog posts, categories, and tags.'
+    },
+    {
+        'name': 'blog_delete',
+        'description': 'Delete blog posts, categories, tags, and images.'
+    },
+    {
+        'name': 'blog_publish',
+        'description': 'Publish or unpublish blog posts.'
     }
 ]
 

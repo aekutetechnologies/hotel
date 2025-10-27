@@ -18,6 +18,7 @@ from datetime import timedelta
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 WEBSITE_URL = "http://localhost:8000"
+# WEBSITE_URL = "http://192.168.18.16:8000"
 # WEBSITE_URL = 'http://147.93.97.63/api'
 # WEBSITE_URL = 'https://hsquareliving.com/api'
 
@@ -51,6 +52,7 @@ INSTALLED_APPS = [
     "expenses",
     "offer",
     "stats",
+    "blog",
     "whitenoise",
 ]
 
@@ -184,15 +186,17 @@ LOGGING = {
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8080",
-    "http://localhost:3000",
+    "http://localhost:3001",
     "http://127.0.0.1:8080",
-    "http://127.0.0.1:3000",
+    "http://127.0.0.1:3001",
     "http://127.0.0.1:8000",
     "https://hsquareliving.in",
     "https://hsquareliving.in",
     "https://www.hsquareliving.in",
     "https://hsquareliving.com",
     "https://www.hsquareliving.com",
+    "http://192.168.18.16:8000",
+    "http://192.168.18.16:3000",
 ]
 
 CORS_ALLOW_METHODS = (

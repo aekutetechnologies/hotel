@@ -19,8 +19,8 @@ const hotelImages = [
 
 const hostelImages = [
   "/hostel/hostel5.jpeg",
-  "/hostel/hostel6.jpg",
-  "/hostel/hostel7.jpg",
+  "/hostel/hostel6.jpeg",
+  "/hostel/hostel7.jpeg",
 ];
 
 // Image preloader hook

@@ -16,7 +16,8 @@ from .models import (
     Country,
     State,
     FavoriteProperty,
-    UserProperty
+    UserProperty,
+    Setting
 )
 from .serializers import (
     PropertySerializer,
@@ -828,4 +829,42 @@ def create_review(request):
         return Response(
             {"error": str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(["GET"])
+def settings_list(request):
+    """
+    Get all settings (no authentication required for reading)
+    """
+    settings = Setting.objects.filter(is_active=True)
+    settings_dict = {setting.key: setting.value for setting in settings}
+    return Response(settings_dict)
+
+
+@api_view(["GET", "PUT"])
+@custom_authentication_and_permissions(required_permissions=['admin:settings:manage'])
+def settings_detail(request, key):
+    """
+    Get or update a specific setting (requires authentication for updates)
+    """
+    try:
+        setting = Setting.objects.get(key=key)
+        
+        if request.method == "GET":
+            return Response({"key": setting.key, "value": setting.value, "description": setting.description})
+        
+        elif request.method == "PUT":
+            setting.value = request.data.get('value', setting.value)
+            setting.description = request.data.get('description', setting.description)
+            setting.save()
+            return Response({
+                "message": "Setting updated successfully",
+                "key": setting.key,
+                "value": setting.value
+            })
+    except Setting.DoesNotExist:
+        return Response(
+            {"error": "Setting not found"},
+            status=status.HTTP_404_NOT_FOUND
         )

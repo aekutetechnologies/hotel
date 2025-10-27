@@ -44,8 +44,8 @@ export default function TestimonialSection({ testimonials, theme }: any) {
 
   const getBackgroundImage = () => {
     return theme === "hotel"
-      ? "/images/hotels/hotel_1.webp"
-      : "/images/hostels/hostel_1.jpg";
+      ? "/images/hotels/hotel_1.png"
+      : "/images/hostels/hostel_1.png";
   };
 
   const selectedTheme = themeMap[theme] || "grey";

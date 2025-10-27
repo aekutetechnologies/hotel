@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
-import { Header } from '@/components/Header'
+import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import { LoginDialog } from '@/components/LoginDialog'
 import InlineSearchForm from '@/components/InlineSearchForm'
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Star, MapPin, ChevronLeft, ChevronRight, ClipboardList, FileCheck, CheckCircle2, Building2 } from 'lucide-react'
+import { Star, MapPin, ChevronLeft, ChevronRight, ClipboardList, FileCheck, CheckCircle2, Building2, Share2, Copy, MessageCircle, User, Users } from 'lucide-react'
 import { getAmenityIcon } from '@/lib/amenityIconMap'
 import Image from 'next/image'
 import { Property, Room } from '@/types/property'
@@ -16,9 +17,11 @@ import { ReviewSection } from '@/components/ReviewSection'
 import { BookingCard } from '@/components/BookingCard'
 import ShowMap from '@/components/ShowMap'
 import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { GalleryModal } from '@/components/GalleryModal'
 import { Spinner } from '@/components/ui/spinner'
 import { LoadingIndicator } from '@/components/ui/LoadingIndicator'
+import { IMAGE_CATEGORIES } from '@/lib/constants/imageCategories'
 
 interface PropertyDetailsProps {
   property: Property;
@@ -86,6 +89,10 @@ export default function PropertyDetails() {
   const [currentRoomImageIndex, setCurrentRoomImageIndex] = useState(0)
   const [currentRoomImageIndices, setCurrentRoomImageIndices] = useState<{ [key: string]: number }>({});
   const [error, setError] = useState<string | null>(null);
+  const [activeImageCategory, setActiveImageCategory] = useState<string>('all');
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [userName, setUserName] = useState("")
+  const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false)
 
   const params = useParams()
   const router = useRouter()
@@ -133,6 +140,38 @@ export default function PropertyDetails() {
   const [checkOutDate, setCheckOutDate] = useState<Date | undefined>(checkOutDateParam ? new Date(checkOutDateParam) : undefined)
   const [checkInTime, setCheckInTime] = useState<string | null>(checkInTimeParam)
   const [checkOutTime, setCheckOutTime] = useState<string | null>(checkOutTimeParam)
+
+  // Login handlers - MUST be before any conditional logic
+  useEffect(() => {
+    const storedName = localStorage.getItem("name")
+    const storedAccessToken = localStorage.getItem("accessToken")
+    
+    if (storedName && storedAccessToken) {
+      setIsLoggedIn(true)
+      setUserName(storedName)
+    }
+  }, [])
+
+  const handleLoginClick = () => {
+    setIsLoginDialogOpen(true)
+  }
+
+  const handleLoginSuccess = (name: string) => {
+    setIsLoggedIn(true)
+    setUserName(name)
+    setIsLoginDialogOpen(false)
+  }
+
+  const handleLogout = () => {
+    localStorage.clear()
+    setIsLoggedIn(false)
+    setUserName("")
+    window.location.href = "/"
+  }
+
+  const setShowDetailSection = (section: string) => {
+    window.location.href = `/home?type=${section}`
+  }
 
   // Log time values for debugging
   useEffect(() => {
@@ -206,6 +245,11 @@ export default function PropertyDetails() {
       }
     }
   }, [property, selectedRoomsCount, selectedRooms]);
+
+  // Reset image index when category changes
+  useEffect(() => {
+    setCurrentImageIndex(0);
+  }, [activeImageCategory]);
 
   // Add global error handling for the component
   if (error) {
@@ -338,6 +382,37 @@ export default function PropertyDetails() {
     setShowGallery(false)
   }
 
+  // Social share functions
+  const shareToWhatsApp = () => {
+    const url = window.location.href
+    const text = `Check out this ${property?.property_type || 'property'}: ${property?.name}`
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`${text} - ${url}`)}`
+    window.open(whatsappUrl, '_blank')
+  }
+
+  const shareToFacebook = () => {
+    const url = window.location.href
+    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`
+    window.open(facebookUrl, '_blank')
+  }
+
+  const shareToTwitter = () => {
+    const url = window.location.href
+    const text = `Check out this ${property?.property_type || 'property'}: ${property?.name}`
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`
+    window.open(twitterUrl, '_blank')
+  }
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href)
+      // You could add a toast notification here
+      alert('Link copied to clipboard!')
+    } catch (err) {
+      console.error('Failed to copy link:', err)
+    }
+  }
+
   console.log("PropertyDetails Render", {
     latitude: property?.latitude, longitude: property?.longitude
   })
@@ -398,9 +473,11 @@ export default function PropertyDetails() {
       const currentRoom = updatedRooms.get(roomId);
 
       if (currentRoom) {
-        // Calculate new quantity with limits (0 minimum, 5 maximum)
+        // Calculate new quantity with limits
         const currentQuantity = currentRoom.quantity || 0;
-        const newQuantity = Math.max(0, Math.min(5, currentQuantity + increment));
+        // For hostels, limit to 2 beds max per user, for hotels keep 5 max
+        const maxQuantity = isHostel ? 2 : 5;
+        const newQuantity = Math.max(0, Math.min(maxQuantity, currentQuantity + increment));
 
         // Only proceed if there's an actual change
         if (newQuantity !== currentQuantity) {
@@ -441,9 +518,27 @@ export default function PropertyDetails() {
 
   const isHostel = property.property_type === 'hostel'
 
+  // Filter images based on active category
+  const filteredImages = activeImageCategory === 'all' 
+    ? property.images 
+    : property.images.filter(img => img.category === activeImageCategory)
+
+  // Get categories that have images
+  const availableCategories = ['all', ...IMAGE_CATEGORIES
+    .map(cat => cat.value)
+    .filter(catValue => property.images.some(img => img.category === catValue))]
+
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      <Navbar
+        isLoggedIn={isLoggedIn}
+        userName={userName}
+        handleLogout={handleLogout}
+        handleLoginClick={handleLoginClick}
+        setShowDetailSection={setShowDetailSection}
+        isClosed={false}
+        currentSection={propertyType === 'hostel' ? 'hostels' : 'hotels'}
+      />
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="mb-6">
           <InlineSearchForm />
@@ -534,7 +629,39 @@ export default function PropertyDetails() {
 
         {/* Property Header */}
         <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-2">{property.name}</h1>
+          <div className="flex justify-between items-start mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold">{property.name}</h1>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="neutral"
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <Share2 className="h-4 w-4" />
+                  Share
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={shareToWhatsApp}>
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  WhatsApp
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={shareToFacebook}>
+                  <span className="mr-2">📘</span>
+                  Facebook
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={shareToTwitter}>
+                  <span className="mr-2">🐦</span>
+                  Twitter
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={copyLink}>
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy Link
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
           <p className="text-gray-600 flex items-center gap-2 mb-4">
             <MapPin className="h-5 w-5 text-[#B11E43]" />
             {property.area && property.city ? `${property.area}, ${property.city.name}` : property.location}
@@ -544,6 +671,27 @@ export default function PropertyDetails() {
               <Building2 className="h-4 w-4 text-[#B11E43]" />
               {property.property_type === 'hotel' ? 'Hotel' : property.property_type === 'hostel' ? 'Hostel' : 'Property'}
             </Badge>
+            {property.property_type === 'hostel' && property.gender_type && (
+              <div className="group relative">
+                <Badge 
+                  variant="outline" 
+                  className="rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 flex items-center gap-2 border-[#B11E43] text-[#B11E43]"
+                >
+                  {property.gender_type === 'male' ? (
+                    <User className="h-4 w-4 text-[#B11E43]" />
+                  ) : property.gender_type === 'female' ? (
+                    <User className="h-4 w-4 text-[#B11E43]" />
+                  ) : (
+                    <Users className="h-4 w-4 text-[#B11E43]" />
+                  )}
+                  {property.gender_type.charAt(0).toUpperCase() + property.gender_type.slice(1)}
+                </Badge>
+                {/* Tooltip */}
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                  {property.gender_type.charAt(0).toUpperCase() + property.gender_type.slice(1)} Only
+                </div>
+              </div>
+            )}
             {property.discount && (
               <Badge variant="outline" className="bg-green-50 text-green-700">
                 {property.discount}% OFF
@@ -622,54 +770,129 @@ export default function PropertyDetails() {
           <div className="lg:col-span-2 space-y-8">
             {/* Image Gallery */}
             <div className="relative" id="overview">
-              {/* Main image */}
-              <div className="relative w-full h-64 sm:h-80 md:h-96 rounded-t-xl overflow-hidden">
-                <Image
-                  src={property.images[currentImageIndex]?.image || '/placeholder-property.jpg'}
-                  alt={`${property.name} - featured image`}
-                  fill
-                  className="object-cover"
-                  priority
-                />
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent" />
-                <div className="absolute bottom-4 right-4 flex space-x-2">
+              {/* Category Tabs */}
+              <div className="mb-6 overflow-x-auto scrollbar-hidden">
+                <div className="flex gap-2 min-w-max pb-1">
                   <Button
-                    size="icon"
-                    variant="default"
-                    onClick={() => setCurrentImageIndex(prev => (prev > 0 ? prev - 1 : property.images.length - 1))}
-                    className="h-8 w-8 rounded-full bg-white/80 text-[#B11E43] hover:bg-white hover:text-[#8f1836]"
+                    variant={activeImageCategory === 'all' ? 'default' : 'neutral'}
+                    size="sm"
+                    onClick={() => setActiveImageCategory('all')}
+                    className={activeImageCategory === 'all' ? 'bg-[#B11E43] hover:bg-[#8f1836] text-white shadow-md' : 'border-gray-300 hover:border-[#B11E43] hover:text-[#B11E43]'}
                   >
-                    <ChevronLeft className="h-4 w-4" />
+                    All Images ({property.images.length})
                   </Button>
-                  <Button
-                    size="icon"
-                    variant="default"
-                    onClick={() => setCurrentImageIndex(prev => (prev < property.images.length - 1 ? prev + 1 : 0))}
-                    className="h-8 w-8 rounded-full bg-white/80 text-[#B11E43] hover:bg-white hover:text-[#8f1836]"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
+                  {IMAGE_CATEGORIES.map((category) => {
+                    const count = property.images.filter(img => img.category === category.value).length
+                    if (count === 0) return null
+                    return (
+                      <Button
+                        key={category.value}
+                        variant={activeImageCategory === category.value ? 'default' : 'neutral'}
+                        size="sm"
+                        onClick={() => setActiveImageCategory(category.value)}
+                        className={activeImageCategory === category.value ? 'bg-[#B11E43] hover:bg-[#8f1836] text-white shadow-md' : 'border-gray-300 hover:border-[#B11E43] hover:text-[#B11E43]'}
+                      >
+                        {category.label} ({count})
+                      </Button>
+                    )
+                  })}
                 </div>
               </div>
 
-              {/* Image thumbnails */}
-              <div className="flex gap-2 mt-2 overflow-x-auto pb-2 scrollbar-hidden">
-                {property.images.map((image, index) => (
-                  <button
-                    key={`image-thumbnail-${image.id || index}`}
-                    className={`relative w-20 h-16 rounded-md overflow-hidden transition-all ${currentImageIndex === index ? 'ring-2 ring-primary' : 'opacity-80'
-                      }`}
-                    onClick={() => setCurrentImageIndex(index)}
+              {/* Main image */}
+              {filteredImages.length > 0 ? (
+                <>
+                  <div 
+                    className="relative w-full h-64 sm:h-80 md:h-96 lg:h-[500px] rounded-xl overflow-hidden cursor-pointer group shadow-lg"
+                    onClick={() => openGalleryModal(currentImageIndex)}
                   >
                     <Image
-                      src={image.image || image.image_url || '/placeholder.jpg'}
-                      alt={`${property.name} - image ${index + 1}`}
+                      src={filteredImages[currentImageIndex]?.image || filteredImages[currentImageIndex]?.image_url || '/placeholder-property.jpg'}
+                      alt={`${property.name} - ${activeImageCategory} image ${currentImageIndex + 1}`}
                       fill
-                      className="object-cover"
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      priority
                     />
-                  </button>
-                ))}
-              </div>
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/40" />
+                    
+                    {/* Navigation buttons */}
+                    {filteredImages.length > 1 && (
+                      <div className="absolute bottom-4 right-4 flex space-x-2">
+                        <Button
+                          size="icon"
+                          variant="default"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setCurrentImageIndex(prev => (prev > 0 ? prev - 1 : filteredImages.length - 1))
+                          }}
+                          className="h-10 w-10 rounded-full bg-white/95 text-[#B11E43] hover:bg-white hover:text-[#8f1836] shadow-lg"
+                        >
+                          <ChevronLeft className="h-5 w-5" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="default"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setCurrentImageIndex(prev => (prev < filteredImages.length - 1 ? prev + 1 : 0))
+                          }}
+                          className="h-10 w-10 rounded-full bg-white/95 text-[#B11E43] hover:bg-white hover:text-[#8f1836] shadow-lg"
+                        >
+                          <ChevronRight className="h-5 w-5" />
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* Image counter */}
+                    <div className="absolute bottom-4 left-4 bg-black/70 text-white px-3 py-1.5 rounded-full text-sm font-medium">
+                      {currentImageIndex + 1} / {filteredImages.length}
+                    </div>
+
+                    {/* Click hint */}
+                    <div className="absolute top-4 right-4 bg-black/70 text-white px-3 py-1.5 rounded-full text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                      Click to view fullscreen
+                    </div>
+                  </div>
+
+                  {/* Image thumbnails */}
+                  {filteredImages.length > 1 && (
+                    <div className="mt-4">
+                      <h3 className="text-sm font-medium text-gray-700 mb-2">All Images ({filteredImages.length})</h3>
+                      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hidden">
+                        {filteredImages.map((image, index) => (
+                          <button
+                            key={`image-thumbnail-${image.id || index}`}
+                            className={`relative flex-shrink-0 w-20 h-16 sm:w-24 sm:h-18 rounded-lg overflow-hidden transition-all duration-200 ${
+                              currentImageIndex === index 
+                                ? 'ring-2 ring-[#B11E43] ring-offset-2 scale-105 shadow-lg' 
+                                : 'opacity-70 hover:opacity-100 hover:ring-2 hover:ring-gray-300'
+                            }`}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setCurrentImageIndex(index)
+                            }}
+                          >
+                            <Image
+                              src={image.image || image.image_url || '/placeholder.jpg'}
+                              alt={`${property.name} - image ${index + 1}`}
+                              fill
+                              className="object-cover"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="w-full h-64 sm:h-80 md:h-96 rounded-xl bg-gray-100 flex items-center justify-center border-2 border-dashed border-gray-300">
+                  <div className="text-center">
+                    <Building2 className="h-16 w-16 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-500 text-lg font-medium">No images in this category</p>
+                    <p className="text-gray-400 text-sm mt-1">Select another category to view images</p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Amenities */}
@@ -768,6 +991,12 @@ export default function PropertyDetails() {
                                         {room.bed_type}
                                       </div>
                                     )}
+                                    {isHostel && (room as any).gender_type && (
+                                      <div className="flex items-center gap-2">
+                                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                        {(room as any).gender_type.charAt(0).toUpperCase() + (room as any).gender_type.slice(1)} Room
+                                      </div>
+                                    )}
                                     {room.private_bathroom !== undefined && (
                                       <div className="flex items-center gap-2">
                                         <CheckCircle2 className="h-4 w-4 text-green-600" />
@@ -857,25 +1086,31 @@ export default function PropertyDetails() {
                                   }
                                 </div>
                               </div>
-                              <div className="flex items-center justify-end">
-                                <Button
-                                  onClick={(e) => handleRoomQuantityChange(roomId, -1, e)}
-                                  variant="neutral"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                  disabled={quantity <= 0}
-                                >
-                                  -
-                                </Button>
-                                <span className="mx-3 font-medium">{quantity}</span>
-                                <Button
-                                  onClick={(e) => handleRoomQuantityChange(roomId, 1, e)}
-                                  variant="neutral"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                >
-                                  +
-                                </Button>
+                              <div className="flex flex-col items-end">
+                                <div className="flex items-center justify-end">
+                                  <Button
+                                    onClick={(e) => handleRoomQuantityChange(roomId, -1, e)}
+                                    variant="neutral"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    disabled={quantity <= 0}
+                                  >
+                                    -
+                                  </Button>
+                                  <span className="mx-3 font-medium">{quantity}</span>
+                                  <Button
+                                    onClick={(e) => handleRoomQuantityChange(roomId, 1, e)}
+                                    variant="neutral"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    disabled={quantity >= (isHostel ? 2 : 5)}
+                                  >
+                                    +
+                                  </Button>
+                                </div>
+                                {isHostel && (
+                                  <p className="text-xs text-gray-500 mt-1">Max 2 beds per user</p>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -1003,18 +1238,26 @@ export default function PropertyDetails() {
           </div>
         </div>
       </main>
-      <Footer sectionType="hotels" />
+      <Footer sectionType={propertyType === 'hostel' ? 'hostels' : 'hotels'} />
 
       {showGallery && (
         <GalleryModal
-          images={property.images.map(img => ({
+          images={filteredImages.map(img => ({
             id: img.id,
-            image: img.image || img.image_url || '/placeholder.jpg'
+            image: img.image || img.image_url || '/placeholder.jpg',
+            category: img.category
           }))}
           initialIndex={currentImageIndex}
           onClose={closeGalleryModal}
+          activeCategory={activeImageCategory}
         />
       )}
+
+      <LoginDialog 
+        isOpen={isLoginDialogOpen}
+        onClose={() => setIsLoginDialogOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
+      />
     </div>
   );
 }

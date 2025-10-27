@@ -1,13 +1,15 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Booking, BookingDocument
-from .serializers import BookingSerializer, BookingUserViewSerializer, BookingViewSerializer, BookingDocumentSerializer, BookingDocumentViewSerializer
+from .models import Booking, BookingDocument, HostelVisit
+from .serializers import BookingSerializer, BookingUserViewSerializer, BookingViewSerializer, BookingDocumentSerializer, BookingDocumentViewSerializer, HostelVisitSerializer, HostelVisitViewSerializer
 from users.decorators import custom_authentication_and_permissions
 from django.shortcuts import get_object_or_404
 from property.serializers import PropertyViewSerializer
 from users.models import HsUser, UserHsPermission
 from property.models import UserProperty
+import requests
+from urllib.parse import quote as urlquote
 @api_view(['GET', 'POST'])
 @custom_authentication_and_permissions()
 def booking_list(request):
@@ -160,4 +162,142 @@ def booking_document_view(request, pk):
 def booking_list_by_user_id(request, user_id):
     bookings = Booking.objects.filter(user_id=user_id).order_by('-created_at')
     serializer = BookingUserViewSerializer(bookings, many=True)
+    return Response(serializer.data)
+
+
+# Hostel Visit Views
+
+@api_view(['GET', 'POST'])
+def hostel_visit_list(request):
+    """
+    GET: List all hostel visits (admin view - requires auth)
+    POST: Create a new hostel visit (no authentication required)
+    """
+    if request.method == 'GET':
+        # Check if user is authenticated
+        auth = request.headers.get('Authorization')
+        if not auth or not auth.startswith('Bearer '):
+            return Response({'error': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        # Decorate with auth for GET
+        decorated_view = custom_authentication_and_permissions()(
+            lambda req: hostel_visit_list_get(req)
+        )
+        return decorated_view(request)
+    
+    elif request.method == 'POST':
+        # POST doesn't require authentication
+        # If user is authenticated, use their user_id
+        data = request.data.copy()
+        
+        # Check if user is authenticated (optional)
+        auth = request.headers.get('Authorization')
+        if auth and auth.startswith('Bearer '):
+            try:
+                import jwt
+                from django.conf import settings
+                from users.models import HsUser
+                token = auth[7:]
+                payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+                user_id = payload.get('user_id')
+                if user_id:
+                    data['user'] = user_id
+            except:
+                pass  # If auth fails, continue without user
+        
+        serializer = HostelVisitSerializer(data=data)
+        if serializer.is_valid():
+            visit = serializer.save()
+            
+            # Send WhatsApp notification programmatically
+            try:
+                from property.models import Property
+                property_obj = Property.objects.get(id=visit.property.id)
+                
+                # Format visit date and time
+                visit_date_formatted = visit.visit_date.strftime('%B %d, %Y')
+                visit_time_formatted = visit.visit_time.strftime('%I:%M %p')
+                
+                # Create notification message
+                visitor_name = visit.name or (visit.user.name if visit.user else 'Guest')
+                visitor_phone = visit.phone or (visit.user.mobile if visit.user else 'Not provided')
+                
+                message = f"""🏠 New Visit Request
+
+Property: {property_obj.name}
+Location: {property_obj.location}
+
+Visitor Details:
+👤 Name: {visitor_name}
+📱 Phone: {visitor_phone}
+👥 Guests: {visit.number_of_guests}
+
+📅 Visit Date: {visit_date_formatted}
+⏰ Visit Time: {visit_time_formatted}
+
+{('📝 Notes: ' + visit.notes) if visit.notes else ''}
+
+Please confirm this visit booking."""
+                
+                # WhatsApp number (same as chat)
+                whatsapp_number = '918342091661'
+                whatsapp_url = f"https://wa.me/{whatsapp_number}?text={urlquote(message)}"
+                print(whatsapp_url)
+                
+                # Trigger WhatsApp URL programmatically (opens WhatsApp Web/App)
+                try:
+                    requests.get(whatsapp_url, timeout=5)
+                    print(f"✓ WhatsApp notification sent successfully")
+                except requests.RequestException as e:
+                    print(f"⚠ Could not send WhatsApp notification: {str(e)}")
+                
+            except Exception as e:
+                print(f"Error sending WhatsApp notification: {str(e)}")
+            
+            # Return the detailed view
+            return_serializer = HostelVisitViewSerializer(visit)
+            return Response(return_serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+def hostel_visit_list_get(request):
+    """Helper function for GET request that requires authentication"""
+    visits = HostelVisit.objects.all().order_by('-visit_date', '-visit_time')
+    serializer = HostelVisitViewSerializer(visits, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['GET', 'PUT', 'DELETE'])
+@custom_authentication_and_permissions(required_permissions=['booking:view', 'booking:update', 'booking:delete'])
+def hostel_visit_detail(request, pk):
+    """
+    GET: Retrieve a hostel visit
+    PUT: Update a hostel visit
+    DELETE: Delete a hostel visit
+    """
+    visit = get_object_or_404(HostelVisit, pk=pk)
+    
+    if request.method == 'GET':
+        serializer = HostelVisitViewSerializer(visit)
+        return Response(serializer.data)
+    
+    elif request.method == 'PUT':
+        serializer = HostelVisitSerializer(visit, data=request.data, partial=True)
+        if serializer.is_valid():
+            visit = serializer.save()
+            return_serializer = HostelVisitViewSerializer(visit)
+            return Response(return_serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    elif request.method == 'DELETE':
+        visit.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['GET'])
+@custom_authentication_and_permissions()
+def hostel_visit_list_by_user(request):
+    """Get all visits for the logged-in user"""
+    visits = HostelVisit.objects.filter(user=request.user).order_by('-visit_date', '-visit_time')
+    serializer = HostelVisitViewSerializer(visits, many=True)
     return Response(serializer.data)

@@ -1,8 +1,9 @@
 import { API_URL } from '../config'
 
-export async function uploadImage(imageFile: File): Promise<{ id: number, image_url: string }> {
+export async function uploadImage(imageFile: File, category: string = 'other'): Promise<{ id: number, image_url: string }> {
   const formData = new FormData()
   formData.append('image', imageFile)
+  formData.append('category', category)
 
   const response = await fetch(`${API_URL}property/images/upload/`, {
     method: 'POST',

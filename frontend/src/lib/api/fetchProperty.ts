@@ -15,7 +15,8 @@ export interface TransformedPropertyData extends Property {
   images: { 
     id: number
     image?: string
-    image_url?: string 
+    image_url?: string
+    category?: string
   }[]
   
   rooms?: {
@@ -62,7 +63,8 @@ export async function fetchProperty(id: string): Promise<TransformedPropertyData
       images: Array.isArray(data.images) ? data.images.map(img => ({
         id: typeof img === 'object' ? (img.id || 0) : 0,
         image_url: typeof img === 'object' ? (img.image_url || img.image || '') : img,
-        image: typeof img === 'object' ? (img.image || '') : ''
+        image: typeof img === 'object' ? (img.image || '') : '',
+        category: typeof img === 'object' ? (img.category || 'other') : 'other'
       })) : [],
       
       // Standardize rooms format
@@ -111,6 +113,7 @@ export async function fetchProperty(id: string): Promise<TransformedPropertyData
 interface PropertyImage {
   id: number
   image?: string
+  category?: string
   [key: string]: any
 }
 

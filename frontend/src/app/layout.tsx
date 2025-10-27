@@ -9,6 +9,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { AppErrorProvider } from "@/components/AppErrorProvider";
 import { CookieConsentWrapper } from "@/components/CookieConsentWrapper";
 import WhatsApp from "@/components/WhatsApp";
+import { ChatWidget } from "@/components/ChatWidget";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -68,6 +69,7 @@ export default function RootLayout({
           </AppErrorProvider>
           <ToastContainer position="top-right" autoClose={5000} />
           <CookieConsentWrapper />
+          <ChatWidget />
           {/* <WhatsApp /> */}
         </PermissionProvider>
       </body>

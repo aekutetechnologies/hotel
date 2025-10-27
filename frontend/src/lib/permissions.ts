@@ -44,7 +44,12 @@ export type Permission =
   | 'admin:offer:update'
   | 'admin:offer:delete'
   | 'admin:user:view'
-  | 'admin:dashboard:view';
+  | 'admin:dashboard:view'
+  | 'blog:create'
+  | 'blog:edit'
+  | 'blog:delete'
+  | 'blog:publish'
+  | 'blog:view';
 
 // Function to safely access localStorage (client-side only)
 function getFromLocalStorage(key: string): string | null {
@@ -77,6 +82,9 @@ export const pagePermissionsMap: Record<string, Permission[]> = {
   // Bookings
   '/admin/bookings': ['booking:view'],
   
+  // Visits
+  '/admin/visits': ['booking:view'],
+  
   // Expenses
   '/admin/expenses': ['admin:expense:view'],
   
@@ -88,6 +96,11 @@ export const pagePermissionsMap: Record<string, Permission[]> = {
   
   // Offers
   '/admin/offers': ['admin:offer:view'],
+  
+  // Blogs
+  '/admin/blogs': ['blog:view'],
+  '/admin/blogs/new': ['blog:create'],
+  '^/admin/blogs/.+/edit$': ['blog:edit'],
 };
 
 // Check if user has all required permissions

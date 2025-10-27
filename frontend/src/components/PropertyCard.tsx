@@ -3,7 +3,7 @@
 import { Property, Review } from '@/types/property'
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Star, MapPin, Wifi, Coffee, ShieldCheck, UserRoundCheck, BellRing, Beer, Soup, Building, BatteryCharging, Heater, ChefHat, AirVent, Tv, Utensils, StarHalf, Heart } from 'lucide-react'
+import { Star, MapPin, Wifi, Coffee, ShieldCheck, UserRoundCheck, BellRing, Beer, Soup, Building, BatteryCharging, Heater, ChefHat, AirVent, Tv, Utensils, StarHalf, Heart, User, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
@@ -155,7 +155,7 @@ export function PropertyCard({ property, searchParams }: PropertyCardProps) {
   const displayRating = averageRating > 0 ? averageRating.toFixed(1) : "New"
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 hover:border-[#B11E43] transition-colors duration-300">
+    <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 transition-colors duration-300">
       <div className="flex flex-col sm:flex-row">
         {/* Image Section */}
         <div className="w-full sm:w-2/5 relative flex pr-0">
@@ -185,6 +185,7 @@ export function PropertyCard({ property, searchParams }: PropertyCardProps) {
             >
               {property.property_type.toUpperCase()}
             </Badge>
+            
             
             {/* Favorite Button */}
             <button
@@ -246,6 +247,29 @@ export function PropertyCard({ property, searchParams }: PropertyCardProps) {
                     {property.area && property.city ? `${property.area}, ${property.city.name}` : property.location}
                   </p>
                 </div>
+                
+                {/* Gender Type Badge for Hostels */}
+                {isHostel && property.gender_type && (
+                  <div className="group relative">
+                    <Badge
+                      variant="outline"
+                      className="rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 flex items-center gap-2 border-[#B11E43] text-[#B11E43]"
+                    >
+                      {property.gender_type === 'male' ? (
+                        <User className="h-4 w-4 text-[#B11E43]" />
+                      ) : property.gender_type === 'female' ? (
+                        <User className="h-4 w-4 text-[#B11E43]" />
+                      ) : (
+                        <Users className="h-4 w-4 text-[#B11E43]" />
+                      )}
+                      {property.gender_type.charAt(0).toUpperCase() + property.gender_type.slice(1)}
+                    </Badge>
+                    {/* Tooltip */}
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                      {property.gender_type.charAt(0).toUpperCase() + property.gender_type.slice(1)} Only
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

@@ -95,3 +95,39 @@ class BookingReview(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
+
+
+class HostelVisit(models.Model):
+    """Model for hostel visit bookings (pre-visit before actual booking)"""
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('confirmed', 'Confirmed'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
+        ('converted_to_booking', 'Converted to Booking'),
+    ]
+    
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(HsUser, on_delete=models.CASCADE, null=True, blank=True)
+    name = models.CharField(max_length=255, blank=True)  # Name of the visitor
+    phone = models.CharField(max_length=20, blank=True)  # Phone number of the visitor
+    property = models.ForeignKey(Property, on_delete=models.CASCADE)
+    visit_date = models.DateField()
+    visit_time = models.TimeField()
+    number_of_guests = models.IntegerField(default=1)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    notes = models.TextField(null=True, blank=True)
+    converted_booking = models.ForeignKey(Booking, on_delete=models.SET_NULL, null=True, blank=True, related_name='visit')
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['-visit_date', '-visit_time']
+        indexes = [
+            models.Index(fields=['-visit_date']),
+            models.Index(fields=['status']),
+        ]
+
+    def __str__(self):
+        return f"Visit {self.id} - {self.property.name} on {self.visit_date}"

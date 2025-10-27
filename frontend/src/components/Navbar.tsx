@@ -111,7 +111,7 @@ const Navbar: React.FC<NavbarProps> = ({
                   <Link href="/team" onClick={() => setOpen(false)} className="w-full block text-left px-2 py-2 rounded hover:bg-gray-100">Team</Link>
                   <Link href="/partner-with-us" onClick={() => setOpen(false)} className="w-full block text-left px-2 py-2 rounded hover:bg-gray-100">Partner With Us</Link>
                   <Link href="/events" onClick={() => setOpen(false)} className="w-full block text-left px-2 py-2 rounded hover:bg-gray-100">Events</Link>
-                  <Link href="/blogs" onClick={() => setOpen(false)} className="w-full block text-left px-2 py-2 rounded hover:bg-gray-100">Blogs</Link>
+                  <Link href="/blog" onClick={() => setOpen(false)} className="w-full block text-left px-2 py-2 rounded hover:bg-gray-100">Blogs</Link>
                   <Link href="/careers" onClick={() => setOpen(false)} className="w-full block text-left px-2 py-2 rounded hover:bg-gray-100">Career</Link>
                 </div>
               </div>
@@ -264,24 +264,33 @@ const Navbar: React.FC<NavbarProps> = ({
               Hotels
             </button>
 
-            <div className="relative">
+            <div className="relative group">
               <button
                 // coming soon - non-clickable
                 onClick={() => { }}
-                className={`px-3 py-1 rounded-md transition-colors text-sm font-medium ${isActiveSection('appartment') ? 'bg-[#FFEEF0] text-[#7A1633]' : getMenuTextColor()}`}
+                className={`px-3 py-1 rounded-md transition-colors text-sm font-medium cursor-not-allowed opacity-60 ${isActiveSection('appartment') ? 'bg-[#FFEEF0] text-[#7A1633]' : getMenuTextColor()}`}
               >
                 Apartment
               </button>
-              {/* <span className={`absolute -top-2 -right-10 text-xs px-2 py-0.5 rounded-full ${navModal ? 'bg-white/20 text-white' : 'text-[#7A1633]'}`}>Coming soon</span> */}
+              {/* Coming Soon Tooltip */}
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-0.5 px-1.5 py-0.5 bg-gray-800 text-white text-xs rounded-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                Coming Soon
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-b-2 border-transparent border-b-gray-800"></div>
+              </div>
             </div>
 
-            <div className="relative">
+            <div className="relative group">
               <button
                 onClick={() => { }}
-                className={`px-3 py-1 rounded-md transition-colors text-sm font-medium ${isActiveSection('hcommunity') ? 'bg-[#FFEEF0] text-[#7A1633]' : getMenuTextColor()}`}
+                className={`px-3 py-1 rounded-md transition-colors text-sm font-medium cursor-not-allowed opacity-60 ${isActiveSection('hcommunity') ? 'bg-[#FFEEF0] text-[#7A1633]' : getMenuTextColor()}`}
               >
                 Housing Community
               </button>
+              {/* Coming Soon Tooltip */}
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-0.5 px-1.5 py-0.5 bg-gray-800 text-white text-xs rounded-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                Coming Soon
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-b-2 border-transparent border-b-gray-800"></div>
+              </div>
             </div>
           </div>
         </div>

@@ -3,14 +3,14 @@ async-timeout==5.0.1
 beautifulsoup4==4.13.1
 certifi==2025.1.31
 charset-normalizer==3.4.1
-Django==5.1.5
+Django
 django-cors-headers==4.6.0
 django-redis==5.4.0
 djangorestframework==3.15.2
 djangorestframework_simplejwt==5.4.0
 gunicorn==23.0.0
 idna==3.10
-numpy==2.2.4
+numpy
 packaging==24.2
 pandas==2.2.3
 pillow==11.1.0

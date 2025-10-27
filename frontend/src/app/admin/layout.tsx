@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Building2, CalendarCheck, CircleDollarSign, Users, Tag, Menu, X, LogOut, UserRound, Home } from 'lucide-react'
+import { Building2, CalendarCheck, CircleDollarSign, Users, Tag, Menu, X, LogOut, UserRound, Home, BookOpen, Eye } from 'lucide-react'
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ProtectedRoute } from '@/components/ProtectedRoute'
@@ -22,7 +22,6 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
-  const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
 
@@ -33,12 +32,14 @@ export default function AdminLayout({
 
   const navigation: NavItem[] = [
     { name: 'Dashboard', href: '/admin/dashboard', icon: Home, permissions: ['admin:dashboard:view'] },
-    { name: 'Properties', href: '/admin/properties', icon: Building2, permissions: ['admin:dashboard:view', 'property:view'] },
+    { name: 'Properties', href: '/admin/properties', icon: Building2, permissions: ['property:view'] },
     { name: 'Bookings', href: '/admin/bookings', icon: CalendarCheck, permissions: ['booking:view'] },
+    { name: 'Visits', href: '/admin/visits', icon: Eye, permissions: ['booking:view'] },
     { name: 'Expenses', href: '/admin/expenses', icon: CircleDollarSign, permissions: ['admin:expense:view'] },
     { name: 'Users', href: '/admin/users', icon: Users, permissions: ['admin:user:view'] },
     { name: 'User Roles', href: '/admin/userroles', icon: UserRound, permissions: ['admin:user:assign-permissions'] },
     { name: 'Offers', href: '/admin/offers', icon: Tag, permissions: ['admin:offer:view'] },
+    { name: 'Blogs', href: '/admin/blogs', icon: BookOpen, permissions: ['blog:view'] },
   ]
 
   // Handle logout
@@ -58,6 +59,7 @@ export default function AdminLayout({
   // Check if user has permission to see a navigation item
   const canAccessNavItem = (item: NavItem): boolean => {
     if (!mounted) return false
+    // User needs ANY of the permissions (not all)
     return item.permissions.some(permission => hasPermission(permission))
   }
 

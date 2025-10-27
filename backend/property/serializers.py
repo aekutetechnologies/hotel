@@ -14,6 +14,7 @@ from .models import (
     Country,
     FavoriteProperty,
     ReviewImage,
+    Setting,
 )
 
 from offer.models import PropertyOffer
@@ -136,7 +137,7 @@ class PropertySerializer(serializers.ModelSerializer):
     amenities = serializers.PrimaryKeyRelatedField(queryset=Amenity.objects.all(), many=True, required=False)
     rules = serializers.PrimaryKeyRelatedField(queryset=Rule.objects.all(), many=True, required=False)
     documentation = serializers.PrimaryKeyRelatedField(queryset=Documentation.objects.all(), many=True, required=False)
-    images = serializers.PrimaryKeyRelatedField(queryset=PropertyImage.objects.all(), many=True, required=False)
+    images = serializers.PrimaryKeyRelatedField(queryset=PropertyImage.objects.all(), many=True, required=False, read_only=False)
     rooms = RoomSerializer(many=True, required=False)
     city = serializers.CharField(required=False)
     state = serializers.CharField(required=False)
@@ -145,6 +146,28 @@ class PropertySerializer(serializers.ModelSerializer):
     class Meta:
         model = Property
         fields = "__all__"
+        
+    def to_internal_value(self, data):
+        """Custom validation to handle image dictionaries"""
+        # Handle images specially if they're dictionaries
+        images_data = data.get('images', [])
+        
+        if images_data and isinstance(images_data, list) and len(images_data) > 0 and isinstance(images_data[0], dict):
+            # Update image categories first
+            for img in images_data:
+                if isinstance(img, dict) and 'id' in img and 'category' in img:
+                    try:
+                        img_obj = PropertyImage.objects.get(id=img['id'])
+                        img_obj.category = img['category']
+                        img_obj.save()
+                    except PropertyImage.DoesNotExist:
+                        pass
+            
+            # Convert dictionaries to IDs for the field validation
+            data['images'] = [img['id'] for img in images_data if 'id' in img]
+        
+        # Get the original validated data
+        return super().to_internal_value(data)
 
     def create(self, validated_data):
         city_name = validated_data.pop('city', '').strip()
@@ -266,7 +289,7 @@ class PropertyViewSerializer(serializers.ModelSerializer):
             'city', 'country', 'state', 'area', 'longitude', 'latitude',
             'images', 'discount', 'amenities', 'rooms', 'rules',
             'documentation', 'created_at', 'updated_at', 'is_active',
-            'reviews', 'offers', 'is_favorite'  # Added is_favorite field
+            'reviews', 'offers', 'is_favorite', 'gender_type'  # Added is_favorite and gender_type fields
         ]
 
     def get_is_favorite(self, obj):
@@ -323,3 +346,8 @@ class ReviewCreateSerializer(serializers.ModelSerializer):
             )
         
         return review
+
+class SettingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Setting
+        fields = '__all__'

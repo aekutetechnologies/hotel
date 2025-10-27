@@ -75,7 +75,20 @@ class Documentation(models.Model):
         return self.name
 
 class PropertyImage(models.Model):
+    IMAGE_CATEGORY_CHOICES = [
+        ('room', 'Room'),
+        ('bathroom', 'Bathroom'),
+        ('waiting_room', 'Waiting Room'),
+        ('facade', 'Facade'),
+        ('parking', 'Parking'),
+        ('lobby', 'Lobby'),
+        ('dining', 'Dining'),
+        ('exterior', 'Exterior'),
+        ('other', 'Other'),
+    ]
+    
     image = models.ImageField(upload_to='property_images/')
+    category = models.CharField(max_length=20, choices=IMAGE_CATEGORY_CHOICES, default='other')
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
@@ -120,6 +133,12 @@ class Room(models.Model):
         return self.name
 
 class Property(models.Model):
+    GENDER_TYPE_CHOICES = [
+        ('unisex', 'Unisex'),
+        ('male', 'Male'),
+        ('female', 'Female'),
+    ]
+    
     id = models.AutoField(primary_key=True)
     PROPERTY_TYPE_CHOICES = [
         ('hotel', 'Hotel'),
@@ -141,12 +160,29 @@ class Property(models.Model):
     rooms = models.ManyToManyField(Room, blank=True)
     rules = models.ManyToManyField(Rule, blank=True)
     documentation = models.ManyToManyField(Documentation, blank=True)
+    gender_type = models.CharField(max_length=10, null=True, blank=True, choices=GENDER_TYPE_CHOICES)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
         return self.name
+
+class Setting(models.Model):
+    """Global settings for the system"""
+    id = models.AutoField(primary_key=True)
+    key = models.CharField(max_length=100, unique=True)
+    value = models.CharField(max_length=255)
+    description = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+    
+    class Meta:
+        ordering = ['key']
+        
+    def __str__(self):
+        return f"{self.key}: {self.value}"
 
 class UserProperty(models.Model):
     id = models.AutoField(primary_key=True)

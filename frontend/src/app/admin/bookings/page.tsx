@@ -11,8 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Search, Plus, Edit, FileText, Eye, Trash2, Upload, Calendar, Filter, X, Info, FileDown } from 'lucide-react'
-import Link from 'next/link'
+import { Search, Plus, Edit, FileText, Trash2, Upload, Calendar, Filter, X, Info, FileDown } from 'lucide-react'
 import { BookingModal } from '@/components/BookingModal'
 import { DocumentModal } from '@/components/DocumentModal'
 import {
@@ -125,29 +124,7 @@ interface BookPropertyParams {
   token?: string;
 }
 
-// Add type definitions for response structures
-interface ApiResponse<T> {
-  results: T[]
-}
 
-// Update BookingData to match what comes from API but be compatible with Booking interface
-interface BookingData {
-  id: number
-  property: Property | number | null
-  room?: number
-  user: User | number | null
-  checkin_date: string
-  checkout_date: string
-  status: string
-  price: number
-  booking_type: string
-  payment_type: string
-  number_of_guests?: number
-  number_of_rooms?: number
-  discount?: number
-  documents?: Document[]
-  [key: string]: unknown
-}
 
 // Add interface for booking room types
 interface BookingRoomType {
@@ -162,9 +139,7 @@ export default function Bookings() {
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
   const [bookings, setBookings] = useState<Booking[]>([])
   const [documents, setDocuments] = useState<Document[]>([])
-  const [isLoading, setIsLoading] = useState(false)
   const [isLoadingBookings, setIsLoadingBookings] = useState(false)
-  const [isLoadingUpload, setIsLoadingUpload] = useState(false)
   const [isLoadingDocuments, setIsLoadingDocuments] = useState(false)
   const [properties, setProperties] = useState<Property[]>([])
   const [users, setUsers] = useState<User[]>([])

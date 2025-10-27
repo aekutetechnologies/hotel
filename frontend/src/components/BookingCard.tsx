@@ -18,6 +18,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
 import { Princess_Sofia } from "next/font/google"
 import { Separator } from "./ui/separator"
+import { toast } from 'react-toastify'
 
 interface Offer {
   id: number
@@ -52,18 +53,20 @@ interface BookingCardProps {
 function CalendarWithAutoClose({
   selected,
   onSelect,
+  autoClose = true,
   ...props
 }: {
   selected: Date | undefined;
   onSelect: (date: Date | undefined) => void;
+  autoClose?: boolean;
   [key: string]: any;
 }) {
   const handleSelect = (date: Date | undefined) => {
     // Call the provided onSelect
     onSelect(date);
 
-    // Auto-close the popover after selection
-    if (date) {
+    // Auto-close the popover after selection only if autoClose is enabled
+    if (date && autoClose) {
       setTimeout(() => {
         // Find and close the popover
         const openPopover = document.querySelector('[data-state="open"][data-radix-popper-content-wrapper]');
@@ -139,9 +142,27 @@ export function BookingCard({
   const [months, setMonths] = useState(initialMonths)
   const [years, setYears] = useState(initialYears)
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null)
+  const [taxRate, setTaxRate] = useState<number>(0.18) // Default to 18% GST
 
   // Check if this is a hostel property
   const isHostel = property?.property_type === 'hostel'
+
+  // Fetch tax rate from database
+  useEffect(() => {
+    const fetchTaxRate = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/'}property/settings/`)
+        const settings = await response.json()
+        if (settings.tax_rate) {
+          setTaxRate(parseFloat(settings.tax_rate))
+        }
+      } catch (error) {
+        console.error('Error fetching tax rate:', error)
+        // Keep default value
+      }
+    }
+    fetchTaxRate()
+  }, [])
 
   // When selectedRoomMap changes, update the URL to match
   useEffect(() => {
@@ -478,7 +499,7 @@ export function BookingCard({
 
 
   const discountedPrice = totalPrice - (totalPrice * averageDiscount / 100)
-  const taxes = discountedPrice * 0.18 // 18% GST
+  const taxes = discountedPrice * taxRate // Tax rate from database
 
   // Safely handle offer discount
   const offerDiscount = selectedOffer ? (totalPrice * parseFloat(selectedOffer.offer.discount_percentage)) / 100 : 0
@@ -625,35 +646,48 @@ export function BookingCard({
       <CardContent className="space-y-6">
         {/* Redesigned Date/Time/Room/Guest/Months Layout */}
         <div className="space-y-4">
-          {/* Hotel Daily Booking: Check-in and Check-out date in 1 row */}
+          {/* Hotel Daily Booking: Check-in and Check-out date in 1 row, Rooms and Guests in 1 row */}
           {bookingType === 'daily' && !isHostel && (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Check-in Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="neutral" className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}> <CalendarDays className="mr-2 h-4 w-4" /> {date ? format(date, "MMM d, yyyy") : <span>Pick a date</span>} </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <CalendarWithAutoClose selected={date} onSelect={handleDateChange} initialFocus disabled={(date: Date) => date < new Date(formattedToday)} />
-                  </PopoverContent>
-                </Popover>
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Check-in Date</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="neutral" className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}> <CalendarDays className="mr-2 h-4 w-4" /> {date ? format(date, "MMM d, yyyy") : <span>Pick a date</span>} </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarWithAutoClose selected={date} onSelect={handleDateChange} initialFocus disabled={(date: Date) => date < new Date(formattedToday)} />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div>
+                  <Label>Check-out Date</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="neutral" className={cn("w-full justify-start text-left font-normal", !checkOut && "text-muted-foreground")}> <CalendarDays className="mr-2 h-4 w-4" /> {checkOut ? format(checkOut, "MMM d, yyyy") : <span>Pick a date</span>} </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarWithAutoClose selected={checkOut} onSelect={handleCheckOutDateChange} initialFocus disabled={(calDate: Date) => { if (!date) return calDate < new Date(formattedToday); return calDate < new Date(formattedToday) || calDate < date; }} defaultMonth={date && date > new Date() ? date : undefined} />
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
-              <div>
-                <Label>Check-out Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="neutral" className={cn("w-full justify-start text-left font-normal", !checkOut && "text-muted-foreground")}> <CalendarDays className="mr-2 h-4 w-4" /> {checkOut ? format(checkOut, "MMM d, yyyy") : <span>Pick a date</span>} </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <CalendarWithAutoClose selected={checkOut} onSelect={handleCheckOutDateChange} initialFocus disabled={(calDate: Date) => { if (!date) return calDate < new Date(formattedToday); return calDate < new Date(formattedToday) || calDate < date; }} defaultMonth={date && date > new Date() ? date : undefined} />
-                  </PopoverContent>
-                </Popover>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Number of Rooms</Label>
+                  <Input type="number" value={getRoomCountFromSearchParams()} onChange={(e) => handleRoomsChange(parseInt(e.target.value) || 1)} min={1} className="mt-1 bg-gray-100" disabled />
+                </div>
+                <div>
+                  <Label>Number of Guests</Label>
+                  <Input type="number" value={guests} onChange={(e) => { const newValue = parseInt(e.target.value) || 1; const maxGuests = getRoomCountFromSearchParams() * 3; handleGuestsChange(Math.min(newValue, maxGuests)); }} min={1} max={getRoomCountFromSearchParams() * 3} className="mt-1" />
+                  <div className="text-xs text-gray-500 mt-1">Max 3 guests per room</div>
+                </div>
               </div>
-            </div>
+            </>
           )}
 
-          {/* Hotel Hourly Booking: Check-in date in 1 row, check-in/out time in 1 row */}
+          {/* Hotel Hourly Booking: Check-in date in 1 row, check-in/out time in 1 row, Rooms and Guests in 1 row */}
           {bookingType === 'hourly' && !isHostel && (
             <>
               <div>
@@ -685,6 +719,17 @@ export function BookingCard({
                     </SelectTrigger>
                     <SelectContent>{getAvailableHours(true).map((hour) => (<SelectItem key={hour} value={hour.toString()}>{formatTime(hour)}</SelectItem>))}</SelectContent>
                   </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Number of Rooms</Label>
+                  <Input type="number" value={getRoomCountFromSearchParams()} onChange={(e) => handleRoomsChange(parseInt(e.target.value) || 1)} min={1} className="mt-1 bg-gray-100" disabled />
+                </div>
+                <div>
+                  <Label>Number of Guests</Label>
+                  <Input type="number" value={guests} onChange={(e) => { const newValue = parseInt(e.target.value) || 1; const maxGuests = getRoomCountFromSearchParams() * 3; handleGuestsChange(Math.min(newValue, maxGuests)); }} min={1} max={getRoomCountFromSearchParams() * 3} className="mt-1" />
+                  <div className="text-xs text-gray-500 mt-1">Max 3 guests per room</div>
                 </div>
               </div>
             </>
@@ -840,7 +885,7 @@ export function BookingCard({
               </div>
             )}
             <div className="flex justify-between">
-              <span>Taxes</span>
+              <span>Taxes ({(taxRate * 100).toFixed(0)}%)</span>
               <span>₹{bookingType === 'monthly'
                 ? (taxes * months * guests).toFixed(2)
                 : bookingType === 'yearly'
@@ -861,42 +906,93 @@ export function BookingCard({
       </CardContent>
 
       <CardFooter className="flex flex-col gap-4">
-        <Link href={{
-          pathname: `/property/${property.id}/book`,
-          query: {
-            ...(searchParams ? Object.fromEntries(searchParams.entries()) : {}),
-            selectedRooms: JSON.stringify(
-              Array.from(selectedRoomMap.entries())
-                .filter(([_, room]) => room.quantity > 0)
-                .map(([id, room]) => ({
-                  id,
-                  name: room.name || room.occupancyType || 'Room',
-                  quantity: room.quantity,
-                  price: bookingType === 'yearly'
-                    ? room.yearly_rate
-                    : bookingType === 'monthly'
-                      ? room.monthly_rate
-                      : bookingType === 'hourly'
-                        ? room.hourly_rate
-                        : room.daily_rate
-                }))
-            ),
-            selectedOffer: selectedOffer ? JSON.stringify({
-              id: selectedOffer.id,
-              code: selectedOffer.offer.code,
-              title: selectedOffer.offer.title,
-              discount_percentage: selectedOffer.offer.discount_percentage
-            }) : ''
-          }
-        }}
-          rel="noopener noreferrer">
-          <Button
-            className="w-full bg-[#B11E43] hover:bg-[#8f1836]"
-            disabled={Array.from(selectedRoomMap.values()).filter(room => room.quantity > 0).length === 0}
-          >
-            Book Now
-          </Button>
-        </Link>
+        {isHostel ? (
+          <>
+            {/* Hostel: Show both Book Visit and Book Now side by side */}
+            <div className="grid grid-cols-2 gap-3">
+              <Link href={`/property/${property.id}/visit`}>
+                <Button
+                  className="w-full bg-[#B11E43] hover:bg-[#8f1836] text-white"
+                >
+                  Schedule Visit
+                </Button>
+              </Link>
+              <Link href={{
+                pathname: `/property/${property.id}/book`,
+                query: {
+                  ...(searchParams ? Object.fromEntries(searchParams.entries()) : {}),
+                  selectedRooms: JSON.stringify(
+                    Array.from(selectedRoomMap.entries())
+                      .filter(([_, room]) => room.quantity > 0)
+                      .map(([id, room]) => ({
+                        id,
+                        name: room.name || room.occupancyType || 'Room',
+                        quantity: room.quantity,
+                        price: bookingType === 'yearly'
+                          ? room.yearly_rate
+                          : bookingType === 'monthly'
+                            ? room.monthly_rate
+                            : bookingType === 'hourly'
+                              ? room.hourly_rate
+                              : room.daily_rate
+                      }))
+                  ),
+                  selectedOffer: selectedOffer ? JSON.stringify({
+                    id: selectedOffer.id,
+                    code: selectedOffer.offer.code,
+                    title: selectedOffer.offer.title,
+                    discount_percentage: selectedOffer.offer.discount_percentage
+                  }) : ''
+                }
+              }}
+                rel="noopener noreferrer">
+                <Button
+                  className="w-full bg-[#B11E43] hover:bg-[#8f1836] text-white"
+                  disabled={Array.from(selectedRoomMap.values()).filter(room => room.quantity > 0).length === 0}
+                >
+                  Request Booking
+                </Button>
+              </Link>
+            </div>
+          </>
+        ) : (
+          <Link href={{
+            pathname: `/property/${property.id}/book`,
+            query: {
+              ...(searchParams ? Object.fromEntries(searchParams.entries()) : {}),
+              selectedRooms: JSON.stringify(
+                Array.from(selectedRoomMap.entries())
+                  .filter(([_, room]) => room.quantity > 0)
+                  .map(([id, room]) => ({
+                    id,
+                    name: room.name || room.occupancyType || 'Room',
+                    quantity: room.quantity,
+                    price: bookingType === 'yearly'
+                      ? room.yearly_rate
+                      : bookingType === 'monthly'
+                        ? room.monthly_rate
+                        : bookingType === 'hourly'
+                          ? room.hourly_rate
+                          : room.daily_rate
+                  }))
+              ),
+              selectedOffer: selectedOffer ? JSON.stringify({
+                id: selectedOffer.id,
+                code: selectedOffer.offer.code,
+                title: selectedOffer.offer.title,
+                discount_percentage: selectedOffer.offer.discount_percentage
+              }) : ''
+            }
+          }}
+            rel="noopener noreferrer">
+            <Button
+              className="w-full bg-[#B11E43] hover:bg-[#8f1836]"
+              disabled={Array.from(selectedRoomMap.values()).filter(room => room.quantity > 0).length === 0}
+            >
+              Book Now
+            </Button>
+          </Link>
+        )}
 
         <div className="w-full space-y-2">
           <p className="text-sm text-green-600 flex items-center gap-1">
@@ -905,6 +1001,8 @@ export function BookingCard({
           </p>
         </div>
       </CardFooter>
+
+
     </Card>
   )
 }

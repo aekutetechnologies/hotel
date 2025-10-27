@@ -8,7 +8,7 @@ import Navbar from "@/components/Navbar";
 import PlaceCard from "@/components/PlaceCard";
 import { PropertyTimeline } from "@/components/property-timeline";
 import Features from "@/components/Features";
-import SocialSection from "@/components/SocialSection";
+import HighlightedBlogs from "@/components/blog/HighlightedBlogs";
 import TestimonialSection from "@/components/testimonial-section";
 import { HeroSection } from "./HeroSection";
 import Footer from "./Footer";
@@ -257,8 +257,8 @@ export function DetailSection({
           {/* Features */}
           <Features sectionType={sectionType} />
 
-          {/* Social Section */}
-          <SocialSection type={getSingularType(sectionType)} />
+          {/* Highlighted Blogs Section */}
+          <HighlightedBlogs type={getSingularType(sectionType)} />
 
           {/* Reviews Section */}
           <div className="py-16 bg-white">

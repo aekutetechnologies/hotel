@@ -169,7 +169,7 @@ export function HomeHero({
   const hotelRibbonTextColor = "#fff";
 
   // Colors for hostel ribbon
-  const hostelRibbonColor = "#454F61";
+  const hostelRibbonColor = "#a31c44";
   const hostelRibbonTextColor = "#fff";
 
   return (

@@ -18,7 +18,7 @@ interface LoginDialogProps {
 }
 
 export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProps) {
-  const [view, setView] = useState<"benefits" | "phone" | "otp" | "userInfo">("benefits")
+  const [view, setView] = useState<"benefits" | "phone" | "otp" | "userInfo">("phone")
   const [phoneNumber, setPhoneNumber] = useState("")
   const [otp, setOtp] = useState(["", "", "", "", "", ""])
   const [showOTPInput, setShowOTPInput] = useState(false)
@@ -30,7 +30,7 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
   const [error, setError] = useState<string | null>(null)
 
   const resetDialogState = () => {
-    setView("benefits")
+    setView("phone")
     setPhoneNumber("")
     setOtp(["", "", "", "", "", ""])
     setShowOTPInput(false)
@@ -171,7 +171,6 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">Log In/Sign Up</DialogTitle>
-          <p className="text-sm text-gray-500">Sign-up to become a member of Hsquare, and get exclusive discounts.</p>
         </DialogHeader>
 
         <div className="flex flex-col gap-6 py-4">
@@ -183,25 +182,7 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
             <div className="px-4 py-2 bg-red-100 text-red-700 rounded-md">{error}</div>
           )}
 
-          {view === "benefits" ? (
-            // Benefits View
-            <div className="space-y-6">
-              {benefits.map((benefit, index) => (
-                <div key={index} className="flex items-start gap-4">
-                  <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
-                    <benefit.icon className="h-6 w-6 text-[#A31C44]" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium">{benefit.title}</h3>
-                    <p className="text-sm text-gray-500">{benefit.description}</p>
-                  </div>
-                </div>
-              ))}
-              <Button className="w-full bg-[#A31C44] hover:bg-[#7A1533] text-white" onClick={() => setView("phone")}>
-                Continue
-              </Button>
-            </div>
-          ) : view === "phone" ? (
+          {view === "phone" ? (
             // Phone Input View
             <div className="space-y-6">
               <div className="space-y-4">

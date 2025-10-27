@@ -9,4 +9,9 @@ urlpatterns = [
     path('bookings/<int:pk>/status/', views.update_booking_status, name='update-booking-status'),
     path('bookings/<int:pk>/documents/', views.upload_booking_document, name='upload-booking-document'),
     path('bookings/documents/<int:pk>/', views.booking_document_view, name='booking-document-view'),
+    
+    # Hostel Visit URLs
+    path('visits/', views.hostel_visit_list, name='hostel-visit-list'),
+    path('visits/<int:pk>/', views.hostel_visit_detail, name='hostel-visit-detail'),
+    path('visits/user/', views.hostel_visit_list_by_user, name='hostel-visit-list-by-user'),
 ]

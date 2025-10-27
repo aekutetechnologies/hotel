@@ -10,12 +10,12 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "text-mtext bg-main border-2 border-border shadow-shadow hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none",
-        noShadow: "text-mtext bg-main border-2 border-border",
+          "text-white rounded-lg font-medium transition-colors text-sm shadow-lg bg-[#B11E43] hover:bg-[#8f1836]",
+        noShadow: "text-white bg-[#B11E43] hover:bg-[#8f1836]",
         neutral:
-          "bg-bw text-text border-2 border-border shadow-shadow hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none",
+          "bg-white text-black shadow-lg rounded-xl",
         reverse:
-          "text-mtext bg-main border-2 border-border hover:translate-x-reverseBoxShadowX hover:translate-y-reverseBoxShadowY hover:shadow-shadow",
+          "text-white bg-[#B11E43] hover:bg-[#8f1836] shadow-lg",
       },
       size: {
         default: "h-10 px-4 py-2",

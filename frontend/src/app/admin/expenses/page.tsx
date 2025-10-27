@@ -45,7 +45,6 @@ export default function Expenses() {
   const [isLoadingExpenses, setIsLoadingExpenses] = useState(false)
   const [isLoadingDocuments, setIsLoadingDocuments] = useState(false)
   const [documents, setDocuments] = useState<ExpenseDocument[]>([])
-  const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>([])
   const [properties, setProperties] = useState<Property[]>([])
   
   const fetchExpensesData = useCallback(async () => {

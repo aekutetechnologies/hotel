@@ -1,62 +1,95 @@
-import requests
-from bs4 import BeautifulSoup
-from django.utils import timezone
 import os
 import django
+from django.utils import timezone
 
 # Set up Django environment
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')  # Replace 'your_project' with your project name
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
-from property.models import City, State  # Replace 'your_app' with your app name
+from property.models import City, State
 
-def scrape_cities_and_states():
-    urls = [
-        "https://en.wikipedia.org/wiki/List_of_towns_in_India_by_population",
-        "https://en.wikipedia.org/wiki/List_of_cities_in_India_by_population"
+def add_states_and_union_territories():
+    """Add states and union territories to the database."""
+    
+    # List of states
+    states = [
+        "Andhra Pradesh",
+        "Arunachal Pradesh",
+        "Assam",
+        "Bihar",
+        "Chhattisgarh",
+        "Goa",
+        "Gujarat",
+        "Haryana",
+        "Himachal Pradesh",
+        "Jharkhand",
+        "Karnataka",
+        "Kerala",
+        "Madhya Pradesh",
+        "Maharashtra",
+        "Manipur",
+        "Meghalaya",
+        "Mizoram",
+        "Nagaland",
+        "Odisha",
+        "Punjab",
+        "Rajasthan",
+        "Sikkim",
+        "Tamil Nadu",
+        "Telangana",
+        "Tripura",
+        "Uttar Pradesh",
+        "Uttarakhand",
+        "West Bengal"
     ]
-
-    for url in urls:
-        response = requests.get(url)
-        soup = BeautifulSoup(response.content, 'html.parser')
-
-        # Find the relevant table (this may need adjustment based on the actual table structure)
-        tables = soup.find_all('table', {'class': 'wikitable'})
+    
+    # List of union territories
+    union_territories = [
+        "Andaman and Nicobar Islands",
+        "Chandigarh",
+        "Dadra and Nagar Haveli and Daman and Diu",
+        "Delhi",
+        "Jammu and Kashmir",
+        "Ladakh",
+        "Lakshadweep",
+        "Puducherry"
+    ]
+    
+    # Combine states and union territories
+    all_states = states + union_territories
+    
+    added_count = 0
+    existing_count = 0
+    
+    print(f"\nAdding states and union territories...")
+    print(f"{'='*60}")
+    
+    for state_name in all_states:
+        state, created = State.objects.get_or_create(name=state_name)
         
-        for table in tables:
-            header_row = table.find('tr')
-            if header_row:
-                headers = [th.text.strip().lower() for th in header_row.find_all('th')]
-                towns_col_index = -1
-                state_col_index = -1
-
-                for index, header in enumerate(headers):
-                    if 'town' in header or 'city' in header:
-                        towns_col_index = index
-                    if 'state' in header:
-                        state_col_index = index
-
-                if towns_col_index != -1 and state_col_index != -1:
-                    rows = table.find_all('tr')[1:]  # Skip header row
-                    for row in rows:
-                        columns = row.find_all('td')
-                        if columns and len(columns) > max(towns_col_index, state_col_index):
-                            city_name = columns[towns_col_index].text.strip()
-                            state_name = columns[state_col_index].text.strip()
-
-                            # Create or get state object
-                            state, state_created = State.objects.get_or_create(name=state_name)
-
-                            # Create or get city object
-                            city, city_created = City.objects.get_or_create(name=city_name, defaults={'is_active': True})
-                            city.created_at = timezone.now()
-                            city.updated_at = timezone.now()
-                            city.save()
-
-                else:
-                    pass
-            else:
-                pass
+        if created:
+            state.created_at = timezone.now()
+            state.updated_at = timezone.now()
+            state.save()
+            print(f"✓ Added state: {state_name}")
+            added_count += 1
+        else:
+            print(f"→ Already exists: {state_name}")
+            existing_count += 1
+    
+    print(f"{'='*60}")
+    print(f"Total states processed: {len(all_states)}")
+    print(f"Added: {added_count}")
+    print(f"Already existed: {existing_count}")
+    print(f"{'='*60}\n")
+    
+    return added_count, existing_count
 
 if __name__ == "__main__":
-    scrape_cities_and_states()
+    try:
+        add_states_and_union_territories()
+        print("✓ States and union territories added successfully!")
+    except Exception as e:
+        print(f"✗ Error: {str(e)}")
+        import traceback
+        traceback.print_exc()

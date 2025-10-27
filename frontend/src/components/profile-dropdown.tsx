@@ -14,6 +14,7 @@ import { useRef, useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { PermissionGuard } from './PermissionGuard'
+import { createPortal } from "react-dom"
 
 interface ProfileDropdownProps {
   onLogout: () => void
@@ -24,6 +25,8 @@ export function ProfileDropdown({ onLogout, userName }: ProfileDropdownProps) {
   const firstLetter = userName.charAt(0).toUpperCase()
   const triggerRef = useRef<HTMLButtonElement>(null)
   const [triggerWidth, setTriggerWidth] = useState<number>(0)
+  const [isOpen, setIsOpen] = useState(false)
+  const [buttonRect, setButtonRect] = useState<DOMRect | null>(null)
   const router = useRouter()
 
   // Calculate trigger width on mount and window resize
@@ -51,88 +54,98 @@ export function ProfileDropdown({ onLogout, userName }: ProfileDropdownProps) {
     router.push('/home?type=hotels')
   }
 
+  const handleButtonClick = () => {
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect()
+      setButtonRect(rect)
+    }
+    setIsOpen(!isOpen)
+  }
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (triggerRef.current && !triggerRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isOpen])
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button 
-          ref={triggerRef}
-          variant="neutral" 
-          size="sm" 
-          className="hover:bg-red-50 pl-2 pr-3 border-none focus:ring-0 focus:ring-offset-0"
-        >
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-red-600 flex items-center justify-center">
-              <span className="text-white font-medium text-lg">{firstLetter}</span>
-            </div>
-            <span className="text-gray-700 text-base">Hi {userName}</span>
-            <ChevronDown className="h-4 w-4 text-gray-500" />
-          </div>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent 
-        align="end" 
-        alignOffset={0}
-        className="p-2 rounded-b-lg rounded-t-none border-t-0 shadow-lg mt-1 border-white" 
-        style={{ 
-          zIndex: 60,
-          width: `${triggerWidth}px`,
-          marginTop: '-2px',
-          marginLeft: '-5px',
-          borderTopLeftRadius: 0,
-          borderTopRightRadius: 0,
-          borderTop: 'none',
-          borderColor: 'white',
-          animation: 'dropdownSlide 150ms ease-out'
-        }}
+    <>
+      <Button 
+        ref={triggerRef}
+        variant="neutral" 
+        size="sm" 
+        className="hover:bg-red-50 pl-2 pr-3 border-none focus:ring-0 focus:ring-offset-0"
+        onClick={handleButtonClick}
       >
-        <style jsx global>{`
-          @keyframes dropdownSlide {
-            from {
-              opacity: 0;
-              transform: translateY(-5px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-        `}</style>
-        <Link href="/profile" passHref>
-          <DropdownMenuItem className="cursor-pointer text-base rounded-md my-1 hover:bg-gray-50">
-            <User className="mr-2 h-4 w-4" />
-            <span>My Profile</span>
-          </DropdownMenuItem>
-        </Link>
-        <Link href="/booking" passHref>
-          <DropdownMenuItem className="cursor-pointer text-base rounded-md my-1 hover:bg-gray-50">
-            <CalendarDays className="mr-2 h-4 w-4" />
-            <span>My Bookings</span>
-          </DropdownMenuItem>
-        </Link>
-        <Link href="/favorites" passHref>
-          <DropdownMenuItem className="cursor-pointer text-base rounded-md my-1 hover:bg-gray-50">
-            <Heart className="mr-2 h-4 w-4" />
-            <span>My Favorites</span>
-          </DropdownMenuItem>
-        </Link>
-        <PermissionGuard permission="admin:dashboard:view">
-          <Link href="/admin/dashboard" passHref>
-            <DropdownMenuItem className="cursor-pointer text-base rounded-md my-1 hover:bg-gray-50">
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Admin Dashboard</span>
-            </DropdownMenuItem>
-          </Link>
-        </PermissionGuard>
-        <DropdownMenuSeparator className="my-2" />
-        <DropdownMenuItem 
-          className="cursor-pointer text-red-600 rounded-md my-1 hover:bg-red-50 focus:text-red-600 focus:bg-red-50 text-base" 
-          onClick={handleLogout}
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-full bg-red-600 flex items-center justify-center">
+            <span className="text-white font-medium text-lg">{firstLetter}</span>
+          </div>
+          <span className="text-gray-700 text-base">Hi {userName}</span>
+          <ChevronDown className="h-4 w-4 text-gray-500" />
+        </div>
+      </Button>
+      {isOpen && buttonRect && createPortal(
+        <div 
+          className="fixed bg-white shadow-lg rounded-md z-[9999] border border-gray-200"
+          style={{ 
+            width: `${triggerWidth}px`,
+            top: buttonRect.bottom + 8,
+            left: buttonRect.right - triggerWidth,
+            right: 'auto'
+          }}
         >
-          <LogOut className="mr-2 h-4 w-4" />
-          <span>Logout</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          <div className="p-2">
+            <Link href="/profile" onClick={() => setIsOpen(false)}>
+              <div className="cursor-pointer text-base rounded-md my-1 hover:bg-gray-50 px-2 py-2 flex items-center">
+                <User className="mr-2 h-4 w-4" />
+                <span>My Profile</span>
+              </div>
+            </Link>
+            <Link href="/booking" onClick={() => setIsOpen(false)}>
+              <div className="cursor-pointer text-base rounded-md my-1 hover:bg-gray-50 px-2 py-2 flex items-center">
+                <CalendarDays className="mr-2 h-4 w-4" />
+                <span>My Bookings</span>
+              </div>
+            </Link>
+            <Link href="/favorites" onClick={() => setIsOpen(false)}>
+              <div className="cursor-pointer text-base rounded-md my-1 hover:bg-gray-50 px-2 py-2 flex items-center">
+                <Heart className="mr-2 h-4 w-4" />
+                <span>My Favorites</span>
+              </div>
+            </Link>
+            <PermissionGuard permission="admin:dashboard:view">
+              <Link href="/admin/dashboard" onClick={() => setIsOpen(false)}>
+                <div className="cursor-pointer text-base rounded-md my-1 hover:bg-gray-50 px-2 py-2 flex items-center">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Admin Dashboard</span>
+                </div>
+              </Link>
+            </PermissionGuard>
+            <div className="border-t my-2"></div>
+            <div 
+              className="cursor-pointer text-red-600 rounded-md my-1 hover:bg-red-50 px-2 py-2 flex items-center" 
+              onClick={() => { handleLogout(); setIsOpen(false); }}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Logout</span>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
   )
 }
 

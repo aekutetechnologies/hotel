@@ -280,7 +280,7 @@ export default function Bookings() {
 
   const handleStatusChange = async (bookingId: number, newStatus: 'confirmed' | 'pending' | 'cancelled') => {
     try {
-      setIsLoading(true)
+      setIsLoadingBookings(true)
       await updateStatusBooking({ id: bookingId.toString(), status: newStatus })
       getBookingsData()
       toast.success('Booking status updated successfully')
@@ -288,12 +288,12 @@ export default function Bookings() {
       console.error('Error updating booking status:', error)
       toast.error(`Failed to update booking status: ${error.message}`)
     } finally {
-      setIsLoading(false)
+      setIsLoadingBookings(false)
     }
   }
 
   const handleDocumentUpload = async (bookingId: number, file: File) => {
-    setIsLoadingUpload(true)
+    setIsLoadingDocuments(true)
     try {
       await uploadBookingDoc(bookingId.toString(), file)
       toast.success('Document uploaded successfully')
@@ -303,7 +303,7 @@ export default function Bookings() {
       console.error('Error uploading document:', error)
       toast.error(`Failed to upload document: ${error.message}`)
     } finally {
-      setIsLoadingUpload(false)
+      setIsLoadingDocuments(false)
     }
   }
 

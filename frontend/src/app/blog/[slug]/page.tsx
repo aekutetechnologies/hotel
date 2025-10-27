@@ -221,9 +221,9 @@ export default function BlogDetailPage() {
               </div>
 
               {/* Images Carousel */}
-              {blog.images && blog.images.length > 0 ? (
+              {blog.images && blog.images.filter(img => img.image_url).length > 0 ? (
                 <BlogImageCarousel 
-                  images={blog.images}
+                  images={blog.images.filter(img => img.image_url) as any}
                   autoSlide={true}
                   slideInterval={5000}
                   className="mb-8"
@@ -339,7 +339,7 @@ export default function BlogDetailPage() {
                         </h3>
                       </Link>
                       <p className="text-sm text-gray-600 overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: '1.2em', maxHeight: '2.4em' }}>
-                        {relatedBlog.excerpt}
+                        {relatedBlog.content ? relatedBlog.content.replace(/<[^>]*>/g, '').substring(0, 150) + '...' : 'No content available'}
                       </p>
                     </CardContent>
                   </Card>

@@ -12,7 +12,8 @@ import {
   Calendar, 
   CreditCard, 
   ShoppingBag, 
-  UserPlus 
+  UserPlus,
+  ArrowUp
 } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { Spinner } from '@/components/ui/spinner'

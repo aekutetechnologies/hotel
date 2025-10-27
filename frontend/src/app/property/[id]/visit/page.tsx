@@ -56,7 +56,7 @@ export default function VisitBookingPage() {
   useEffect(() => {
     const loadProperty = async () => {
       try {
-        const data = await fetchProperty(propertyId)
+        const data = await fetchProperty(propertyId.toString())
         setProperty(data)
       } catch (error) {
         console.error('Error loading property:', error)
@@ -172,7 +172,7 @@ export default function VisitBookingPage() {
             <Card className="sticky top-4">
               <div className="relative h-48 w-full rounded-t-lg overflow-hidden">
                 <Image
-                  src={property.featured_image?.image || property.images?.[0]?.image || '/placeholder.jpg'}
+                  src={property.images?.[0]?.image || property.images?.[0]?.image_url || '/placeholder.jpg'}
                   alt={property.name}
                   fill
                   className="object-cover"
@@ -191,20 +191,6 @@ export default function VisitBookingPage() {
                     </p>
                   </div>
                 </div>
-                
-                {property.contact_number && (
-                  <div className="flex items-center">
-                    <Phone className="h-5 w-5 mr-3 text-gray-500" />
-                    <span className="text-sm text-gray-600">{property.contact_number}</span>
-                  </div>
-                )}
-
-                {property.contact_email && (
-                  <div className="flex items-center">
-                    <Mail className="h-5 w-5 mr-3 text-gray-500" />
-                    <span className="text-sm text-gray-600">{property.contact_email}</span>
-                  </div>
-                )}
 
                 <div className="pt-4 border-t">
                   <p className="text-sm text-gray-600">

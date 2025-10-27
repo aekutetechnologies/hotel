@@ -140,7 +140,7 @@ export default function HighlightedBlogs({ type }: HighlightedBlogsProps) {
                   )}
                   
                   <p className="text-gray-600 text-base mb-5 line-clamp-3 flex-grow">
-                    {blog.excerpt || "Discover more about this topic and explore our latest insights."}
+                    {blog.content ? blog.content.replace(/<[^>]*>/g, '').substring(0, 150) + '...' : "Discover more about this topic and explore our latest insights."}
                   </p>
 
                   {/* CTA - Prominent like in the image */}

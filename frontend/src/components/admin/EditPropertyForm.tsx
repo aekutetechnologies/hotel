@@ -664,7 +664,7 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
         location: location.address,
         latitude: location.latitude,
         longitude: location.longitude,
-        images: images.map(img => ({ id: Number(img.id), category: img.category })), // Send image objects with category
+        images: images.map(img => Number(img.id)), // Send image IDs
         amenities: selectedAmenities,
         rules: selectedPolicies,
         documentation: selectedDocumentation,

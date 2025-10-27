@@ -93,6 +93,9 @@ export default function PropertyDetails() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [userName, setUserName] = useState("")
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false)
+  const [isClosed, setIsClosed] = useState(false)
+  const [isNavModalOpen, setIsNavModalOpen] = useState(false)
+  const [sectionType, setSectionType] = useState<"hotels" | "hostels">("hotels")
 
   const params = useParams()
   const router = useRouter()
@@ -172,6 +175,23 @@ export default function PropertyDetails() {
   const setShowDetailSection = (section: string) => {
     window.location.href = `/home?type=${section}`
   }
+
+  // Helper to convert the section type from "hotels"/"hostels" to "hotel"/"hostel"
+  const getSingularType = (type: "hotels" | "hostels"): "hotel" | "hostel" => {
+    return type === "hotels" ? "hotel" : "hostel";
+  };
+
+  // Handle navModal state change from Navbar
+  const handleNavModalChange = (isOpen: boolean) => {
+    setIsNavModalOpen(isOpen);
+  };
+
+  // Update sectionType based on property type
+  useEffect(() => {
+    if (property) {
+      setSectionType(property.property_type === 'hostel' ? 'hostels' : 'hotels');
+    }
+  }, [property]);
 
   // Log time values for debugging
   useEffect(() => {
@@ -529,17 +549,23 @@ export default function PropertyDetails() {
     .filter(catValue => property.images.some(img => img.category === catValue))]
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col overflow-visible">
       <Navbar
         isLoggedIn={isLoggedIn}
         userName={userName}
         handleLogout={handleLogout}
         handleLoginClick={handleLoginClick}
-        setShowDetailSection={setShowDetailSection}
-        isClosed={false}
-        currentSection={propertyType === 'hostel' ? 'hostels' : 'hotels'}
+        setShowDetailSection={(section: string) => {
+          if (section) {
+            setShowDetailSection(section);
+          }
+        }}
+        isClosed={isClosed}
+        currentSection={getSingularType(sectionType)}
+        onNavModalChange={handleNavModalChange}
+        isDetailPage={true}
       />
-      <main className="flex-grow container mx-auto px-4 py-8">
+      <main className="flex-grow container mx-auto px-4 py-8 overflow-visible">
         <div className="mb-6">
           <InlineSearchForm />
         </div>

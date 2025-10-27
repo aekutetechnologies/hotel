@@ -231,20 +231,24 @@ permissions = [
         'description': 'Delete replies.'
     },
     {
-        'name': 'blog_create',
+        'name': 'blog:create',
         'description': 'Create new blog posts and manage blog categories/tags.'
     },
     {
-        'name': 'blog_edit',
+        'name': 'blog:edit',
         'description': 'Edit existing blog posts, categories, and tags.'
     },
     {
-        'name': 'blog_delete',
+        'name': 'blog:delete',
         'description': 'Delete blog posts, categories, tags, and images.'
     },
     {
-        'name': 'blog_publish',
+        'name': 'blog:publish',
         'description': 'Publish or unpublish blog posts.'
+    },
+    {
+        'name': 'blog:view',
+        'description': 'View blog posts.'
     }
 ]
 

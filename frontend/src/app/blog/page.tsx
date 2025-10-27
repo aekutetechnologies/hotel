@@ -239,7 +239,7 @@ export default function BlogListPage() {
                     </Link>
                     
                     <p className="text-gray-600 text-sm mb-4 line-clamp-3 flex-grow">
-                      {blog.excerpt}
+                      {blog.content ? blog.content.replace(/<[^>]*>/g, '').substring(0, 150) + '...' : 'No content available'}
                     </p>
 
                     <div className="flex items-center justify-between text-sm text-gray-500">

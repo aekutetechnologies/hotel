@@ -13,6 +13,7 @@ import Link from "next/link";
 import { fetchCityArea } from "@/lib/api/fetchCityArea";
 import { fetchOffers } from "@/lib/api/fetchOffers";
 import { toast } from "react-toastify";
+import { createPortal } from "react-dom";
 
 interface NavbarProps {
   isLoggedIn: boolean;
@@ -64,6 +65,7 @@ const Navbar: React.FC<NavbarProps> = ({
   // Guest dropdown component (inline) ------------------------------------------------------
   const GuestDropdown: React.FC = () => {
     const [open, setOpen] = useState(false);
+    const [buttonRect, setButtonRect] = useState<DOMRect | null>(null);
     const ref = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
@@ -77,12 +79,20 @@ const Navbar: React.FC<NavbarProps> = ({
       return () => document.removeEventListener('click', onDocClick);
     }, []);
 
+    const handleButtonClick = () => {
+      if (ref.current) {
+        const rect = ref.current.getBoundingClientRect();
+        setButtonRect(rect);
+      }
+      setOpen(v => !v);
+    };
+
     return (
       <>
         <div ref={ref}>
           <button
             aria-label="open menu"
-            onClick={() => setOpen(v => !v)}
+            onClick={handleButtonClick}
             className={`flex items-center gap-2 p-2 rounded-full border ${getMenuTextColor()} hover:bg-gray-100/50`}
           >
             {/* three small bars on the left to indicate options */}
@@ -93,8 +103,16 @@ const Navbar: React.FC<NavbarProps> = ({
             </span>
             <User className="w-5 h-5" />
           </button>
-          {open && (
-            <div className={`absolute right-0 top-full mt-2 w-64 bg-white shadow-lg rounded-md z-50 ${navModal ? 'text-white bg-black/50' : ''}`} style={{ minWidth: 220 }}>
+          {open && buttonRect && createPortal(
+            <div 
+              className={`fixed w-64 bg-white shadow-lg rounded-md z-[9999] ${navModal ? 'text-white bg-black/50' : ''}`} 
+              style={{ 
+                minWidth: 220,
+                top: buttonRect.bottom + 8,
+                left: buttonRect.right - 256, // 256px is the width of the dropdown
+                right: 'auto'
+              }}
+            >
               <div className="p-2">
                 <div className="border-b pb-2 mb-2">
                   <button
@@ -115,7 +133,8 @@ const Navbar: React.FC<NavbarProps> = ({
                   <Link href="/careers" onClick={() => setOpen(false)} className="w-full block text-left px-2 py-2 rounded hover:bg-gray-100">Career</Link>
                 </div>
               </div>
-            </div>
+            </div>,
+            document.body
           )}
         </div>
       </>
@@ -215,14 +234,14 @@ const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <motion.div
-      className={`w-full shadow-lg max-w-[100vw] overflow-visible overflow-x-hidden
+      className={`w-full shadow-lg max-w-[100vw] overflow-hidden relative z-50
       ${getBackgroundStyle()}`}
       animate={{
         height: navModal ? "100vh" : "70px"
       }}
       transition={{ duration: 0.5, ease: "easeInOut" }}
     >
-      <div className="flex justify-between items-center px-4 md:px-6 py-2 max-w-screen-2xl mx-auto w-full h-[70px]">
+      <div className="flex justify-between items-center px-4 md:px-6 py-2 max-w-screen-2xl mx-auto w-full h-[70px] relative overflow-hidden">
         <div className="flex items-center gap-4">
           {/* <motion.button
             onClick={() => handleNavModalToggle(!navModal)}
@@ -295,7 +314,7 @@ const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 relative">
           <Link href={`tel:${phoneNumber.replace(/-/g, '')}`} className="hidden md:flex items-center gap-2">
             <PhoneCall className="h-6 w-6 text-gray-600" />
             <div className="flex flex-col items-start">

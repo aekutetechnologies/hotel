@@ -32,7 +32,9 @@ interface HostelVisit {
     id: number
     name: string
     mobile: string
-  }
+  } | null
+  name: string
+  phone: string
   visit_date: string
   visit_time: string
   number_of_guests: number
@@ -91,8 +93,8 @@ export default function HostelVisitsPage() {
     if (searchTerm) {
       filtered = filtered.filter(visit =>
         visit.property.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        visit.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        visit.user.mobile.includes(searchTerm)
+        (visit.user?.name || visit.name).toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (visit.user?.mobile || visit.phone).includes(searchTerm)
       )
     }
 
@@ -260,7 +262,7 @@ export default function HostelVisitsPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <User className="h-4 w-4" />
-                        <span>{visit.user.name}</span>
+                        <span>{visit.user?.name || visit.name}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <User className="h-4 w-4" />
@@ -270,7 +272,7 @@ export default function HostelVisitsPage() {
 
                     {/* Contact Info */}
                     <div className="text-sm text-gray-600 mb-4">
-                      <strong>Contact:</strong> {visit.user.mobile}
+                      <strong>Contact:</strong> {visit.user?.mobile || visit.phone}
                     </div>
 
                     {visit.notes && (

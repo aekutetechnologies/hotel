@@ -20,6 +20,7 @@ import { fetchProperty } from '@/lib/api/fetchProperty'
 import { Property } from '@/types/property'
 import { LoadingIndicator } from '@/components/ui/LoadingIndicator'
 import Image from 'next/image'
+import { bookVisit } from '@/lib/api/visitManagement'
 
 export default function VisitBookingPage() {
   const params = useParams()
@@ -88,35 +89,15 @@ export default function VisitBookingPage() {
     try {
       setBookingVisit(true)
       
-      // Try to get auth token if user is logged in
-      const accessToken = localStorage.getItem('accessToken')
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-      }
-      
-      // Add auth token if available
-      if (accessToken) {
-        headers['Authorization'] = `Bearer ${accessToken}`
-      }
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/'}booking/visits/`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          property: propertyId,
-          name: visitName,
-          phone: visitPhone,
-          visit_date: format(visitDate, 'yyyy-MM-dd'),
-          visit_time: `${visitTime}:00`,
-          number_of_guests: visitGuests,
-          notes: visitNotes
-        })
+      await bookVisit({
+        property: propertyId,
+        name: visitName,
+        phone: visitPhone,
+        visit_date: format(visitDate, 'yyyy-MM-dd'),
+        visit_time: `${visitTime}:00`,
+        number_of_guests: visitGuests,
+        notes: visitNotes
       })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to book visit')
-      }
 
       toast.success('Visit booked successfully! We will contact you soon.')
       router.push(`/property/${propertyId}`)

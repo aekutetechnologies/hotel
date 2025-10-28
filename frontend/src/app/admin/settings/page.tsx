@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { toast } from 'react-toastify'
 import { getSettings } from '@/lib/api/getSettings'
+import { updateTaxRate } from '@/lib/api/updateTaxRate'
 
 export default function SettingsPage() {
   const [taxRate, setTaxRate] = useState('0.18')
@@ -34,24 +35,7 @@ export default function SettingsPage() {
   const handleSave = async () => {
     try {
       setSaving(true)
-      const accessToken = localStorage.getItem('accessToken')
-      
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/'}property/settings/tax_rate/`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`
-          },
-          body: JSON.stringify({ value: taxRate })
-        }
-      )
-
-      if (!response.ok) {
-        throw new Error('Failed to update tax rate')
-      }
-
+      await updateTaxRate(taxRate)
       toast.success('Tax rate updated successfully!')
     } catch (error) {
       console.error('Error updating tax rate:', error)

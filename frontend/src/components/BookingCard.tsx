@@ -151,8 +151,8 @@ export function BookingCard({
   useEffect(() => {
     const fetchTaxRate = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/'}property/settings/`)
-        const settings = await response.json()
+        const { getSettings } = await import('@/lib/api/getSettings')
+        const settings = await getSettings()
         if (settings.tax_rate) {
           setTaxRate(parseFloat(settings.tax_rate))
         }

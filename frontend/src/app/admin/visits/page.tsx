@@ -19,29 +19,7 @@ import { format } from 'date-fns'
 import { toast } from 'react-toastify'
 import Link from 'next/link'
 import { usePermissions } from '@/hooks/usePermissions'
-
-interface HostelVisit {
-  id: number
-  property: {
-    id: number
-    name: string
-    location: string
-    property_type: string
-  }
-  user: {
-    id: number
-    name: string
-    mobile: string
-  } | null
-  name: string
-  phone: string
-  visit_date: string
-  visit_time: string
-  number_of_guests: number
-  status: string
-  notes: string
-  created_at: string
-}
+import { fetchVisits, updateVisitStatus, HostelVisit } from '@/lib/api/visitManagement'
 
 export default function HostelVisitsPage() {
   const { can } = usePermissions()
@@ -62,16 +40,7 @@ export default function HostelVisitsPage() {
   const loadVisits = async () => {
     try {
       setLoading(true)
-      const accessToken = localStorage.getItem('accessToken')
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/'}booking/visits/`, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
-      })
-      
-      if (!response.ok) throw new Error('Failed to fetch visits')
-      
-      const data = await response.json()
+      const data = await fetchVisits()
       setVisits(data)
     } catch (error) {
       console.error('Failed to load visits:', error)
@@ -101,20 +70,9 @@ export default function HostelVisitsPage() {
     setFilteredVisits(filtered)
   }
 
-  const updateVisitStatus = async (visitId: number, newStatus: string) => {
+  const handleUpdateVisitStatus = async (visitId: number, newStatus: string) => {
     try {
-      const accessToken = localStorage.getItem('accessToken')
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/'}booking/visits/${visitId}/`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`
-        },
-        body: JSON.stringify({ status: newStatus })
-      })
-
-      if (!response.ok) throw new Error('Failed to update visit status')
-
+      await updateVisitStatus(visitId, newStatus)
       toast.success('Visit status updated')
       loadVisits()
     } catch (error) {
@@ -289,7 +247,7 @@ export default function HostelVisitsPage() {
                             <Button
                               size="sm"
                               variant="neutral"
-                              onClick={() => updateVisitStatus(visit.id, 'confirmed')}
+                              onClick={() => handleUpdateVisitStatus(visit.id, 'confirmed')}
                               className="bg-blue-50 text-blue-600 hover:bg-blue-100"
                             >
                               Confirm
@@ -297,7 +255,7 @@ export default function HostelVisitsPage() {
                             <Button
                               size="sm"
                               variant="neutral"
-                              onClick={() => updateVisitStatus(visit.id, 'cancelled')}
+                              onClick={() => handleUpdateVisitStatus(visit.id, 'cancelled')}
                               className="bg-red-50 text-red-600 hover:bg-red-100"
                             >
                               Cancel
@@ -308,7 +266,7 @@ export default function HostelVisitsPage() {
                           <Button
                             size="sm"
                             variant="neutral"
-                            onClick={() => updateVisitStatus(visit.id, 'completed')}
+                            onClick={() => handleUpdateVisitStatus(visit.id, 'completed')}
                             className="bg-green-50 text-green-600 hover:bg-green-100"
                           >
                             Mark as Completed

@@ -1,6 +1,6 @@
 import { API_URL } from '../config'
 import { apiGet } from './apiClient'
-import { Property } from '@/types/property'
+import { Property, ImageCategory } from '@/types/property'
 
 // Define the extended type for transformed properties
 export interface TransformedPropertyData extends Property {
@@ -10,29 +10,6 @@ export interface TransformedPropertyData extends Property {
   _amenityIds: number[]
   _ruleIds: number[]
   _documentationIds: number[]
-  
-  // Additional fields for propertyForm compatibility
-  images: { 
-    id: number
-    image?: string
-    image_url?: string
-    category?: string
-  }[]
-  
-  rooms?: {
-    id: number
-    images?: { 
-      id: number
-      image?: string
-      image_url?: string 
-    }[]
-    roomImages?: { 
-      id: number
-      image_url: string 
-    }[]
-    amenities?: any[]
-    [key: string]: any
-  }[]
 }
 
 /**
@@ -54,18 +31,50 @@ export async function fetchProperty(id: string): Promise<TransformedPropertyData
     }
     
     // Transform data without losing original format
+    const normalizeImageCategory = (image: PropertyImage) => {
+      if (!image) {
+        return { category: null, category_id: null, category_name: null, category_code: null }
+      }
+
+      if (image.category && typeof image.category === 'object' && 'id' in image.category) {
+        const categoryObj = image.category as ImageCategory
+        return {
+          category: categoryObj,
+          category_id: categoryObj.id ?? image.category_id ?? null,
+          category_name: categoryObj.name ?? image.category_name ?? null,
+          category_code: categoryObj.code ?? image.category_code ?? null,
+        }
+      }
+
+      return {
+        category: null,
+        category_id: image.category_id ?? null,
+        category_name: image.category_name ?? (typeof image.category === 'string' ? image.category : null),
+        category_code: image.category_code ?? null,
+      }
+    }
+
+    const normalizePropertyImages = (images: any[] = []) =>
+      images.map((img: any) => {
+        const { category, category_id, category_name, category_code } = normalizeImageCategory(img)
+        return {
+          id: typeof img === 'object' ? (img.id || 0) : 0,
+          image_url: typeof img === 'object' ? (img.image_url || img.image || '') : img,
+          image: typeof img === 'object' ? (img.image || '') : '',
+          category,
+          category_id,
+          category_name,
+          category_code,
+        }
+      })
+
     const transformedData = {
       ...data,
       // Ensure property_type is valid
       property_type: data.property_type || 'hotel',
       
       // Standardize images format
-      images: Array.isArray(data.images) ? data.images.map(img => ({
-        id: typeof img === 'object' ? (img.id || 0) : 0,
-        image_url: typeof img === 'object' ? (img.image_url || img.image || '') : img,
-        image: typeof img === 'object' ? (img.image || '') : '',
-        category: typeof img === 'object' ? (img.category || 'other') : 'other'
-      })) : [],
+      images: normalizePropertyImages(data.images),
       
       // Standardize rooms format
       rooms: Array.isArray(data.rooms) ? data.rooms.map(room => ({
@@ -113,7 +122,11 @@ export async function fetchProperty(id: string): Promise<TransformedPropertyData
 interface PropertyImage {
   id: number
   image?: string
-  category?: string
+  image_url?: string
+  category?: ImageCategory | string | null
+  category_id?: number | null
+  category_name?: string | null
+  category_code?: string | null
   [key: string]: any
 }
 

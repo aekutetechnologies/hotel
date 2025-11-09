@@ -1372,7 +1372,7 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
             </h3>
             <Button
               type="button"
-              variant="outline"
+              variant="neutral"
               size="sm"
               onClick={() => setManageImageCategoriesOpen(true)}
             >
@@ -1498,7 +1498,7 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
             <h3 className="text-lg font-semibold">Amenities</h3>
             <Button
               type="button"
-              variant="outline"
+              variant="neutral"
               size="sm"
               onClick={() => setManageAmenitiesOpen(true)}
             >
@@ -1533,7 +1533,7 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
             <h3 className="text-lg font-semibold">Hotel Policies</h3>
             <Button
               type="button"
-              variant="outline"
+              variant="neutral"
               size="sm"
               onClick={() => setManagePoliciesOpen(true)}
             >
@@ -1568,7 +1568,7 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
             <h3 className="text-lg font-semibold">Documentation</h3>
             <Button
               type="button"
-              variant="outline"
+              variant="neutral"
               size="sm"
               onClick={() => setManageDocumentationOpen(true)}
             >

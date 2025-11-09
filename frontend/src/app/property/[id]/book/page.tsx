@@ -153,18 +153,44 @@ export default function BookProperty() {
       }
       
       // Add price field based on booking type
-      if (data && data.rooms) {
-        data.rooms = data.rooms.map((room: any) => ({
-          ...room,
-          price: bookingTypeParam === 'hourly' ? room.hourly_rate : 
-                 bookingTypeParam === 'monthly' ? room.monthly_rate :
-                 bookingTypeParam === 'yearly' ? room.yearly_rate : room.daily_rate
-        }));
+      const normalizePropertyImages = (images: any[] = []) =>
+        images.map((img: any) => {
+          const normalizedCategory =
+            img && typeof img.category === 'object'
+              ? img.category
+              : null
+
+          return {
+            ...img,
+            category: normalizedCategory,
+          }
+        })
+
+      const normalizedRooms = Array.isArray(data?.rooms)
+        ? data.rooms.map((room: any) => ({
+            ...room,
+            images: normalizePropertyImages(room.images),
+            roomImages: room.roomImages,
+            price:
+              bookingTypeParam === 'hourly'
+                ? room.hourly_rate
+                : bookingTypeParam === 'monthly'
+                ? room.monthly_rate
+                : bookingTypeParam === 'yearly'
+                ? room.yearly_rate
+                : room.daily_rate,
+          }))
+        : []
+
+      const normalizedProperty: Property = {
+        ...(data as Property),
+        images: normalizePropertyImages(data?.images),
+        rooms: normalizedRooms,
       }
-      
-      setProperty(data)
-      if (data?.rooms && Array.isArray(data.rooms) && data.rooms.length > 0) {
-        setSelectedRoom(data.rooms[0]) // Select the first room by default
+
+      setProperty(normalizedProperty)
+      if (normalizedProperty.rooms && normalizedProperty.rooms.length > 0) {
+        setSelectedRoom(normalizedProperty.rooms[0]) // Select the first room by default
       }
     })
   }, [propertyId, bookingTypeParam, roomsParam])

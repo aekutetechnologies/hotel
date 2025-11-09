@@ -538,15 +538,75 @@ export default function PropertyDetails() {
 
   const isHostel = property.property_type === 'hostel'
 
-  // Filter images based on active category
-  const filteredImages = activeImageCategory === 'all' 
-    ? property.images 
-    : property.images.filter(img => img.category === activeImageCategory)
+  const getImageCategoryValue = (image: typeof property.images[number]) => {
+    if (!image) return 'uncategorized'
 
-  // Get categories that have images
-  const availableCategories = ['all', ...IMAGE_CATEGORIES
-    .map(cat => cat.value)
-    .filter(catValue => property.images.some(img => img.category === catValue))]
+    const category = image.category as any
+    if (category && typeof category === 'object') {
+      return category.code || `category-${category.id}` || 'uncategorized'
+    }
+
+    if (typeof category === 'string' && category.trim().length > 0) {
+      return category
+    }
+
+    if (image.category_code) {
+      return image.category_code
+    }
+
+    if (image.category_name) {
+      return image.category_name.toLowerCase().replace(/\s+/g, '_')
+    }
+
+    return 'uncategorized'
+  }
+
+  const getImageCategoryLabel = (image: typeof property.images[number], value: string) => {
+    const category = image.category as any
+    if (category && typeof category === 'object' && category.name) {
+      return category.name
+    }
+
+    if (image.category_name) {
+      return image.category_name
+    }
+
+    const predefinedLabel = IMAGE_CATEGORIES.find(cat => cat.value === value)?.label
+    if (predefinedLabel) {
+      return predefinedLabel
+    }
+
+    if (value === 'uncategorized') {
+      return 'Uncategorized'
+    }
+
+    return value
+      .split(/[_-]/g)
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ')
+  }
+
+  const imageCategoryOptions = property.images.reduce<{ value: string; label: string }[]>((acc, image) => {
+    const value = getImageCategoryValue(image)
+    if (!value) {
+      return acc
+    }
+
+    if (!acc.some(option => option.value === value)) {
+      acc.push({
+        value,
+        label: getImageCategoryLabel(image, value),
+      })
+    }
+
+    return acc
+  }, [])
+
+  // Filter images based on active category
+  const filteredImages =
+    activeImageCategory === 'all'
+      ? property.images
+      : property.images.filter(img => getImageCategoryValue(img) === activeImageCategory)
 
   return (
     <div className="min-h-screen flex flex-col overflow-visible">
@@ -807,8 +867,8 @@ export default function PropertyDetails() {
                   >
                     All Images ({property.images.length})
                   </Button>
-                  {IMAGE_CATEGORIES.map((category) => {
-                    const count = property.images.filter(img => img.category === category.value).length
+                  {imageCategoryOptions.map((category) => {
+                    const count = property.images.filter(img => getImageCategoryValue(img) === category.value).length
                     if (count === 0) return null
                     return (
                       <Button

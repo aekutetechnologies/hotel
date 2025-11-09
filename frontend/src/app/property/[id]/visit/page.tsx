@@ -58,7 +58,26 @@ export default function VisitBookingPage() {
     const loadProperty = async () => {
       try {
         const data = await fetchProperty(propertyId.toString())
-        setProperty(data)
+
+        const normalizeImages = (images: any[] = []) =>
+          images.map((img: any) => ({
+            ...img,
+            category: img && typeof img.category === 'object' ? img.category : null,
+          }))
+
+        const normalizedProperty: Property = {
+          ...(data as Property),
+          images: normalizeImages(data?.images),
+          rooms: Array.isArray(data?.rooms)
+            ? data.rooms.map((room: any) => ({
+                ...room,
+                images: normalizeImages(room.images),
+                roomImages: room.roomImages,
+              }))
+            : [],
+        }
+
+        setProperty(normalizedProperty)
       } catch (error) {
         console.error('Error loading property:', error)
         toast.error('Failed to load property details')

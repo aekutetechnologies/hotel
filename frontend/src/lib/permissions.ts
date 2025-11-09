@@ -101,6 +101,9 @@ export const pagePermissionsMap: Record<string, Permission[]> = {
   '/admin/blogs': ['blog:view'],
   '/admin/blogs/new': ['blog:create'],
   '^/admin/blogs/.+/edit$': ['blog:edit'],
+
+  // Settings
+  '/admin/settings': ['admin:dashboard:view'],
 };
 
 // Check if user has all required permissions

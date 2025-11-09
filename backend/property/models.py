@@ -1,5 +1,7 @@
+from decimal import Decimal, InvalidOperation
 from django.db import models
 from django.utils import timezone
+from django.utils.text import slugify
 from users.models import HsUser
 
 BED_TYPE_CHOICES = [
@@ -74,27 +76,42 @@ class Documentation(models.Model):
     def __str__(self):
         return self.name
 
+class ImageCategory(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=255, unique=True)
+    code = models.SlugField(max_length=50, unique=True)
+    description = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.code:
+            self.code = slugify(self.name)
+        super().save(*args, **kwargs)
+
 class PropertyImage(models.Model):
-    IMAGE_CATEGORY_CHOICES = [
-        ('room', 'Room'),
-        ('bathroom', 'Bathroom'),
-        ('waiting_room', 'Waiting Room'),
-        ('facade', 'Facade'),
-        ('parking', 'Parking'),
-        ('lobby', 'Lobby'),
-        ('dining', 'Dining'),
-        ('exterior', 'Exterior'),
-        ('other', 'Other'),
-    ]
-    
     image = models.ImageField(upload_to='property_images/')
-    category = models.CharField(max_length=20, choices=IMAGE_CATEGORY_CHOICES, default='other')
+    category = models.ForeignKey(
+        ImageCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='property_images'
+    )
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
-        return f"Image ID: {self.id}"
+        category = self.category.name if self.category else 'Uncategorized'
+        return f"Image ID: {self.id} ({category})"
 
 class RoomImage(models.Model):
     id = models.AutoField(primary_key=True)
@@ -168,6 +185,32 @@ class Property(models.Model):
     def __str__(self):
         return self.name
 
+
+class NearbyPlace(models.Model):
+    id = models.AutoField(primary_key=True)
+    property = models.ForeignKey(
+        Property,
+        on_delete=models.CASCADE,
+        related_name='nearby_places'
+    )
+    name = models.CharField(max_length=255)
+    category = models.CharField(max_length=100)
+    distance = models.CharField(
+        max_length=50,
+        help_text="Distance in a human readable format e.g. '1.5 km'"
+    )
+    sort_order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['sort_order', 'name']
+
+    def __str__(self):
+        return f"{self.name} - {self.distance}"
+
+
 class Setting(models.Model):
     """Global settings for the system"""
     id = models.AutoField(primary_key=True)
@@ -183,6 +226,23 @@ class Setting(models.Model):
         
     def __str__(self):
         return f"{self.key}: {self.value}"
+
+    @staticmethod
+    def get_dynamic_tax_rate(amount):
+        """
+        Returns a dynamic tax rate based on the provided amount.
+        Amounts below 7500 attract 5% tax, and amounts equal or above 7500 attract 18% tax.
+        """
+        try:
+            amount_decimal = Decimal(str(amount or 0))
+        except (InvalidOperation, TypeError):
+            return Decimal('0')
+
+        if amount_decimal <= 0:
+            return Decimal('0')
+
+        threshold = Decimal('7500')
+        return Decimal('0.05') if amount_decimal < threshold else Decimal('0.18')
 
 class UserProperty(models.Model):
     id = models.AutoField(primary_key=True)

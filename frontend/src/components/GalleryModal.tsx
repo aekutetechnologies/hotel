@@ -5,10 +5,16 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 
+interface ImageCategoryInfo {
+  id?: number | string
+  name?: string | null
+  code?: string | null
+}
+
 interface ImageWithId {
-  id: number;
-  image: string;
-  category?: string;
+  id: number
+  image: string
+  category?: string | ImageCategoryInfo | null
 }
 
 interface GalleryModalProps {
@@ -16,6 +22,23 @@ interface GalleryModalProps {
   initialIndex: number
   onClose: () => void
   activeCategory?: string
+}
+
+const normalizeCategory = (category: ImageWithId['category']) => {
+  if (!category) return 'other'
+  if (typeof category === 'string') return category
+
+  if (typeof category === 'object') {
+    if (category?.name) return category.name
+    if ('code' in category && category.code) return category.code as string
+  }
+
+  return 'other'
+}
+
+const formatCategoryLabel = (category: string) => {
+  if (!category) return ''
+  return category.charAt(0).toUpperCase() + category.slice(1).replace(/[_-]/g, ' ')
 }
 
 export function GalleryModal({ images, initialIndex, onClose, activeCategory }: GalleryModalProps) {
@@ -54,8 +77,11 @@ export function GalleryModal({ images, initialIndex, onClose, activeCategory }: 
   }
 
   // Get unique categories from images
-  const categories = Array.from(new Set(images.map(img => img.category || 'other')))
-  const getCategoryCount = (category: string) => images.filter(img => (img.category || 'other') === category).length
+  const categories = Array.from(
+    new Set(images.map(img => normalizeCategory(img.category)))
+  )
+  const getCategoryCount = (category: string) =>
+    images.filter(img => normalizeCategory(img.category) === category).length
 
   return (
     <div className="fixed inset-0 z-50 bg-gray-900">
@@ -82,7 +108,7 @@ export function GalleryModal({ images, initialIndex, onClose, activeCategory }: 
                 // For now, just show the current category
               }}
             >
-              {category.charAt(0).toUpperCase() + category.slice(1).replace('_', ' ')} ({getCategoryCount(category)})
+              {formatCategoryLabel(category)} ({getCategoryCount(category)})
             </button>
           ))}
         </div>
@@ -129,8 +155,8 @@ export function GalleryModal({ images, initialIndex, onClose, activeCategory }: 
             {/* Image counter and category badge */}
             <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1">
               <div className="text-sm font-medium text-gray-900">
-                {images[currentIndex]?.category ? 
-                  `${images[currentIndex].category.charAt(0).toUpperCase() + images[currentIndex].category.slice(1).replace('_', ' ')} - ${currentIndex + 1}` :
+                {images[currentIndex]?.category ?
+                  `${formatCategoryLabel(normalizeCategory(images[currentIndex].category))} - ${currentIndex + 1}` :
                   `${currentIndex + 1} / ${images.length}`
                 }
               </div>

@@ -17,7 +17,8 @@ from .models import (
     State,
     FavoriteProperty,
     UserProperty,
-    Setting
+    Setting,
+    ImageCategory,
 )
 from .serializers import (
     PropertySerializer,
@@ -36,7 +37,8 @@ from .serializers import (
     ReplySerializer,
     CitySerializer,
     FavoritePropertySerializer,
-    ReviewCreateSerializer
+    ReviewCreateSerializer,
+    ImageCategorySerializer,
 )
 
 from users.models import HsUser
@@ -154,6 +156,43 @@ def documentation_detail(request, pk):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     elif request.method == "DELETE":
         documentation.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(["GET", "POST"])
+@custom_authentication_and_permissions(
+    exempt_get_views=[r"^/api/property/image-categories/$"]
+)
+def image_category_list(request):
+    if request.method == "GET":
+        categories = ImageCategory.objects.all()
+        serializer = ImageCategorySerializer(categories, many=True)
+        return Response(serializer.data)
+    elif request.method == "POST":
+        serializer = ImageCategorySerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["GET", "PUT", "DELETE"])
+@custom_authentication_and_permissions(
+    exempt_get_views=[r"^/api/property/image-categories/\d+/?$"]
+)
+def image_category_detail(request, pk):
+    category = get_object_or_404(ImageCategory, pk=pk)
+    if request.method == "GET":
+        serializer = ImageCategorySerializer(category)
+        return Response(serializer.data)
+    elif request.method == "PUT":
+        serializer = ImageCategorySerializer(category, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == "DELETE":
+        category.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -516,13 +555,15 @@ def image_upload(request):
             {
                 "id": image_instance.id,
                 "image_url": WEBSITE_URL + image_instance.image.url,
+                "category": ImageCategorySerializer(image_instance.category).data if image_instance.category else None,
+                "category_id": image_instance.category.id if image_instance.category else None,
             },
             status=status.HTTP_201_CREATED,
         )
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(["GET", "DELETE"])
+@api_view(["GET", "PUT", "DELETE"])
 @custom_authentication_and_permissions(exempt_get_views=[r"^/api/property/images/\d+/?$"])
 def image_detail(request, pk):
     """
@@ -532,6 +573,12 @@ def image_detail(request, pk):
     if request.method == "GET":
         serializer = PropertyImageSerializer(image)
         return Response(serializer.data)
+    elif request.method == "PUT":
+        serializer = PropertyImageSerializer(image, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     elif request.method == "DELETE":
         image.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

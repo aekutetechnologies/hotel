@@ -1154,6 +1154,39 @@ export default function PropertyDetails() {
               <p className="text-gray-700">{property.description}</p>
             </section>
 
+            {property.nearby_places && property.nearby_places.length > 0 && (
+              <section className="property-section">
+                <h2 className="text-2xl font-semibold mb-4">Nearby Places</h2>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {property.nearby_places
+                    .slice()
+                    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+                    .map((place) => (
+                      <div
+                        key={place.id || `${place.name}-${place.category}-${place.distance}`}
+                        className="rounded-xl border border-gray-100 bg-white p-4 shadow-lg transition-shadow hover:shadow-xl"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#B11E43]/10 text-[#B11E43]">
+                            <MapPin className="h-5 w-5" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-base font-semibold text-gray-900">{place.name}</p>
+                            <p className="text-sm text-gray-500">{place.category}</p>
+                          </div>
+                        </div>
+                        <div className="mt-4 flex items-center justify-between">
+                          <span className="text-sm font-medium text-gray-500">Distance</span>
+                          <span className="text-base font-semibold text-[#B11E43]">
+                            {place.distance}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </section>
+            )}
+
             {/* Map Section */}
             {!showGallery && (
               <section className="property-section">

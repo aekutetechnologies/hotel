@@ -1,4 +1,4 @@
-import { apiGet } from './apiClient'
+import { apiGet, apiPost, apiPut, apiDelete } from './apiClient'
 import { Amenity } from '@/types/property'
 
 /**
@@ -14,3 +14,15 @@ export async function fetchAmenities(): Promise<Amenity[]> {
     return []
   }
 } 
+
+export async function createAmenity(name: string): Promise<Amenity> {
+  return apiPost<Amenity>('property/amenities/', { name })
+}
+
+export async function updateAmenity(id: number, name: string): Promise<Amenity> {
+  return apiPut<Amenity>(`property/amenities/${id}/`, { name })
+}
+
+export async function deleteAmenity(id: number): Promise<void> {
+  await apiDelete(`property/amenities/${id}/`)
+}

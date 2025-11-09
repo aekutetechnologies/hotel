@@ -1,9 +1,19 @@
 import { API_URL } from '../config'
+import { ImageCategory } from '@/types/property'
 
-export async function uploadImage(imageFile: File, category: string = 'other'): Promise<{ id: number, image_url: string }> {
+export interface UploadImageResponse {
+  id: number
+  image_url: string
+  category?: ImageCategory | null
+  category_id?: number | null
+}
+
+export async function uploadImage(imageFile: File, categoryId?: number | null): Promise<UploadImageResponse> {
   const formData = new FormData()
   formData.append('image', imageFile)
-  formData.append('category', category)
+  if (typeof categoryId === 'number') {
+    formData.append('category', String(categoryId))
+  }
 
   const response = await fetch(`${API_URL}property/images/upload/`, {
     method: 'POST',
@@ -18,5 +28,5 @@ export async function uploadImage(imageFile: File, category: string = 'other'): 
     throw new Error(`Image upload failed: ${JSON.stringify(error)}`)
   }
 
-  return await response.json() as { id: number, image_url: string }
+  return await response.json() as UploadImageResponse
 } 

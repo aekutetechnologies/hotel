@@ -249,6 +249,14 @@ permissions = [
     {
         'name': 'blog:view',
         'description': 'View blog posts.'
+    },
+    {
+        'name': 'admin:settings:manage',
+        'description': 'Manage system settings and configurations.'
+    },
+    {
+        'name': 'admin:dashboard:view',
+        'description': 'View system settings and configurations.'
     }
 ]
 

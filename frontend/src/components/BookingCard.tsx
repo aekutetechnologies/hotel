@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import Link from 'next/link'
 import { Button } from "./ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -142,27 +142,8 @@ export function BookingCard({
   const [months, setMonths] = useState(initialMonths)
   const [years, setYears] = useState(initialYears)
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null)
-  const [taxRate, setTaxRate] = useState<number>(0.18) // Default to 18% GST
-
   // Check if this is a hostel property
   const isHostel = property?.property_type === 'hostel'
-
-  // Fetch tax rate from database
-  useEffect(() => {
-    const fetchTaxRate = async () => {
-      try {
-        const { getSettings } = await import('@/lib/api/getSettings')
-        const settings = await getSettings()
-        if (settings.tax_rate) {
-          setTaxRate(parseFloat(settings.tax_rate))
-        }
-      } catch (error) {
-        console.error('Error fetching tax rate:', error)
-        // Keep default value
-      }
-    }
-    fetchTaxRate()
-  }, [])
 
   // When selectedRoomMap changes, update the URL to match
   useEffect(() => {
@@ -499,11 +480,32 @@ export function BookingCard({
 
 
   const discountedPrice = totalPrice - (totalPrice * averageDiscount / 100)
-  const taxes = discountedPrice * taxRate // Tax rate from database
+
+  const bookingMultiplier = useMemo(() => {
+    if (bookingType === 'monthly') {
+      return months && months > 0 ? months : 1
+    }
+    if (bookingType === 'yearly') {
+      return years && years > 0 ? years : 1
+    }
+    return 1
+  }, [bookingType, months, years])
+
+  const guestMultiplier = useMemo(() => (guests && guests > 0 ? guests : 1), [guests])
+
+  const offerDiscount = selectedOffer ? (totalPrice * parseFloat(selectedOffer.offer.discount_percentage)) / 100 : 0
+  const taxableBasePerUnit = Math.max(discountedPrice - offerDiscount, 0)
+  const totalTaxableBase = taxableBasePerUnit * bookingMultiplier * guestMultiplier
+
+  const taxRate = useMemo(() => {
+    if (totalTaxableBase <= 0) return 0
+    return totalTaxableBase < 7500 ? 0.05 : 0.18
+  }, [totalTaxableBase])
+
+  const taxes = taxableBasePerUnit * taxRate // Tax based on dynamic threshold
 
   // Safely handle offer discount
-  const offerDiscount = selectedOffer ? (totalPrice * parseFloat(selectedOffer.offer.discount_percentage)) / 100 : 0
-  const finalPrice = discountedPrice - offerDiscount + taxes
+  const finalPrice = taxableBasePerUnit + taxes
 
   // Determine the price label based on property type and room
   const getPriceLabel = () => {

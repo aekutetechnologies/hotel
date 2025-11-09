@@ -7,7 +7,10 @@ export interface Property {
     id: number; 
     image?: string;
     image_url?: string;
-    category?: string;
+    category?: ImageCategory | null;
+    category_id?: number | null;
+    category_name?: string | null;
+    category_code?: string | null;
   }[];
   rooms?: {
     id: number;
@@ -57,6 +60,7 @@ export interface Property {
   };
   area: string;
   reviews?: Review[]; // Add reviews property
+  nearby_places?: NearbyPlace[];
   
   // Additional properties for PropertyForm compatibility
   _cityString?: string;
@@ -109,6 +113,24 @@ export interface Amenity {
   created_at: string;
   updated_at: string;
   is_active: boolean;
+}
+
+export interface ImageCategory {
+  id: number;
+  name: string;
+  code: string;
+  description?: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NearbyPlace {
+  id: number;
+  name: string;
+  category: string;
+  distance: string;
+  sort_order?: number;
 }
 
 export interface Room {

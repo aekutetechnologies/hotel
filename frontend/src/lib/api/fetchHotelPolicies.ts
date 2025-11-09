@@ -1,4 +1,4 @@
-import { apiGet } from './apiClient'
+import { apiDelete, apiGet, apiPost, apiPut } from './apiClient'
 
 interface Rule {
   id: number;
@@ -21,3 +21,15 @@ export async function fetchHotelPolicies(): Promise<Rule[]> {
     return []
   }
 } 
+
+export async function createHotelPolicy(name: string): Promise<Rule> {
+  return apiPost<Rule>('property/rules/', { name })
+}
+
+export async function updateHotelPolicy(id: number, name: string): Promise<Rule> {
+  return apiPut<Rule>(`property/rules/${id}/`, { name })
+}
+
+export async function deleteHotelPolicy(id: number): Promise<void> {
+  await apiDelete(`property/rules/${id}/`)
+}

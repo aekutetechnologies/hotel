@@ -18,20 +18,25 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Upload, X, Plus, Trash, Star, MapPin } from 'lucide-react'
 import { Property, Hotel, Hostel, HotelRoom, HostelRoom, FoodMenu } from '@/types/property'
 import { ImageCropper } from '@/components/ImageCropper'
-import { fetchAmenities } from '@/lib/api/fetchAmenities'
-import { fetchHotelPolicies } from '@/lib/api/fetchHotelPolicies'
-import { fetchDocumentation } from '@/lib/api/fetchDocumentation'
+import { fetchAmenities, createAmenity, updateAmenity, deleteAmenity } from '@/lib/api/fetchAmenities'
+import { fetchHotelPolicies, createHotelPolicy, updateHotelPolicy, deleteHotelPolicy } from '@/lib/api/fetchHotelPolicies'
+import { fetchDocumentation, createDocumentation, updateDocumentation, deleteDocumentation } from '@/lib/api/fetchDocumentation'
 import { editProperty } from '@/lib/api/editProperty'
 // Import FormMapPicker dynamically to prevent SSR issues
 import dynamic from 'next/dynamic'
-import { Modal } from '@/components/ui/Modal'
 import { toast } from 'react-toastify'
 import { uploadImage } from '@/lib/api/uploadImage'
 import { Spinner } from '@/components/ui/spinner'
 import { uploadRoomImage } from '@/lib/api/uploadRoomImage'
 import { fetchLocation } from '@/lib/api/fetchLocation'
 import { fetchState } from '@/lib/api/fetchState'
-import { IMAGE_CATEGORIES } from '@/lib/constants/imageCategories'
+import { fetchImageCategories, createImageCategory, updateImageCategory, deleteImageCategory } from '@/lib/api/imageCategories'
+import { updatePropertyImage } from '@/lib/api/propertyImages'
+import { ManageConfigModal } from '@/components/admin/ManageConfigModal'
+import { ImageCategory } from '@/types/property'
+import imageCompression from 'browser-image-compression'
+
+const UNCATEGORIZED_IMAGE_CATEGORY = 'uncategorized'
 
 // Dynamically import the FormMapPicker with no SSR to prevent leaflet errors
 const FormMapPicker = dynamic(() => import('@/components/FormMapPicker').then(mod => mod.FormMapPicker), {
@@ -92,6 +97,14 @@ interface Documentation {
   is_active?: boolean;
 }
 
+interface NearbyPlaceFormEntry {
+  id: string;
+  name: string;
+  category: string;
+  distance: string;
+  existingId?: number;
+}
+
 interface City {
   id: string;
   name: string;
@@ -112,6 +125,13 @@ interface PropertyApiData {
   amenities: number[];
   rules: number[];
   documentation: number[];
+  nearby_places?: {
+    id?: string | number;
+    name: string;
+    category: string;
+    distance: string;
+    sort_order?: number;
+  }[];
   rooms: {
     id: string | number;
     name: string;
@@ -159,6 +179,16 @@ const GENDER_TYPE_CHOICES = [
 const COUNTRY_CHOICES = [
   { value: 'india', label: 'India' },
 ];
+
+const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png']
+
+const createNearbyPlaceEntry = (overrides?: Partial<NearbyPlaceFormEntry>): NearbyPlaceFormEntry => ({
+  id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+  name: '',
+  category: '',
+  distance: '',
+  ...overrides,
+})
 
 // Separate component for map to avoid rendering issues
 function PropertyMapSection({ 
@@ -274,14 +304,24 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
   const [name, setName] = useState(initialData.name || '')
   const [description, setDescription] = useState(initialData.description || '')
   // @ts-ignore - Suppressing type errors for images
-  const [images, setImages] = useState<{ id: string; image_url: string; category: string }[]>(
-    initialData.images?.map((image: any) => ({
-      id: String(image.id || ''), 
-      image_url: normalizeImageUrl(image),
-      category: image.category || 'other'
-    })) || []
+  const [images, setImages] = useState<{ id: string; image_url: string; categoryId: number | null }[]>(
+    initialData.images?.map((image: any) => {
+      const categoryId =
+        typeof image?.category_id === 'number'
+          ? image.category_id
+          : image?.category && typeof image.category.id !== 'undefined'
+            ? Number(image.category.id)
+            : null
+
+      return {
+        id: String(image.id || ''),
+        image_url: normalizeImageUrl(image),
+        categoryId,
+      }
+    }) || []
   )
-  const [selectedImageCategory, setSelectedImageCategory] = useState<string>('room')
+  const [imageCategories, setImageCategories] = useState<ImageCategory[]>([])
+  const [selectedImageCategoryId, setSelectedImageCategoryId] = useState<string>(UNCATEGORIZED_IMAGE_CATEGORY)
   const [loading, setLoading] = useState(false)
   const [location, setLocation] = useState({
     address: initialData.location || '',
@@ -356,6 +396,83 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
     ) || []
   )
   const [genderType, setGenderType] = useState<string>(initialData.gender_type || '')
+  const refreshAmenities = useCallback(async () => {
+    const amenitiesResponse = await fetchAmenities()
+    setAmenities(amenitiesResponse)
+  }, [])
+
+  const refreshPolicies = useCallback(async () => {
+    const policiesResponse = await fetchHotelPolicies()
+    setRules(policiesResponse)
+  }, [])
+
+  const refreshDocumentation = useCallback(async () => {
+    const documentationResponse = await fetchDocumentation()
+    setDocumentation(documentationResponse)
+  }, [])
+
+  const refreshImageCategories = useCallback(async (preferredCategoryId?: number | null) => {
+    const categoriesResponse = await fetchImageCategories()
+    setImageCategories(categoriesResponse)
+
+    const preferredIdString = preferredCategoryId != null ? String(preferredCategoryId) : null
+    if (preferredIdString && categoriesResponse.some(category => category.id === preferredCategoryId)) {
+      setSelectedImageCategoryId(preferredIdString)
+    } else if (
+      selectedImageCategoryId !== UNCATEGORIZED_IMAGE_CATEGORY &&
+      categoriesResponse.some(category => String(category.id) === selectedImageCategoryId)
+    ) {
+      // keep current selection
+    } else if (categoriesResponse.length > 0) {
+      setSelectedImageCategoryId(String(categoriesResponse[0].id))
+    } else {
+      setSelectedImageCategoryId(UNCATEGORIZED_IMAGE_CATEGORY)
+    }
+  }, [selectedImageCategoryId])
+  const [manageAmenitiesOpen, setManageAmenitiesOpen] = useState(false)
+  const [managePoliciesOpen, setManagePoliciesOpen] = useState(false)
+  const [manageDocumentationOpen, setManageDocumentationOpen] = useState(false)
+  const [manageImageCategoriesOpen, setManageImageCategoriesOpen] = useState(false)
+  const [nearbyPlaces, setNearbyPlaces] = useState<NearbyPlaceFormEntry[]>(() => {
+    if (!Array.isArray(initialData.nearby_places) || initialData.nearby_places.length === 0) {
+      return []
+    }
+
+    return initialData.nearby_places
+      .filter((place: any) => place)
+      .sort((a: any, b: any) => (a?.sort_order ?? 0) - (b?.sort_order ?? 0))
+      .map((place: any) =>
+        createNearbyPlaceEntry({
+          id: `existing-${place.id ?? Math.random().toString(36).slice(2, 8)}`,
+          name: place.name ?? '',
+          category: place.category ?? '',
+          distance: place.distance ?? '',
+          existingId:
+            typeof place.id === 'number'
+              ? place.id
+              : place.id
+              ? Number(place.id)
+              : undefined,
+        })
+      )
+  })
+
+  const addNearbyPlace = useCallback(() => {
+    setNearbyPlaces((prev) => [...prev, createNearbyPlaceEntry()])
+  }, [])
+
+  const updateNearbyPlace = useCallback(
+    (index: number, field: keyof Omit<NearbyPlaceFormEntry, 'id' | 'existingId'>, value: string) => {
+      setNearbyPlaces((prev) =>
+        prev.map((place, i) => (i === index ? { ...place, [field]: value } : place))
+      )
+    },
+    []
+  )
+
+  const removeNearbyPlace = useCallback((index: number) => {
+    setNearbyPlaces((prev) => prev.filter((_, i) => i !== index))
+  }, [])
 
   useEffect(() => {
     // Additional logging to help debug image issues
@@ -371,17 +488,14 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
         images: room.images
       })));
     }
-  
+  }, [initialData, images])
+
+  useEffect(() => {
     async function loadData() {
       try {
-        const amenitiesResponse = await fetchAmenities()
-        setAmenities(amenitiesResponse)
-
-        const policiesResponse = await fetchHotelPolicies()
-        setRules(policiesResponse)
-
-        const documentationResponse = await fetchDocumentation()
-        setDocumentation(documentationResponse)
+        await refreshAmenities()
+        await refreshPolicies()
+        await refreshDocumentation()
 
         try {
           console.log("Loading states for property editing...")
@@ -400,6 +514,23 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
           setStateOptions([])
         }
 
+        let preferredCategoryId: number | null = null
+        if (Array.isArray(initialData.images)) {
+          for (const image of initialData.images) {
+            if (typeof image?.category_id === 'number') {
+              preferredCategoryId = image.category_id
+              break
+            }
+            const categoryObj = image?.category
+            if (categoryObj && typeof categoryObj === 'object' && typeof categoryObj.id !== 'undefined') {
+              preferredCategoryId = Number(categoryObj.id)
+              break
+            }
+          }
+        }
+
+        await refreshImageCategories(preferredCategoryId ?? undefined)
+
       } catch (error) {
         console.error("Failed to load form data:", error)
         toast.error("Failed to load form data. Please try again later.")
@@ -411,7 +542,7 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
     }
 
     loadData()
-  }, [initialData, images])
+  }, [initialData, refreshAmenities, refreshDocumentation, refreshImageCategories, refreshPolicies])
 
   // Debug hook to track changes to rooms state
   useEffect(() => {
@@ -426,74 +557,130 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
     }
   }, [rooms]);
 
+  const handleCreateAmenity = async (name: string) => {
+    await createAmenity(name)
+    await refreshAmenities()
+  }
+
+  const handleUpdateAmenity = async (id: number, name: string) => {
+    await updateAmenity(id, name)
+    await refreshAmenities()
+  }
+
+  const handleDeleteAmenity = async (id: number) => {
+    await deleteAmenity(id)
+    setSelectedAmenities((prev) => prev.filter((amenityId) => amenityId !== id))
+    await refreshAmenities()
+  }
+
+  const handleCreatePolicy = async (name: string) => {
+    await createHotelPolicy(name)
+    await refreshPolicies()
+  }
+
+  const handleUpdatePolicy = async (id: number, name: string) => {
+    await updateHotelPolicy(id, name)
+    await refreshPolicies()
+  }
+
+  const handleDeletePolicy = async (id: number) => {
+    await deleteHotelPolicy(id)
+    setSelectedPolicies((prev) => prev.filter((policyId) => policyId !== id))
+    await refreshPolicies()
+  }
+
+  const handleCreateDocumentation = async (name: string) => {
+    await createDocumentation(name)
+    await refreshDocumentation()
+  }
+
+  const handleUpdateDocumentation = async (id: number, name: string) => {
+    await updateDocumentation(id, name)
+    await refreshDocumentation()
+  }
+
+  const handleDeleteDocumentation = async (id: number) => {
+    await deleteDocumentation(id)
+    setSelectedDocumentation((prev) => prev.filter((docId) => docId !== id))
+    await refreshDocumentation()
+  }
+
+  const handleCreateImageCategory = async (name: string) => {
+    const category = await createImageCategory(name)
+    await refreshImageCategories(category.id)
+  }
+
+  const handleUpdateImageCategoryName = async (id: number, name: string) => {
+    await updateImageCategory(id, name)
+    await refreshImageCategories(id)
+  }
+
+  const handleDeleteImageCategory = async (id: number) => {
+    await deleteImageCategory(id)
+    setImages((prev) =>
+      prev.map((image) =>
+        image.categoryId === id ? { ...image, categoryId: null } : image
+      )
+    )
+    if (selectedImageCategoryId === String(id)) {
+      setSelectedImageCategoryId(UNCATEGORIZED_IMAGE_CATEGORY)
+    }
+    await refreshImageCategories()
+  }
+
   const handleCropComplete = useCallback(async (croppedImageBlob: Blob) => {
-    setUploadingImages(true) // Start image upload loading
+    setUploadingImages(true)
     try {
       if (!croppedImageBlob) {
         toast.error("No cropped image data to upload.")
         return
       }
 
-      let finalBlob = croppedImageBlob
-      
-      // Compress image if size exceeds 4MB (4096000 bytes)
-      if (croppedImageBlob.size > 4096000) {
-        console.log(`Image size (${croppedImageBlob.size / 4096000}MB) exceeds 4MB, compressing...`)
-        toast.info("Compressing large image...")
-        
-        // Create an image element to draw to canvas
-        const img = new Image()
-        const blobUrl = URL.createObjectURL(croppedImageBlob)
-        
-        // Wait for image to load
-        await new Promise((resolve, reject) => {
-          img.onload = resolve
-          img.onerror = reject
-          img.src = blobUrl
-        })
-        
-        // Create canvas for compression
-        const canvas = document.createElement('canvas')
-        const ctx = canvas.getContext('2d')
-        
-        // Calculate new dimensions (maintain aspect ratio)
-        let { width, height } = img
-        const aspectRatio = width / height
-        
-        // Target dimensions for compression
-        // Start with 80% of original dimensions and adjust if needed
-        width = Math.round(width * 0.8)
-        height = Math.round(height * 0.8)
-        
-        // Set canvas dimensions
-        canvas.width = width
-        canvas.height = height
-        
-        // Draw image to canvas with new dimensions
-        ctx?.drawImage(img, 0, 0, width, height)
-        
-        // Convert to blob with reduced quality
-        finalBlob = await new Promise<Blob>((resolve) => {
-          canvas.toBlob(
-            (blob) => resolve(blob as Blob),
-            'image/webp',
-            0.7 // Quality factor (0-1)
-          )
-        })
-        
-        // Clean up URL object
-        URL.revokeObjectURL(blobUrl)
-        
-        console.log(`Compressed image size: ${finalBlob.size / 4096000}MB`)
+      const blobType = (croppedImageBlob.type || '').toLowerCase()
+      const isPng = blobType === 'image/png'
+      const targetType = isPng ? 'image/png' : 'image/jpeg'
+      const targetExtension = isPng ? 'png' : 'jpg'
+
+      const croppedFile = new File([croppedImageBlob], `property_image.${targetExtension}`, { type: targetType })
+
+      const compressionOptions = {
+        maxSizeMB: 1.5,
+        useWebWorker: true,
+        fileType: targetType,
+        initialQuality: 0.8,
+        maxIteration: 10
       }
 
-      const imageFile = new File([finalBlob], "cropped_image.webp", { type: "image/webp" })
-      const uploadResult = await uploadImage(imageFile, selectedImageCategory)
+      const compressedFile = await imageCompression(croppedFile, compressionOptions)
+      const fileToUpload =
+        compressedFile instanceof File
+          ? compressedFile
+          : new File([compressedFile], `property_image.${targetExtension}`, { type: targetType })
+
+      if (fileToUpload.size > 1.5 * 1024 * 1024) {
+        toast.warning("Compressed image exceeds 1.5 MB. Please crop a smaller area or choose a different image.")
+        return
+      }
+
+      const categoryId =
+        selectedImageCategoryId === UNCATEGORIZED_IMAGE_CATEGORY
+          ? null
+          : Number(selectedImageCategoryId)
+
+      const uploadResult = await uploadImage(fileToUpload, categoryId)
       if (uploadResult && uploadResult.id) {
+        const resolvedCategoryId =
+          uploadResult.category_id ??
+          uploadResult.category?.id ??
+          categoryId
         setImages((prevImages) => [
           ...prevImages,
-          { id: String(uploadResult.id), image_url: uploadResult.image_url, category: selectedImageCategory }
-        ]) // Store image ID, URL, and category
+          {
+            id: String(uploadResult.id),
+            image_url: uploadResult.image_url,
+            categoryId: resolvedCategoryId ?? null,
+          }
+        ])
         toast.success("Image uploaded successfully!")
       } else {
         toast.error("Image upload failed, but no ID was returned.")
@@ -502,10 +689,10 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
       console.error("Image upload error:", error)
       toast.error(`Image upload failed: ${error.message || 'Unknown error'}`)
     } finally {
-      setUploadingImages(false) // End image upload loading
-      setCropImage(null) // Clear cropImage state
+      setUploadingImages(false)
+      setCropImage(null)
     }
-  }, [setImages, setCropImage, uploadImage, selectedImageCategory])
+  }, [setImages, setCropImage, selectedImageCategoryId])
 
   const handleRoomCropComplete = useCallback(async (croppedImageBlob: Blob) => {
     setRoomUploadingImages(true);
@@ -515,62 +702,39 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
         return;
       }
 
-      let finalBlob = croppedImageBlob;
-      
-      // Compress image if size exceeds 4MB (4096000 bytes)
-      if (croppedImageBlob.size > 4096000) {
-        console.log(`Room image size (${croppedImageBlob.size / 4096000}MB) exceeds 4MB, compressing...`)
-        toast.info("Compressing large image...")
-        
-        // Create an image element to draw to canvas
-        const img = new Image()
-        const blobUrl = URL.createObjectURL(croppedImageBlob)
-        
-        // Wait for image to load
-        await new Promise((resolve, reject) => {
-          img.onload = resolve
-          img.onerror = reject
-          img.src = blobUrl
-        })
-        
-        // Create canvas for compression
-        const canvas = document.createElement('canvas')
-        const ctx = canvas.getContext('2d')
-        
-        // Calculate new dimensions (maintain aspect ratio)
-        let { width, height } = img
-        const aspectRatio = width / height
-        
-        // Target dimensions for compression
-        // Start with 80% of original dimensions and adjust if needed
-        width = Math.round(width * 0.8)
-        height = Math.round(height * 0.8)
-        
-        // Set canvas dimensions
-        canvas.width = width
-        canvas.height = height
-        
-        // Draw image to canvas with new dimensions
-        ctx?.drawImage(img, 0, 0, width, height)
-        
-        // Convert to blob with reduced quality
-        finalBlob = await new Promise<Blob>((resolve) => {
-          canvas.toBlob(
-            (blob) => resolve(blob as Blob),
-            'image/webp',
-            0.7 // Quality factor (0-1)
-          )
-        })
-        
-        // Clean up URL object
-        URL.revokeObjectURL(blobUrl)
-        
-        console.log(`Compressed room image size: ${finalBlob.size / 4096000}MB`)
+      if (selectedRoomIndexForImage === null) {
+        toast.error("No room selected for image upload.");
+        return;
       }
 
-      const imageFile = new File([finalBlob], "room_cropped_image.webp", { type: "image/webp" });
-      const uploadResult = await uploadRoomImage(imageFile);
-      if (uploadResult && uploadResult.id && selectedRoomIndexForImage !== null) {
+      const blobType = (croppedImageBlob.type || '').toLowerCase()
+      const isPng = blobType === 'image/png'
+      const targetType = isPng ? 'image/png' : 'image/jpeg'
+      const targetExtension = isPng ? 'png' : 'jpg'
+
+      const croppedFile = new File([croppedImageBlob], `room_image.${targetExtension}`, { type: targetType })
+
+      const compressionOptions = {
+        maxSizeMB: 1.5,
+        useWebWorker: true,
+        fileType: targetType,
+        initialQuality: 0.8,
+        maxIteration: 10
+      }
+
+      const compressedFile = await imageCompression(croppedFile, compressionOptions)
+      const fileToUpload =
+        compressedFile instanceof File
+          ? compressedFile
+          : new File([compressedFile], `room_image.${targetExtension}`, { type: targetType })
+
+      if (fileToUpload.size > 1.5 * 1024 * 1024) {
+        toast.warning("Compressed image exceeds 1.5 MB. Please crop a smaller area or choose a different image.")
+        return
+      }
+
+      const uploadResult = await uploadRoomImage(fileToUpload);
+      if (uploadResult && uploadResult.id) {
         setRooms(prevRooms => {
           const updatedRooms = [...prevRooms];
           updatedRooms[selectedRoomIndexForImage].roomImages = [
@@ -598,10 +762,38 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
     setImages(prev => prev.filter((_, i) => i !== index))
   }
 
-  const updateImageCategory = (index: number, newCategory: string) => {
-    setImages(prev => prev.map((img, i) => 
-      i === index ? { ...img, category: newCategory } : img
-    ))
+  const handlePropertyImageCategoryChange = async (index: number, newCategory: string) => {
+    const image = images[index]
+    if (!image) {
+      return
+    }
+
+    const previousCategoryId = image.categoryId ?? null
+    const newCategoryId =
+      newCategory === UNCATEGORIZED_IMAGE_CATEGORY ? null : Number(newCategory)
+
+    if (previousCategoryId === newCategoryId) {
+      return
+    }
+
+    setImages(prev =>
+      prev.map((img, i) =>
+        i === index ? { ...img, categoryId: newCategoryId } : img
+      )
+    )
+
+    try {
+      await updatePropertyImage(Number(image.id), { category: newCategoryId })
+      toast.success("Image category updated")
+    } catch (error: any) {
+      console.error("Failed to update image category:", error)
+      toast.error(error?.message || "Failed to update image category")
+      setImages(prev =>
+        prev.map((img, i) =>
+          i === index ? { ...img, categoryId: previousCategoryId } : img
+        )
+      )
+    }
   }
 
   const removeRoomImage = (roomIndex: number, imageIndex: number) => {
@@ -641,6 +833,29 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
       return;
     }
 
+    const hasIncompleteNearbyPlaces = nearbyPlaces.some((place) => {
+      const nameValue = place.name.trim()
+      const categoryValue = place.category.trim()
+      const distanceValue = place.distance.trim()
+      const filledValues = [nameValue, categoryValue, distanceValue].filter(Boolean).length
+      return filledValues > 0 && filledValues < 3
+    })
+
+    if (hasIncompleteNearbyPlaces) {
+      toast.warning('Please complete all fields for each nearby place or remove incomplete entries.')
+      return
+    }
+
+    const formattedNearbyPlaces = nearbyPlaces
+      .map((place, index) => ({
+        id: place.existingId,
+        name: place.name.trim(),
+        category: place.category.trim(),
+        distance: place.distance.trim(),
+        sort_order: index,
+      }))
+      .filter((place) => place.name && place.category && place.distance)
+
     setLoading(true);
     try {
       const preparedRooms = rooms.map(room => {
@@ -668,6 +883,7 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
         amenities: selectedAmenities,
         rules: selectedPolicies,
         documentation: selectedDocumentation,
+        nearby_places: formattedNearbyPlaces,
         rooms: preparedRooms,
         description,
         city,
@@ -729,11 +945,21 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      const fileType = file.type.toLowerCase();
+      if (!ACCEPTED_IMAGE_TYPES.includes(fileType)) {
+        toast.error('Please select a JPEG or PNG image');
+        if (event.target) event.target.value = '';
+        return;
+      }
+
       const reader = new FileReader();
       reader.onloadend = () => {
         setCropImage(reader.result as string);
       };
       reader.readAsDataURL(file);
+    }
+    if (event.target) {
+      event.target.value = '';
     }
   };
 
@@ -760,9 +986,10 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
       console.log(`Processing file: ${file.name}, type: ${file.type}, size: ${file.size}`);
       
       // Validate file type
-      if (!file.type.startsWith('image/')) {
+      const fileType = file.type.toLowerCase();
+      if (!ACCEPTED_IMAGE_TYPES.includes(fileType)) {
         console.error('Invalid file type selected');
-        toast.error('Please select an image file');
+        toast.error('Please select a JPEG or PNG image');
         if (event.target) event.target.value = '';
         return;
       }
@@ -805,7 +1032,7 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
       {/* Hidden file inputs for image uploads */}
       <input
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/jpg,image/png"
         className="hidden"
         onChange={handleFileChange}
         ref={fileInputRef}
@@ -813,7 +1040,7 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
       />
       <input
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/jpg,image/png"
         className="hidden"
         onChange={handleRoomFileChange}
         ref={roomFileInputRef}
@@ -1053,29 +1280,129 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
         </CardContent>
       </Card>
 
+      {/* Nearby Places */}
+      <Card className="mb-4">
+        <CardContent className="pt-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <div>
+              <h3 className="text-lg font-semibold">Nearby Places</h3>
+              <p className="text-sm text-gray-500">
+                Maintain a list of nearby attractions, transit points, or landmarks with their distance.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="neutral"
+              size="sm"
+              onClick={addNearbyPlace}
+              className="flex items-center gap-2 self-start sm:self-auto"
+            >
+              <Plus className="h-4 w-4" />
+              Add Place
+            </Button>
+          </div>
+
+          {nearbyPlaces.length === 0 ? (
+            <div className="border-2 border-dashed rounded-lg p-6 text-center text-gray-500 bg-gray-50">
+              <p className="mb-2">No nearby places added yet.</p>
+              <p className="text-sm">Use the &quot;Add Place&quot; button to include nearby points of interest.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {nearbyPlaces.map((place, index) => (
+                <div
+                  key={place.id}
+                  className="border border-dashed rounded-lg p-4 bg-gray-50 shadow-sm"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-medium text-base text-gray-700">Place {index + 1}</h4>
+                    <Button
+                      type="button"
+                      variant="neutral"
+                      size="sm"
+                      className="text-red-500 hover:text-red-600"
+                      onClick={() => removeNearbyPlace(index)}
+                    >
+                      <Trash className="h-4 w-4 mr-2" />
+                      Remove
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor={`nearby-place-name-${place.id}`}>Name</Label>
+                      <Input
+                        id={`nearby-place-name-${place.id}`}
+                        value={place.name}
+                        onChange={(e) => updateNearbyPlace(index, 'name', e.target.value)}
+                        placeholder="Phoenix Market City Mall"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`nearby-place-category-${place.id}`}>Category</Label>
+                      <Input
+                        id={`nearby-place-category-${place.id}`}
+                        value={place.category}
+                        onChange={(e) => updateNearbyPlace(index, 'category', e.target.value)}
+                        placeholder="Shopping"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`nearby-place-distance-${place.id}`}>Distance</Label>
+                      <Input
+                        id={`nearby-place-distance-${place.id}`}
+                        value={place.distance}
+                        onChange={(e) => updateNearbyPlace(index, 'distance', e.target.value)}
+                        placeholder="1.5 km"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Images */}
       <Card className="mb-4">
         <CardContent className="pt-6">
-          <h3 className="text-lg font-semibold mb-4">
-            <RequiredLabel>Property Images</RequiredLabel>
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">
+              <RequiredLabel>Property Images</RequiredLabel>
+            </h3>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setManageImageCategoriesOpen(true)}
+            >
+              Manage Categories
+            </Button>
+          </div>
           <div className="mb-4">
             <Label htmlFor="image-category">Select Category for Next Image</Label>
             <Select
-              value={selectedImageCategory}
-              onValueChange={(value) => setSelectedImageCategory(value)}
+              value={selectedImageCategoryId}
+              onValueChange={(value) => setSelectedImageCategoryId(value)}
+              disabled={imageCategories.length === 0}
             >
               <SelectTrigger className="w-full md:w-64">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
-                {IMAGE_CATEGORIES.map((category) => (
-                  <SelectItem key={category.value} value={category.value}>
-                    {category.label}
+                <SelectItem value={UNCATEGORIZED_IMAGE_CATEGORY}>Uncategorized</SelectItem>
+                {imageCategories.map((category) => (
+                  <SelectItem key={category.id} value={String(category.id)}>
+                    {category.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {imageCategories.length === 0 && (
+              <p className="mt-2 text-sm text-gray-500">
+                No categories available yet. Click &quot;Manage Categories&quot; to add one.
+              </p>
+            )}
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {images.map((image, index) => (
@@ -1092,7 +1419,7 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
                     loading="lazy"
                   />
                   <div className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                    {IMAGE_CATEGORIES.find(cat => cat.value === image.category)?.label || 'Other'}
+                    {imageCategories.find(cat => cat.id === image.categoryId)?.name || 'Uncategorized'}
                   </div>
                   <Button
                     type="button"
@@ -1105,16 +1432,17 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
                   </Button>
                 </div>
                 <Select
-                  value={image.category}
-                  onValueChange={(value) => updateImageCategory(index, value)}
+                  value={image.categoryId != null ? String(image.categoryId) : UNCATEGORIZED_IMAGE_CATEGORY}
+                  onValueChange={(value) => handlePropertyImageCategoryChange(index, value)}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {IMAGE_CATEGORIES.map((category) => (
-                      <SelectItem key={category.value} value={category.value}>
-                        {category.label}
+                    <SelectItem value={UNCATEGORIZED_IMAGE_CATEGORY}>Uncategorized</SelectItem>
+                    {imageCategories.map((category) => (
+                      <SelectItem key={category.id} value={String(category.id)}>
+                        {category.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -1127,7 +1455,7 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
               <input
                 type="file"
                 className="hidden"
-                accept="image/*"
+                accept="image/jpeg,image/jpg,image/png"
                 onChange={handleFileChange}
               />
             </label>
@@ -1166,7 +1494,17 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
       {/* Amenities */}
       <Card className="mb-4">
         <CardContent className="pt-6">
-          <h3 className="text-lg font-semibold mb-4">Amenities</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Amenities</h3>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setManageAmenitiesOpen(true)}
+            >
+              Manage
+            </Button>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {amenities.map((amenity) => (
               <div key={amenity.id} className="flex items-center space-x-2">
@@ -1191,7 +1529,17 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
       {/* Hotel Policies */}
       <Card className="mb-4">
         <CardContent className="pt-6">
-          <h3 className="text-lg font-semibold mb-4">Hotel Policies</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Hotel Policies</h3>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setManagePoliciesOpen(true)}
+            >
+              Manage
+            </Button>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {rules.map((rule) => (
               <div key={rule.id} className="flex items-center space-x-2">
@@ -1216,7 +1564,17 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
       {/* Documentation */}
       <Card className="mb-4">
         <CardContent className="pt-6">
-          <h3 className="text-lg font-semibold mb-4">Documentation</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Documentation</h3>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setManageDocumentationOpen(true)}
+            >
+              Manage
+            </Button>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {documentation.map((doc) => (
               <div key={doc.id} className="flex items-center space-x-2">
@@ -1531,6 +1889,54 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
       </div>
         </CardContent>
       </Card>
+      <ManageConfigModal
+        title="Amenities"
+        isOpen={manageAmenitiesOpen}
+        onClose={() => setManageAmenitiesOpen(false)}
+        items={amenities.map((amenity) => ({
+          id: Number(amenity.id),
+          name: amenity.name,
+        }))}
+        onCreate={handleCreateAmenity}
+        onUpdate={handleUpdateAmenity}
+        onDelete={handleDeleteAmenity}
+      />
+      <ManageConfigModal
+        title="Hotel Policies"
+        isOpen={managePoliciesOpen}
+        onClose={() => setManagePoliciesOpen(false)}
+        items={rules.map((rule) => ({
+          id: rule.id,
+          name: rule.name,
+        }))}
+        onCreate={handleCreatePolicy}
+        onUpdate={handleUpdatePolicy}
+        onDelete={handleDeletePolicy}
+      />
+      <ManageConfigModal
+        title="Documentation"
+        isOpen={manageDocumentationOpen}
+        onClose={() => setManageDocumentationOpen(false)}
+        items={documentation.map((doc) => ({
+          id: doc.id,
+          name: doc.name,
+        }))}
+        onCreate={handleCreateDocumentation}
+        onUpdate={handleUpdateDocumentation}
+        onDelete={handleDeleteDocumentation}
+      />
+      <ManageConfigModal
+        title="Image Categories"
+        isOpen={manageImageCategoriesOpen}
+        onClose={() => setManageImageCategoriesOpen(false)}
+        items={imageCategories.map((category) => ({
+          id: category.id,
+          name: category.name,
+        }))}
+        onCreate={handleCreateImageCategory}
+        onUpdate={handleUpdateImageCategoryName}
+        onDelete={handleDeleteImageCategory}
+      />
     </form>
   )
 }

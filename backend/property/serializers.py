@@ -15,6 +15,8 @@ from .models import (
     FavoriteProperty,
     ReviewImage,
     Setting,
+    ImageCategory,
+    NearbyPlace,
 )
 
 from offer.models import PropertyOffer
@@ -38,10 +40,31 @@ class RoomImageSerializer(serializers.ModelSerializer):
         model = RoomImage
         fields = "__all__"
 
+class ImageCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ImageCategory
+        fields = "__all__"
+
+
 class PropertyImageSerializer(serializers.ModelSerializer):
+    category = serializers.PrimaryKeyRelatedField(
+        queryset=ImageCategory.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    category_detail = ImageCategorySerializer(source='category', read_only=True)
+
     class Meta:
         model = PropertyImage
-        fields = "__all__"
+        fields = ['id', 'image', 'category', 'category_detail', 'created_at', 'updated_at', 'is_active']
+        read_only_fields = ['created_at', 'updated_at']
+
+
+class NearbyPlaceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NearbyPlace
+        fields = ['id', 'name', 'category', 'distance', 'sort_order']
+        read_only_fields = ['id']
 
 
 class RoomImageViewSerializer(serializers.ModelSerializer):
@@ -55,9 +78,14 @@ class RoomImageViewSerializer(serializers.ModelSerializer):
     
 class PropertyImageViewSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
+    category = ImageCategorySerializer(read_only=True)
+    category_id = serializers.IntegerField(source='category.id', read_only=True)
+    category_name = serializers.CharField(source='category.name', read_only=True)
+    category_code = serializers.CharField(source='category.code', read_only=True)
+
     class Meta:
         model = PropertyImage
-        fields = "__all__"
+        fields = ['id', 'image', 'category', 'category_id', 'category_name', 'category_code', 'created_at', 'updated_at', 'is_active']
 
     def get_image(self, obj):
         return f"{settings.WEBSITE_URL}{settings.MEDIA_URL}{obj.image}"
@@ -139,6 +167,7 @@ class PropertySerializer(serializers.ModelSerializer):
     documentation = serializers.PrimaryKeyRelatedField(queryset=Documentation.objects.all(), many=True, required=False)
     images = serializers.PrimaryKeyRelatedField(queryset=PropertyImage.objects.all(), many=True, required=False, read_only=False)
     rooms = RoomSerializer(many=True, required=False)
+    nearby_places = NearbyPlaceSerializer(many=True, required=False)
     city = serializers.CharField(required=False)
     state = serializers.CharField(required=False)
     country = serializers.CharField(required=False)
@@ -155,14 +184,24 @@ class PropertySerializer(serializers.ModelSerializer):
         if images_data and isinstance(images_data, list) and len(images_data) > 0 and isinstance(images_data[0], dict):
             # Update image categories first
             for img in images_data:
-                if isinstance(img, dict) and 'id' in img and 'category' in img:
+                if isinstance(img, dict) and 'id' in img:
+                    image_id = img.get('id')
+                    category_value = img.get('category') or img.get('category_id')
+                    if image_id is None:
+                        continue
                     try:
-                        img_obj = PropertyImage.objects.get(id=img['id'])
-                        img_obj.category = img['category']
-                        img_obj.save()
+                        img_obj = PropertyImage.objects.get(id=image_id)
+                        category_obj = None
+                        if category_value:
+                            try:
+                                category_obj = ImageCategory.objects.get(id=category_value)
+                            except ImageCategory.DoesNotExist:
+                                category_obj = None
+                        img_obj.category = category_obj
+                        img_obj.save(update_fields=['category', 'updated_at'])
                     except PropertyImage.DoesNotExist:
-                        pass
-            
+                        continue
+
             # Convert dictionaries to IDs for the field validation
             data['images'] = [img['id'] for img in images_data if 'id' in img]
         
@@ -179,6 +218,7 @@ class PropertySerializer(serializers.ModelSerializer):
         documentation = validated_data.pop('documentation', [])
         images = validated_data.pop('images', [])
         rooms_data = validated_data.pop('rooms', [])
+        nearby_places = validated_data.pop('nearby_places', [])
 
         city = City.objects.get_or_create(name__iexact=city_name, defaults={'name': city_name})[0] if city_name else None
         state = State.objects.get_or_create(name__iexact=state_name, defaults={'name': state_name})[0] if state_name else None
@@ -199,6 +239,8 @@ class PropertySerializer(serializers.ModelSerializer):
         for room_data in rooms_data:
             self.create_room(property, room_data)
 
+        self.update_nearby_places(property, nearby_places)
+
         return property
 
     def update(self, instance, validated_data):
@@ -211,6 +253,7 @@ class PropertySerializer(serializers.ModelSerializer):
         documentation = validated_data.pop('documentation', [])
         images = validated_data.pop('images', [])
         rooms_data = validated_data.pop('rooms', [])
+        nearby_places = validated_data.pop('nearby_places', None)
 
         if city_name:
             instance.city = City.objects.get_or_create(name__iexact=city_name, defaults={'name': city_name})[0]
@@ -239,6 +282,9 @@ class PropertySerializer(serializers.ModelSerializer):
         for room in existing_rooms.values():
             room.delete()
 
+        if nearby_places is not None:
+            self.update_nearby_places(instance, nearby_places)
+
         return instance
 
     def create_room(self, property_instance, room_data):
@@ -261,6 +307,45 @@ class PropertySerializer(serializers.ModelSerializer):
         room_instance.images.set(images_data)
         room_instance.save()
         return room_instance
+
+    def update_nearby_places(self, property_instance, nearby_places_data):
+        existing_places = {place.id: place for place in property_instance.nearby_places.all()}
+        processed_ids = set()
+
+        for index, place_data in enumerate(nearby_places_data):
+            name = place_data.get('name', '').strip()
+            category = place_data.get('category', '').strip()
+            distance = place_data.get('distance', '').strip()
+
+            if not name or not category or not distance:
+                continue
+
+            place_id = place_data.get('id')
+            sort_order = place_data.get('sort_order', index)
+            defaults = {
+                'name': name,
+                'category': category,
+                'distance': distance,
+                'sort_order': sort_order,
+            }
+
+            if place_id and place_id in existing_places:
+                place = existing_places[place_id]
+                for attr, value in defaults.items():
+                    setattr(place, attr, value)
+                place.save()
+                processed_ids.add(place_id)
+            else:
+                new_place = NearbyPlace.objects.create(
+                    property=property_instance,
+                    **defaults
+                )
+                processed_ids.add(new_place.id)
+
+        # Remove places not in the updated list
+        for place_id, place in existing_places.items():
+            if place_id not in processed_ids:
+                place.delete()
     
 class PropertyOfferSerializer(serializers.ModelSerializer):
     offer = OfferSerializer(required=False)
@@ -281,6 +366,7 @@ class PropertyViewSerializer(serializers.ModelSerializer):
     offers = PropertyOfferSerializer(many=True, required=False)
     rooms = RoomViewSerializer(many=True, required=False)
     is_favorite = serializers.SerializerMethodField()
+    nearby_places = NearbyPlaceSerializer(many=True, required=False)
 
     class Meta:
         model = Property
@@ -289,7 +375,8 @@ class PropertyViewSerializer(serializers.ModelSerializer):
             'city', 'country', 'state', 'area', 'longitude', 'latitude',
             'images', 'discount', 'amenities', 'rooms', 'rules',
             'documentation', 'created_at', 'updated_at', 'is_active',
-            'reviews', 'offers', 'is_favorite', 'gender_type'  # Added is_favorite and gender_type fields
+            'reviews', 'offers', 'is_favorite', 'gender_type',
+            'nearby_places'
         ]
 
     def get_is_favorite(self, obj):

@@ -43,6 +43,10 @@ permissions = [
         'description': 'Manage system content and data.'
     },
     {
+        'name': 'admin:pages:manage',
+        'description': 'Manage marketing pages (events, team, partner with us).'
+    },
+    {
         'name': 'admin:reports:view',
         'description': 'View system reports and analytics.'
     },

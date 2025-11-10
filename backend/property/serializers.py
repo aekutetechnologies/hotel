@@ -17,6 +17,8 @@ from .models import (
     Setting,
     ImageCategory,
     NearbyPlace,
+    SitePage,
+    SitePageImage,
 )
 
 from offer.models import PropertyOffer
@@ -65,6 +67,39 @@ class NearbyPlaceSerializer(serializers.ModelSerializer):
         model = NearbyPlace
         fields = ['id', 'name', 'category', 'distance', 'sort_order']
         read_only_fields = ['id']
+
+
+class SitePageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SitePage
+        fields = [
+            'id',
+            'slug',
+            'title',
+            'hero_title',
+            'hero_description',
+            'sections',
+            'extra',
+            'created_at',
+            'updated_at',
+            'is_active',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+
+class SitePageImageSerializer(serializers.ModelSerializer):
+    page_slug = serializers.SlugRelatedField(
+        source='page',
+        slug_field='slug',
+        queryset=SitePage.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+
+    class Meta:
+        model = SitePageImage
+        fields = ['id', 'image', 'page_slug', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
 
 
 class RoomImageViewSerializer(serializers.ModelSerializer):

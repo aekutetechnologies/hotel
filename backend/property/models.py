@@ -211,6 +211,42 @@ class NearbyPlace(models.Model):
         return f"{self.name} - {self.distance}"
 
 
+class SitePage(models.Model):
+    id = models.AutoField(primary_key=True)
+    slug = models.SlugField(max_length=100, unique=True)
+    title = models.CharField(max_length=255)
+    hero_title = models.CharField(max_length=255, blank=True)
+    hero_description = models.TextField(blank=True)
+    sections = models.JSONField(default=list, blank=True)
+    extra = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['slug']
+
+    def __str__(self):
+        return self.slug
+
+
+class SitePageImage(models.Model):
+    id = models.AutoField(primary_key=True)
+    page = models.ForeignKey(
+        SitePage,
+        on_delete=models.SET_NULL,
+        related_name='uploaded_images',
+        null=True,
+        blank=True,
+    )
+    image = models.ImageField(upload_to='site_pages/')
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.page.slug if self.page else 'unassigned'} image {self.id}"
+
+
 class Setting(models.Model):
     """Global settings for the system"""
     id = models.AutoField(primary_key=True)

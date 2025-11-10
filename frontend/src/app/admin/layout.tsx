@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Building2, CalendarCheck, CircleDollarSign, Users, Tag, Menu, X, LogOut, UserRound, Home, BookOpen, Eye } from 'lucide-react'
+import { Building2, CalendarCheck, CircleDollarSign, Users, Tag, Menu, X, LogOut, UserRound, Home, BookOpen, Eye, FileText } from 'lucide-react'
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ProtectedRoute } from '@/components/ProtectedRoute'
@@ -39,6 +39,7 @@ export default function AdminLayout({
     { name: 'Users', href: '/admin/users', icon: Users, permissions: ['admin:user:view'] },
     { name: 'User Roles', href: '/admin/userroles', icon: UserRound, permissions: ['admin:user:assign-permissions'] },
     { name: 'Offers', href: '/admin/offers', icon: Tag, permissions: ['admin:offer:view'] },
+    { name: 'Pages', href: '/admin/pages', icon: FileText, permissions: ['admin:pages:manage'] },
     { name: 'Blogs', href: '/admin/blogs', icon: BookOpen, permissions: ['blog:view'] },
   ]
 

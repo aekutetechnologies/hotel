@@ -45,6 +45,7 @@ export type Permission =
   | 'admin:offer:delete'
   | 'admin:user:view'
   | 'admin:dashboard:view'
+  | 'admin:pages:manage'
   | 'blog:create'
   | 'blog:edit'
   | 'blog:delete'
@@ -101,6 +102,9 @@ export const pagePermissionsMap: Record<string, Permission[]> = {
   '/admin/blogs': ['blog:view'],
   '/admin/blogs/new': ['blog:create'],
   '^/admin/blogs/.+/edit$': ['blog:edit'],
+
+  // Site Pages
+  '/admin/pages': ['admin:pages:manage'],
 
   // Settings
   '/admin/settings': ['admin:dashboard:view'],

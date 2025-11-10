@@ -19,6 +19,8 @@ from .models import (
     UserProperty,
     Setting,
     ImageCategory,
+    SitePage,
+    SitePageImage,
 )
 from .serializers import (
     PropertySerializer,
@@ -39,6 +41,8 @@ from .serializers import (
     FavoritePropertySerializer,
     ReviewCreateSerializer,
     ImageCategorySerializer,
+    SitePageSerializer,
+    SitePageImageSerializer,
 )
 
 from users.models import HsUser
@@ -877,6 +881,69 @@ def create_review(request):
             {"error": str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+@api_view(["GET", "POST"])
+@custom_authentication_and_permissions(required_permissions=['admin:pages:manage'])
+def site_page_list(request):
+    if request.method == "GET":
+        pages = SitePage.objects.all().order_by('slug')
+        serializer = SitePageSerializer(pages, many=True)
+        return Response(serializer.data)
+    elif request.method == "POST":
+        serializer = SitePageSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["GET", "PUT", "PATCH", "DELETE"])
+@custom_authentication_and_permissions(
+    required_permissions=['admin:pages:manage'],
+    exempt_get_views=[r"^/api/property/site-pages/[a-zA-Z0-9\-]+/?$"]
+)
+def site_page_detail(request, slug):
+    page = get_object_or_404(SitePage, slug=slug)
+
+    if request.method == "GET":
+        serializer = SitePageSerializer(page)
+        return Response(serializer.data)
+    elif request.method in ["PUT", "PATCH"]:
+        serializer = SitePageSerializer(
+            page,
+            data=request.data,
+            partial=(request.method == "PATCH")
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == "DELETE":
+        page.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(["POST"])
+@parser_classes([MultiPartParser, FormParser])
+@custom_authentication_and_permissions(required_permissions=['admin:pages:manage'])
+def site_page_upload_image(request):
+    file = request.FILES.get('image')
+    if not file:
+        return Response({"error": "No image file provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+    slug = request.data.get('slug')
+    page = None
+    if slug:
+        page = SitePage.objects.filter(slug=slug).first()
+
+    image_instance = SitePageImage.objects.create(page=page, image=file)
+    serializer = SitePageImageSerializer(image_instance, context={'request': request})
+
+    image_url = request.build_absolute_uri(image_instance.image.url)
+    data = serializer.data
+    data['image_url'] = image_url
+    return Response(data, status=status.HTTP_201_CREATED)
 
 
 @api_view(["GET"])

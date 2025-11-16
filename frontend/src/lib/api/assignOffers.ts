@@ -10,8 +10,10 @@ export async function assignOffersToProperties(offerIds: number[], propertyIds: 
 
 export async function unassignOffersFromProperties(offerIds: number[], propertyIds: number[]) {
   return apiDelete(`${API_URL}offers/assign/`, {
-    offer_ids: offerIds,
-    property_ids: propertyIds,
+    body: {
+      offer_ids: offerIds,
+      property_ids: propertyIds,
+    }
   })
 }
 

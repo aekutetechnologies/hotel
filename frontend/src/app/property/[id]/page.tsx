@@ -716,7 +716,7 @@ export default function PropertyDetails() {
         {/* Property Header */}
         <div className="mb-6">
           <div className="flex justify-between items-start mb-2">
-            <h1 className="text-2xl sm:text-3xl font-bold">{property.name}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold">{property.name}</h1>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -983,7 +983,7 @@ export default function PropertyDetails() {
 
             {/* Amenities */}
             <section id="facilities">
-              <h2 className="text-2xl font-semibold mb-4">Amenities</h2>
+              <h2 className="text-xl font-semibold mb-3">Amenities</h2>
               <div className="grid grid-cols-12 sm:grid-cols-16 md:grid-cols-24 gap-0.5 mt-4">
                 {property.amenities.map((amenity, index) => {
                   const amenityKey = amenity.id
@@ -1010,7 +1010,7 @@ export default function PropertyDetails() {
 
             {/* Room Types */}
             <section id="prices">
-              <h2 className="text-2xl font-semibold mb-4">Available Rooms</h2>
+              <h2 className="text-xl font-semibold mb-3">Available Rooms</h2>
               <div className="space-y-4">
                 {property?.rooms?.map((room) => {
                   const roomId = room.id.toString();
@@ -1210,13 +1210,13 @@ export default function PropertyDetails() {
 
             {/* About */}
             <section className="property-section">
-              <h2 className="text-2xl font-semibold mb-4">About this property</h2>
+              <h2 className="text-xl font-semibold mb-3">About this property</h2>
               <p className="text-gray-700">{property.description}</p>
             </section>
 
             {property.nearby_places && property.nearby_places.length > 0 && (
               <section className="property-section">
-                <h2 className="text-2xl font-semibold mb-4">Nearby Places</h2>
+                <h2 className="text-xl font-semibold mb-3">Nearby Places</h2>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {property.nearby_places
                     .slice()
@@ -1250,7 +1250,7 @@ export default function PropertyDetails() {
             {/* Map Section */}
             {!showGallery && (
               <section className="property-section">
-                <h2 className="text-2xl font-semibold mb-4">Location</h2>
+                <h2 className="text-xl font-semibold mb-3">Location</h2>
                 {property.latitude && property.longitude && (
                   <div className="h-64 sm:h-80 md:h-96 w-full rounded-lg overflow-hidden">
                     <ShowMap
@@ -1264,16 +1264,16 @@ export default function PropertyDetails() {
 
             {/* Reviews */}
             <section id="reviews" className="property-section">
-              <h2 className="text-2xl font-semibold mb-4">Ratings and reviews</h2>
+              <h2 className="text-xl font-semibold mb-3">Ratings and reviews</h2>
               <ReviewSection reviews={property.reviews || []} />
             </section>
 
             {/* Policies */}
             <section id="rules" className="property-section">
-              <h2 className="text-2xl font-semibold mb-4">House Rules & Policies</h2>
+              <h2 className="text-xl font-semibold mb-3">House Rules & Policies</h2>
               <div className="space-y-4">
                 <div className="p-4 sm:p-6 bg-white shadow-lg rounded-xl">
-                  <h3 className="text-xl font-semibold mb-4">Rules & Policies</h3>
+                  <h3 className="text-lg font-semibold mb-3">Rules & Policies</h3>
                   <ul className="space-y-2">
                     {property.rules.map((rule, index) => (
                       <li key={rule.id || `rule-${index}`} className="flex items-start">
@@ -1285,7 +1285,7 @@ export default function PropertyDetails() {
                 </div>
 
                 <div className="p-4 sm:p-6 bg-white shadow-lg rounded-xl">
-                  <h3 className="text-xl font-semibold mb-4">Documentation Required</h3>
+                  <h3 className="text-lg font-semibold mb-3">Documentation Required</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {property.documentation.map((doc, index) => (
                       <div key={doc.id || `doc-${index}`} className="flex items-start gap-2">
@@ -1300,7 +1300,7 @@ export default function PropertyDetails() {
 
             {/* Fine Print Section */}
             <section id="fine-print" className="property-section">
-              <h2 className="text-2xl font-semibold mb-4">The fine print</h2>
+              <h2 className="text-xl font-semibold mb-3">The fine print</h2>
               <div className="p-4 sm:p-6 bg-white shadow-lg rounded-xl">
                 <p className="text-gray-700 mb-4">Important information about your booking:</p>
                 <ul className="space-y-2 text-gray-600">

@@ -29,6 +29,8 @@ import { uploadOfferImage } from '@/lib/api/uploadOfferImage'
 import { listOfferimage } from '@/lib/api/listOfferimage'
 import { toast } from 'react-toastify'
 import { createOffer } from '@/lib/api/createOffer'
+import { assignOffersToProperties, unassignOffersFromProperties } from '@/lib/api/assignOffers'
+import { fetchProperties } from '@/lib/api/fetchProperties'
 import { ImageCropper } from '@/components/ImageCropper'
 import { type Offer, type OfferFormData } from '@/types/offer'
 import {
@@ -52,6 +54,11 @@ export default function Offers() {
   const [loading, setLoading] = useState(false)
   const [cropImage, setCropImage] = useState<string | null>(null)
   const [uploadingOfferId, setUploadingOfferId] = useState<number | null>(null)
+  const [selectedOfferIds, setSelectedOfferIds] = useState<number[]>([])
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false)
+  const [properties, setProperties] = useState<any[]>([])
+  const [selectedPropertyIds, setSelectedPropertyIds] = useState<number[]>([])
+  const [propertySearch, setPropertySearch] = useState('')
   const itemsPerPage = 15
   const { can, isLoaded } = usePermissions()
   const offersLoadedRef = useRef(false)
@@ -255,6 +262,61 @@ export default function Offers() {
     }
   }
 
+  const toggleOfferSelection = (offerId: number, checked: boolean) => {
+    setSelectedOfferIds(prev => {
+      if (checked) return Array.from(new Set([...prev, offerId]))
+      return prev.filter(id => id !== offerId)
+    })
+  }
+
+  const openAssignModal = async () => {
+    try {
+      const props = await fetchProperties()
+      setProperties(props || [])
+      setIsAssignModalOpen(true)
+    } catch (e) {
+      toast.error('Failed to load properties')
+    }
+  }
+
+  const togglePropertySelection = (propertyId: number, checked: boolean) => {
+    setSelectedPropertyIds(prev => {
+      if (checked) return Array.from(new Set([...prev, propertyId]))
+      return prev.filter(id => id !== propertyId)
+    })
+  }
+
+  const handleAssign = async () => {
+    if (selectedOfferIds.length === 0 || selectedPropertyIds.length === 0) {
+      toast.error('Select at least one offer and one property')
+      return
+    }
+    try {
+      await assignOffersToProperties(selectedOfferIds, selectedPropertyIds)
+      toast.success('Assigned offers to properties')
+      setIsAssignModalOpen(false)
+      setSelectedPropertyIds([])
+      // Keep selected offers to allow multiple assignments if desired
+    } catch (e: any) {
+      toast.error(e?.message || 'Assignment failed')
+    }
+  }
+
+  const handleUnassign = async () => {
+    if (selectedOfferIds.length === 0 || selectedPropertyIds.length === 0) {
+      toast.error('Select at least one offer and one property')
+      return
+    }
+    try {
+      await unassignOffersFromProperties(selectedOfferIds, selectedPropertyIds)
+      toast.success('Unassigned offers from properties')
+      setIsAssignModalOpen(false)
+      setSelectedPropertyIds([])
+    } catch (e: any) {
+      toast.error(e?.message || 'Unassignment failed')
+    }
+  }
+
   const handleImageUploadClick = (offer: Offer) => {
     setSelectedOffer(offer)
     const fileInput = document.createElement('input')
@@ -313,6 +375,11 @@ export default function Offers() {
       <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-2xl font-bold">Offers</h1>
         <div className="flex gap-2">
+          <PermissionGuard permissions={['admin:offer:update']} requireAll={false}>
+            <Button variant="neutral" onClick={openAssignModal} disabled={selectedOfferIds.length === 0}>
+              Assign to Properties
+            </Button>
+          </PermissionGuard>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -367,6 +434,20 @@ export default function Offers() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-10">
+                <input
+                  type="checkbox"
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedOfferIds(paginatedOffers.map(o => o.id))
+                    } else {
+                      setSelectedOfferIds([])
+                    }
+                  }}
+                  checked={paginatedOffers.length > 0 && paginatedOffers.every(o => selectedOfferIds.includes(o.id))}
+                  aria-label="Select all"
+                />
+              </TableHead>
               <TableHead>Title</TableHead>
               <TableHead>Description</TableHead>
               <TableHead>Code</TableHead>
@@ -380,6 +461,14 @@ export default function Offers() {
           <TableBody>
             {paginatedOffers.map((offer) => (
               <TableRow key={offer.id}>
+                <TableCell>
+                  <input
+                    type="checkbox"
+                    checked={selectedOfferIds.includes(offer.id)}
+                    onChange={(e) => toggleOfferSelection(offer.id, e.target.checked)}
+                    aria-label={`Select offer ${offer.title}`}
+                  />
+                </TableCell>
                 <TableCell className="font-medium">{offer.title}</TableCell>
                 <TableCell>{offer.description}</TableCell>
                 <TableCell>{offer.code}</TableCell>
@@ -501,6 +590,56 @@ export default function Offers() {
           </Pagination>
         )}
       </div>
+
+      {isAssignModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-semibold">Assign Offers to Properties</h2>
+              <Button variant="neutral" onClick={() => setIsAssignModalOpen(false)}>Close</Button>
+            </div>
+            <div className="mb-3">
+              <Input
+                placeholder="Search properties..."
+                value={propertySearch}
+                onChange={(e) => setPropertySearch(e.target.value)}
+              />
+            </div>
+            <div className="max-h-80 overflow-auto border rounded">
+              {(properties || [])
+                .filter(p => {
+                  const q = propertySearch.trim().toLowerCase()
+                  if (!q) return true
+                  return (p.name || '').toLowerCase().includes(q) || (p.location || '').toLowerCase().includes(q)
+                })
+                .map((p) => (
+                  <label key={p.id} className="flex items-center gap-3 px-3 py-2 border-b last:border-b-0">
+                    <input
+                      type="checkbox"
+                      checked={selectedPropertyIds.includes(p.id)}
+                      onChange={(e) => togglePropertySelection(p.id, e.target.checked)}
+                    />
+                    <div className="flex flex-col">
+                      <span className="font-medium">{p.name}</span>
+                      <span className="text-xs text-gray-500">{p.location}</span>
+                    </div>
+                  </label>
+                ))}
+              {(!properties || properties.length === 0) && (
+                <div className="p-4 text-center text-gray-500">No properties found</div>
+              )}
+            </div>
+            <div className="flex items-center justify-end gap-2 mt-4">
+              <Button variant="neutral" onClick={handleUnassign} disabled={selectedPropertyIds.length === 0 || selectedOfferIds.length === 0}>
+                Unassign
+              </Button>
+              <Button className="bg-[#B11E43] hover:bg-[#8f1836]" onClick={handleAssign} disabled={selectedPropertyIds.length === 0 || selectedOfferIds.length === 0}>
+                Assign
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {cropImage && uploadingOfferId && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex justify-center items-center">

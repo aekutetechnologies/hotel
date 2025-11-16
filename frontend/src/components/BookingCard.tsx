@@ -886,6 +886,16 @@ export function BookingCard({
                     : (totalPrice * averageDiscount / 100).toFixed(2)}</span>
               </div>
             )}
+            {selectedOffer && offerDiscount > 0 && (
+              <div className="flex justify-between text-green-600">
+                <span>Offer discount ({selectedOffer.offer.code})</span>
+                <span>-₹{bookingType === 'monthly'
+                  ? (offerDiscount * months * guests).toFixed(2)
+                  : bookingType === 'yearly'
+                    ? (offerDiscount * years * guests).toFixed(2)
+                    : offerDiscount.toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span>Taxes ({(taxRate * 100).toFixed(0)}%)</span>
               <span>₹{bookingType === 'monthly'

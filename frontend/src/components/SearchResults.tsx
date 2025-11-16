@@ -452,8 +452,8 @@ export function SearchResults() {
           }
         }
       `}</style>
-      <div className="container mx-auto px-4 py-6">
-        <div className="mb-4">
+      <div className="container mx-auto px-4">
+        <div className="sticky top-0 z-30 bg-white/90 backdrop-blur supports-[backdrop-filter]:backdrop-blur-lg border-b border-gray-100 py-4">
           <InlineSearchForm />
         </div>
         {/* Mobile Filter Toggle Button */}

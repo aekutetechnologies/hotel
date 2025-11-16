@@ -28,6 +28,7 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
   const [userEmailInput, setUserEmailInput] = useState('')
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [isStaticLogin, setIsStaticLogin] = useState(false)
 
   const resetDialogState = () => {
     setView("phone")
@@ -38,6 +39,7 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
     setOtpValue('')
     setUserNameInput('')
     setUserEmailInput('')
+    setIsStaticLogin(false)
   }
 
   const benefits = [
@@ -86,6 +88,17 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
       const response = await sendOtp({ mobileNumber: phoneNumber })
       console.log("response", response)
       if (response) {
+        // Check if this is a static login number
+        const staticNumbers: Record<string, string> = {
+          '8342091661': '420916',
+          '9938252725': '382527',
+          '9820769934': '207699',
+        }
+        if (staticNumbers[phoneNumber]) {
+          setIsStaticLogin(true)
+        } else {
+          setIsStaticLogin(false)
+        }
         setShowOTPInput(true)
         setView("otp")
       } else {
@@ -224,13 +237,22 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
             // OTP View
             <div className="space-y-6">
               <div className="text-center space-y-2">
-                <p className="text-sm text-gray-600">
-                  We have sent the verification code to your mobile number{" "}
-                  <span className="font-medium">+91-{phoneNumber}</span>
-                  <button className="text-blue-600 ml-2 hover:underline" onClick={() => setView("phone")}>
-                    Change?
-                  </button>
-                </p>
+                {isStaticLogin ? (
+                  <p className="text-sm text-gray-600">
+                    For <span className="font-medium">+91-{phoneNumber}</span>, enter the middle 6 digits of your phone number as OTP.
+                    <button className="text-blue-600 ml-2 hover:underline" onClick={() => setView("phone")}>
+                      Change?
+                    </button>
+                  </p>
+                ) : (
+                  <p className="text-sm text-gray-600">
+                    We have sent the verification code to your mobile number{" "}
+                    <span className="font-medium">+91-{phoneNumber}</span>
+                    <button className="text-blue-600 ml-2 hover:underline" onClick={() => setView("phone")}>
+                      Change?
+                    </button>
+                  </p>
+                )}
               </div>
 
               <div className="space-y-4">

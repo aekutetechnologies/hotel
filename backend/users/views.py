@@ -16,12 +16,34 @@ import requests
 
 logger = logging.getLogger(__name__)
 
+# Static login numbers and their middle 6 digits
+STATIC_LOGIN_NUMBERS = {
+    '8342091661': '420916',
+    '9938252725': '382527',
+    '9820769934': '207699',
+}
+
+def is_static_login_number(mobile):
+    """Check if the mobile number is in the static login list"""
+    return mobile in STATIC_LOGIN_NUMBERS
+
+def get_static_login_otp(mobile):
+    """Get the static OTP (middle 6 digits) for a static login number"""
+    return STATIC_LOGIN_NUMBERS.get(mobile)
+
 @api_view(['POST'])
 def send_otp(request):
     mobile = request.data.get('mobile')
     if not mobile:
         logger.error("Mobile number is required")
         return Response({'error': 'Mobile number is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Check if this is a static login number
+    if is_static_login_number(mobile):
+        # For static numbers, don't send OTP but return success
+        # The user will use the middle 6 digits as OTP
+        logger.info(f"Static login number detected: {mobile}, skipping OTP send")
+        return Response({'message': 'OTP sent successfully', 'is_static': True}, status=status.HTTP_200_OK)
 
     otp = str(random.randint(100000, 999999))
     cache.set(mobile, otp, timeout=300)  # OTP valid for 5 minutes
@@ -37,13 +59,23 @@ def verify_otp(request):
     mobile = request.data.get('mobile')
     otp = request.data.get('otp')
 
-    cached_otp = cache.get(mobile)
-    logger.info(f"Cached OTP: {cached_otp}, OTP: {otp}")
-    if not cached_otp or cached_otp != otp:
-        logger.error(f"Invalid OTP for mobile: {mobile}")
-        return Response({'error': 'Invalid OTP'}, status=status.HTTP_401_UNAUTHORIZED)
-
-    cache.delete(mobile)
+    # Check if this is a static login number
+    if is_static_login_number(mobile):
+        static_otp = get_static_login_otp(mobile)
+        logger.info(f"Static login verification for mobile: {mobile}, Expected OTP: {static_otp}, Provided OTP: {otp}")
+        if otp != static_otp:
+            logger.error(f"Invalid static OTP for mobile: {mobile}")
+            return Response({'error': 'Invalid OTP'}, status=status.HTTP_401_UNAUTHORIZED)
+        # Static login successful, proceed with user creation/login
+        logger.info(f"Static login successful for mobile: {mobile}")
+    else:
+        # Regular OTP verification
+        cached_otp = cache.get(mobile)
+        logger.info(f"Cached OTP: {cached_otp}, OTP: {otp}")
+        if not cached_otp or cached_otp != otp:
+            logger.error(f"Invalid OTP for mobile: {mobile}")
+            return Response({'error': 'Invalid OTP'}, status=status.HTTP_401_UNAUTHORIZED)
+        cache.delete(mobile)
     user, created = HsUser.objects.get_or_create(mobile=mobile)
     
     if created:

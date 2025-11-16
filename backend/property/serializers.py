@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.utils.text import slugify
 from .models import (
     Property,
     Amenity,
@@ -43,9 +44,37 @@ class RoomImageSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 class ImageCategorySerializer(serializers.ModelSerializer):
+    code = serializers.SlugField(required=False, allow_blank=True, max_length=50)
+    
     class Meta:
         model = ImageCategory
         fields = "__all__"
+    
+    def create(self, validated_data):
+        # Auto-generate code from name if not provided
+        if not validated_data.get('code'):
+            base_code = slugify(validated_data.get('name', ''))
+            code = base_code
+            counter = 1
+            # Ensure uniqueness by appending a number if needed
+            while ImageCategory.objects.filter(code=code).exists():
+                code = f"{base_code}-{counter}"
+                counter += 1
+            validated_data['code'] = code
+        return super().create(validated_data)
+    
+    def update(self, instance, validated_data):
+        # Auto-generate code from name if not provided and name is being updated
+        if 'name' in validated_data and not validated_data.get('code'):
+            base_code = slugify(validated_data['name'])
+            code = base_code
+            counter = 1
+            # Ensure uniqueness by appending a number if needed (excluding current instance)
+            while ImageCategory.objects.filter(code=code).exclude(pk=instance.pk).exists():
+                code = f"{base_code}-{counter}"
+                counter += 1
+            validated_data['code'] = code
+        return super().update(instance, validated_data)
 
 
 class PropertyImageSerializer(serializers.ModelSerializer):

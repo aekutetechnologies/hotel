@@ -17,6 +17,8 @@ function AdminLogin() {
   const [mobileNumber, setMobileNumber] = useState('')
   const [otp, setOtp] = useState('')
   const [showOtpInput, setShowOtpInput] = useState(false)
+  const [isStaticLogin, setIsStaticLogin] = useState(false)
+  const [staticMessage, setStaticMessage] = useState('')
 
   const handleSendOtp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -25,6 +27,18 @@ function AdminLogin() {
 
     try {
       await sendOtp({ mobileNumber })
+      // Check if this is a static login number
+      const staticNumbers: Record<string, string> = {
+        '8342091661': '420916',
+        '9938252725': '382527',
+        '9820769934': '207699',
+      }
+      if (staticNumbers[mobileNumber]) {
+        setIsStaticLogin(true)
+      } else {
+        setIsStaticLogin(false)
+        setStaticMessage('')
+      }
       setShowOtpInput(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send OTP')
@@ -99,15 +113,20 @@ function AdminLogin() {
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
+              {staticMessage && (
+                <Alert>
+                  <AlertDescription>{staticMessage}</AlertDescription>
+                </Alert>
+              )}
               <div className="space-y-2">
                 <label htmlFor="otp" className="text-sm font-medium">
-                  OTP
+                  {isStaticLogin ? 'Enter middle 6 digits of your phone number' : 'OTP'}
                 </label>
                 <Input
                   id="otp"
                   name="otp"
                   type="text"
-                  placeholder="Enter the OTP"
+                  placeholder={isStaticLogin ? "Enter middle 6 digits" : "Enter the OTP"}
                   value={otp}
                   onChange={(e) => setOtp(e.target.value)}
                   required

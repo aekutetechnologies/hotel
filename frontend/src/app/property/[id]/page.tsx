@@ -626,7 +626,7 @@ export default function PropertyDetails() {
         isDetailPage={true}
       />
       <main className="flex-grow container mx-auto px-4 py-8 overflow-visible">
-        <div className="mb-6">
+        <div className="mb-6 sticky top-0 z-30 bg-white/90 backdrop-blur supports-[backdrop-filter]:backdrop-blur-lg border-b border-gray-100">
           <InlineSearchForm />
         </div>
         <style jsx global>{`
@@ -1023,12 +1023,12 @@ export default function PropertyDetails() {
                         {/* Image Slider (Left Side - Full width on mobile, 1/3 on desktop) */}
                         <div className="w-full sm:w-1/3 relative mb-4 sm:mb-0">
                           {room.images && room.images.length > 0 ? (
-                            <div className="relative w-full h-48 overflow-hidden rounded-lg mb-2">
+                            <div className="relative w-full h-48 overflow-hidden rounded-lg mb-2 group cursor-pointer">
                               <Image
                                 src={room.images[currentRoomImageIndices[roomId] || 0]?.image || room.images[currentRoomImageIndices[roomId] || 0]?.image_url || '/placeholder.jpg'}
                                 alt={`Room ${room.name || room.occupancyType} - Image ${(currentRoomImageIndices[roomId] || 0) + 1}`}
                                 fill
-                                className="object-cover"
+                                className="object-cover transition-transform duration-300 ease-in-out group-hover:scale-110"
                                 priority
                               />
                               {/* Navigation Arrows */}

@@ -73,6 +73,8 @@ export default function BookProperty() {
   const roomsParam = searchParams.get('rooms') || '1';
   const selectedRoomsParam = searchParams.get('selectedRooms') || '';
   const selectedOfferParam = searchParams.get('selectedOffer') || '';
+  const monthsParam = searchParams.get('months') || '1';
+  const yearsParam = searchParams.get('years') || '1';
 
   // Parse selected rooms from URL parameter
   const [selectedRoomDetails, setSelectedRoomDetails] = useState<any[]>([]);
@@ -239,7 +241,7 @@ export default function BookProperty() {
     }
   }, [selectedOfferParam]);
 
-  // Calculate offer discount
+  // Calculate offer discount (should be applied to totalPrice, not discountedPrice)
   const calculateOfferDiscount = (price: number) => {
     if (!selectedOffer) return 0;
     
@@ -249,8 +251,8 @@ export default function BookProperty() {
     return price * (discountPercentage / 100);
   };
 
-  // Calculate total price across all selected rooms with quantities, discounts, and offers
-  const calculateTotalPrice = () => {
+  // Calculate total base price (before discounts) across all selected rooms
+  const calculateBaseTotalPrice = () => {
     let total = 0;
     
     // Calculate duration of stay based on booking type
@@ -313,16 +315,12 @@ export default function BookProperty() {
           basePrice = parseFloat(roomInfo.daily_rate || '0');
         }
         
-        // Apply room discount
-        const discount = parseFloat(roomInfo.discount || '0');
-        const discountedPrice = basePrice * (1 - (discount / 100));
-        
         // For hostels, multiple by number of guests for shared rooms
         const isHostel = property?.property_type === 'hostel';
         const guestFactor = isHostel ? parseInt(booking.guests, 10) || 1 : 1;
         
-        // Add to total
-        total += quantity * discountedPrice * duration * guestFactor;
+        // Add to total (base price before discounts - discounts applied later)
+        total += quantity * basePrice * duration * guestFactor;
       });
     } else if (property && property.rooms && Array.isArray(property.rooms)) {
       // Use selectedRoomQuantities if no selected room details
@@ -342,29 +340,111 @@ export default function BookProperty() {
           basePrice = parseFloat(room.daily_rate || '0');
         }
         
-        // Apply room discount
-        const discount = parseFloat(room.discount || '0');
-        const discountedPrice = basePrice * (1 - (discount / 100));
-        
         // For hostels, multiple by number of guests for shared rooms
         const isHostel = property?.property_type === 'hostel';
         const guestFactor = isHostel ? parseInt(booking.guests, 10) || 1 : 1;
         
-        // Add to total
-        total += quantity * discountedPrice * duration * guestFactor;
+        // Add to total (base price before discounts - discounts applied later)
+        total += quantity * basePrice * duration * guestFactor;
       });
     }
     
     return parseFloat(total.toFixed(2));
   };
+
+  // Calculate average discount from all selected rooms (matching BookingCard logic)
+  const calculateAverageDiscount = () => {
+    let totalQuantity = 0;
+    let weightedDiscount = 0;
+
+    if (selectedRoomDetails && selectedRoomDetails.length > 0) {
+      selectedRoomDetails.forEach(room => {
+        if (!room.id || !room.quantity) return;
+        const quantity = parseInt(room.quantity, 10);
+        if (quantity <= 0) return;
+        
+        const roomInfo = property?.rooms?.find((r: any) => r.id === parseInt(room.id, 10));
+        if (!roomInfo) return;
+        
+        const discount = parseFloat(roomInfo.discount || '0');
+        totalQuantity += quantity;
+        weightedDiscount += discount * quantity;
+      });
+    } else if (property && property.rooms && Array.isArray(property.rooms)) {
+      property.rooms.forEach((room: any) => {
+        const quantity = selectedRoomQuantities[room.id] || 0;
+        if (quantity <= 0) return;
+        
+        const discount = parseFloat(room.discount || '0');
+        totalQuantity += quantity;
+        weightedDiscount += discount * quantity;
+      });
+    }
+
+    if (totalQuantity === 0) return 0;
+    return weightedDiscount / totalQuantity;
+  };
+
+  // Calculate total price (matching BookingCard logic)
+  const calculateTotalPrice = () => {
+    return calculateBaseTotalPrice();
+  };
+
+  // Calculate discounted price after room discounts
+  const calculateDiscountedPrice = () => {
+    const totalPrice = calculateTotalPrice();
+    const averageDiscount = calculateAverageDiscount();
+    return totalPrice - (totalPrice * averageDiscount / 100);
+  };
   
-  // Get final price after offer discount
+  // Get final price after offer discount and dynamic tax (matching BookingCard logic)
   const getFinalPrice = () => {
-    const baseTotal = calculateTotalPrice();
-    const offerDiscount = calculateOfferDiscount(baseTotal);
-    const taxes = baseTotal * 0.18; // 18% GST
+    const totalPrice = calculateTotalPrice();
+    const averageDiscount = calculateAverageDiscount();
+    const discountedPrice = totalPrice - (totalPrice * averageDiscount / 100);
     
-    return baseTotal - offerDiscount + taxes;
+    // Calculate offer discount on totalPrice (matching BookingCard)
+    const offerDiscount = selectedOffer 
+      ? (totalPrice * parseFloat(selectedOffer.discount_percentage || '0')) / 100 
+      : 0;
+    
+    // Calculate taxable base per unit (after discounts and offer)
+    const taxableBasePerUnit = Math.max(discountedPrice - offerDiscount, 0);
+    
+    // Calculate booking and guest multipliers for monthly/yearly bookings
+    const bookingMultiplier = (bookingTypeParam === 'monthly' && parseInt(monthsParam) > 0) 
+      ? parseInt(monthsParam) 
+      : (bookingTypeParam === 'yearly' && parseInt(yearsParam) > 0) 
+        ? parseInt(yearsParam) 
+        : 1;
+    
+    const guestMultiplier = parseInt(guestsParam) > 0 ? parseInt(guestsParam) : 1;
+    
+    // Calculate total taxable base (for determining tax rate)
+    const totalTaxableBase = taxableBasePerUnit * bookingMultiplier * guestMultiplier;
+    
+    // Dynamic tax rate: 5% if < 7500, 18% if >= 7500
+    const taxRate = totalTaxableBase <= 0 
+      ? 0 
+      : totalTaxableBase < 7500 
+        ? 0.05 
+        : 0.18;
+    
+    // Calculate taxes on taxable base per unit
+    const taxes = taxableBasePerUnit * taxRate;
+    
+    // Final price = taxable base per unit + taxes
+    const finalPrice = taxableBasePerUnit + taxes;
+    
+    return {
+      baseTotal: totalPrice,
+      discountedPrice,
+      offerDiscount,
+      taxableBasePerUnit,
+      taxes,
+      finalPrice,
+      taxRate
+    };
   };
 
   // Handle offer change
@@ -419,7 +499,8 @@ export default function BookProperty() {
     let bookingRoomTypes: Array<Record<string, number>> = [];
     
     // Calculate the total price for the booking
-    const totalPrice = getFinalPrice();
+    const priceDetails = getFinalPrice();
+    const totalPrice = priceDetails.finalPrice;
     
     if (selectedRoomDetails.length > 0) {
       // Use the first selected room for the booking API
@@ -533,7 +614,7 @@ export default function BookProperty() {
     // Include offer information in booking data if an offer is selected
     if (selectedOffer) {
       bookingData.offer_code = selectedOffer.code;
-      bookingData.offer_discount = calculateOfferDiscount(calculateTotalPrice());
+      bookingData.offer_discount = priceDetails.offerDiscount;
     }
 
     console.log("Booking data:", bookingData);
@@ -855,31 +936,43 @@ export default function BookProperty() {
 
               {/* Updated Price Breakdown */}
               <div className="pt-4 border-t border-gray-100">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm mb-2">
-                    <span>Room charges</span>
-                    <span>₹{calculateTotalPrice().toFixed(2)}</span>
-                  </div>
-                  
-                  {selectedOffer && (
-                    <div className="flex justify-between text-sm text-green-600">
-                      <span>Offer discount ({selectedOffer.code})</span>
-                      <span>-₹{calculateOfferDiscount(calculateTotalPrice()).toFixed(2)}</span>
+                {(() => {
+                  const priceDetails = getFinalPrice();
+                  return (
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm mb-2">
+                        <span>Room charges</span>
+                        <span>₹{priceDetails.baseTotal.toFixed(2)}</span>
+                      </div>
+                      
+                      {priceDetails.discountedPrice < priceDetails.baseTotal && (
+                        <div className="flex justify-between text-sm text-green-600">
+                          <span>Discount</span>
+                          <span>-₹{(priceDetails.baseTotal - priceDetails.discountedPrice).toFixed(2)}</span>
+                        </div>
+                      )}
+                      
+                      {selectedOffer && priceDetails.offerDiscount > 0 && (
+                        <div className="flex justify-between text-sm text-green-600">
+                          <span>Offer discount ({selectedOffer.code})</span>
+                          <span>-₹{priceDetails.offerDiscount.toFixed(2)}</span>
+                        </div>
+                      )}
+                      
+                      <div className="flex justify-between text-sm">
+                        <span>Taxes ({(priceDetails.taxRate * 100).toFixed(0)}%)</span>
+                        <span>₹{priceDetails.taxes.toFixed(2)}</span>
+                      </div>
+                      
+                      <Separator className="my-2" />
+                      
+                      <div className="flex justify-between font-medium">
+                        <span>Total</span>
+                        <span>₹{priceDetails.finalPrice.toFixed(2)}</span>
+                      </div>
                     </div>
-                  )}
-                  
-                  <div className="flex justify-between text-sm">
-                    <span>Taxes (18%)</span>
-                    <span>₹{(calculateTotalPrice() * 0.18).toFixed(2)}</span>
-                  </div>
-                  
-                  <Separator className="my-2" />
-                  
-                <div className="flex justify-between font-medium">
-                  <span>Total</span>
-                    <span>₹{getFinalPrice().toFixed(2)}</span>
-                  </div>
-                </div>
+                  );
+                })()}
               </div>
 
               <div className="flex justify-between items-center space-x-4">

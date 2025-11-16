@@ -143,10 +143,10 @@ export function OfferModal({ isOpen, onClose, onSubmit, title, initialData }: Of
               />
             </div>
             <div>
-              <Label htmlFor="validFrom">Valid From</Label>
+              <Label htmlFor="offer_start_date">Valid From</Label>
               <Input
-                id="validFrom"
-                name="validFrom"
+                id="offer_start_date"
+                name="offer_start_date"
                 type="date"
                 value={offer.offer_start_date}
                 onChange={handleChange}
@@ -154,10 +154,10 @@ export function OfferModal({ isOpen, onClose, onSubmit, title, initialData }: Of
               />
             </div>
             <div>
-              <Label htmlFor="validTo">Valid To</Label>
+              <Label htmlFor="offer_end_date">Valid To</Label>
               <Input
-                id="validTo"
-                name="validTo"
+                id="offer_end_date"
+                name="offer_end_date"
                 type="date"
                 value={offer.offer_end_date}
                 onChange={handleChange}

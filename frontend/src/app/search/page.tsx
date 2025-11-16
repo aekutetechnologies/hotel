@@ -10,7 +10,7 @@ import { Suspense } from 'react'
 import { Spinner } from '@/components/ui/spinner'
 import { LoginDialog } from '@/components/LoginDialog'
 
-export default function SearchPage() {
+function SearchPageContent() {
   const searchParams = useSearchParams()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [userName, setUserName] = useState("")
@@ -100,13 +100,7 @@ export default function SearchPage() {
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.4 }}
         >
-          <Suspense fallback={
-            <div className="flex justify-center items-center h-screen">
-              <Spinner className="w-10 h-10" />
-            </div>
-          }>
-            <SearchResults />
-          </Suspense>
+          <SearchResults />
         </motion.div>
       </motion.main>
       <Footer sectionType="hotels" />
@@ -117,6 +111,18 @@ export default function SearchPage() {
         onLoginSuccess={handleLoginSuccess}
       />
     </div>
+  )
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex justify-center items-center h-screen">
+        <Spinner className="w-10 h-10" />
+      </div>
+    }>
+      <SearchPageContent />
+    </Suspense>
   )
 }
 

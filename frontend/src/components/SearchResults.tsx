@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
@@ -40,7 +40,7 @@ const FilterLoader = () => (
   </motion.div>
 );
 
-export function SearchResults() {
+function SearchResultsContent() {
   console.log("SearchResults component rendering")
   const searchParams = useSearchParams()
 
@@ -777,5 +777,17 @@ export function SearchResults() {
         </div>
       </div>
     </div>
+  )
+}
+
+export function SearchResults() {
+  return (
+    <Suspense fallback={
+      <div className="flex justify-center items-center h-screen">
+        <Spinner className="w-10 h-10" />
+      </div>
+    }>
+      <SearchResultsContent />
+    </Suspense>
   )
 }

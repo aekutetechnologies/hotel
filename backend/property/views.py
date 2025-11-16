@@ -337,6 +337,7 @@ def get_all_properties(request):
         serializer = PropertyViewSerializer(properties, many=True, context={"request": request})
         return Response(serializer.data)
     except Exception as e:
+        print(f"Error in get_all_properties: {str(e)}")
         return Response(
             {"error": str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -771,11 +772,13 @@ def public_search_properties(request):
         context = {"request": request}
         if id:
             # Get the user's favorite properties
-            print(f"Request user: {request.user}")
+            print(f"Request user: {id}")
             user_favorites = FavoriteProperty.objects.filter(
-                user=id, 
+                user_id=id,
                 is_active=True
             ).values_list('property_id', flat=True)
+
+            print(f"User favorites: {user_favorites}")
 
             context['user_favorites'] = user_favorites
             

@@ -445,12 +445,14 @@ class PropertyViewSerializer(serializers.ModelSerializer):
 
     def get_is_favorite(self, obj):
         # Check if user is authenticated and property is in user favorites
-        request = self.context.get('request')
-        user_favorites = self.context.get('user_favorites', [])
-        
-        if request and hasattr(request, 'user'):
-            return obj.id in user_favorites
-        return False
+        if 'user_favorites' in self.context:
+            return obj.id in self.context['user_favorites']
+        else:
+            request = self.context.get('request')
+            if request and hasattr(request, 'user'):
+                user_favorites = FavoriteProperty.objects.filter(user=request.user.id, property=obj, is_active=True).values_list('property_id', flat=True)
+                return obj.id in user_favorites
+            return False
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

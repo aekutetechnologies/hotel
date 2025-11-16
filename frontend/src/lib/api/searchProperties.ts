@@ -25,10 +25,15 @@ export async function searchProperties(
     console.log(`Fetching properties from: ${API_URL}${endpoint}`)
     
     // Make the API request using apiGet
-    const properties = await apiGet<Property[]>(endpoint, { includeAuth: false });
-    console.log(`Successfully fetched ${properties.length} properties`)
-    
-    return properties
+    if (localStorage.getItem('accessToken')) {
+      const properties = await apiGet<Property[]>(endpoint, { includeAuth: true });
+      console.log(`Successfully fetched ${properties.length} properties`)
+      return properties
+    } else {
+      const properties = await apiGet<Property[]>(endpoint, { includeAuth: false });
+      console.log(`Successfully fetched ${properties.length} properties`)
+      return properties
+    }
   } catch (error) {
     console.error('Error in searchProperties function:', error)
     // Return an empty array instead of throwing to prevent breaking the UI

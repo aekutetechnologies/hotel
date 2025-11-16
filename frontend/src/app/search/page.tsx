@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { SearchResults } from '@/components/SearchResults'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
@@ -10,6 +11,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { LoginDialog } from '@/components/LoginDialog'
 
 export default function SearchPage() {
+  const searchParams = useSearchParams()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [userName, setUserName] = useState("")
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false)
@@ -32,6 +34,17 @@ export default function SearchPage() {
       setUserName(storedName)
     }
   }, [])
+
+  // Sync navbar section type with search params (hostels vs hotels)
+  useEffect(() => {
+    try {
+      const pt = (searchParams?.get('propertyType') || '').toLowerCase()
+      setSectionType(pt === 'hostel' ? 'hostels' : 'hotels')
+    } catch {
+      // fallback to default 'hotels'
+      setSectionType('hotels')
+    }
+  }, [searchParams])
 
   const handleLoginClick = () => {
     setIsLoginDialogOpen(true)

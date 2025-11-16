@@ -830,10 +830,9 @@ export function BookingCard({
                 <p className="text-sm text-gray-500">{selectedOffer.offer.title}</p>
               </div>
               <Button
-                variant="default"
+                className="w-24 bg-[#B11E43] hover:bg-[#8f1836] text-white"
                 size="sm"
                 onClick={() => setSelectedOffer(null)}
-                className="text-red-500 hover:text-red-700"
               >
                 Remove
               </Button>

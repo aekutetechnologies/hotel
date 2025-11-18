@@ -857,7 +857,7 @@ def create_review(request):
                 )
 
             # Check if the booking is completed
-            if booking.status != 'completed':
+            if booking.status not in ['completed', 'checked_out']:
                 return Response(
                     {"error": "You can only review completed bookings"},
                     status=status.HTTP_400_BAD_REQUEST

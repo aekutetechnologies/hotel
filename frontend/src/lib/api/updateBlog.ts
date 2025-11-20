@@ -1,21 +1,10 @@
-import { API_URL } from '../config'
+import { apiClient } from './apiClient'
 import { Blog, BlogFormData } from '@/types/blog'
 
 export async function updateBlog(slug: string, data: Partial<BlogFormData>): Promise<Blog> {
-  const response = await fetch(`${API_URL}blog/blogs/${slug}/`, {
+  return await apiClient<Blog>(`blog/blogs/${slug}/`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-    },
-    body: JSON.stringify(data),
+    body: data
   })
-
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(`Failed to update blog: ${JSON.stringify(error)}`)
-  }
-
-  return await response.json()
 }
 

@@ -1,15 +1,8 @@
-import { API_URL } from '../config'
+import { apiClient } from './apiClient'
 
 export async function deleteBlog(slug: string): Promise<void> {
-  const response = await fetch(`${API_URL}blog/blogs/${slug}/`, {
-    method: 'DELETE',
-    headers: {
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-    },
+  await apiClient(`blog/blogs/${slug}/`, {
+    method: 'DELETE'
   })
-
-  if (!response.ok) {
-    throw new Error('Failed to delete blog')
-  }
 }
 

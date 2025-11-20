@@ -13,15 +13,12 @@ export async function uploadOfferImage(offerId: number, imageFile: File): Promis
   formData.append('image', imageFile)
 
   // When using FormData, let the browser set the Content-Type header automatically
-  // We need to make a direct apiClient call rather than apiPost as we need custom handling for FormData
   return await apiClient<{ id: number, image_url: string }>(
     `offers/offer-images/${offerId}/`, 
     {
       method: 'POST',
       body: formData,
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      },
+      isFormData: true // Use FormData flag to prevent Content-Type header and JSON.stringify
     }
   )
 } 

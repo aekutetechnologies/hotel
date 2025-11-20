@@ -18,6 +18,7 @@ import { ErrorPage } from '@/components/ErrorPage'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from "@/components/ui/button"
 import InlineSearchForm from "./InlineSearchForm"
+import { logClientEvent } from '@/lib/logger'
 
 // Define interface for room amenities if not defined in types
 interface RoomAmenity {
@@ -161,6 +162,15 @@ function SearchResultsContent() {
         }
       } catch (error) {
         console.error('Error fetching properties:', error)
+        logClientEvent({
+          level: 'error',
+          message: 'Failed to fetch properties',
+          module: 'SearchResults',
+          metadata: {
+            error: error instanceof Error ? error.message : String(error),
+            params: paramsObject,
+          },
+        })
         setHasError(true)
         setErrorMessage('Failed to load properties. Please try again later.')
         toast.error('Failed to load properties')

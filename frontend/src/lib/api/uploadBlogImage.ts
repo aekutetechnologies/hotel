@@ -1,4 +1,4 @@
-import { API_URL } from '../config'
+import { apiClient } from './apiClient'
 
 export async function uploadBlogImage(imageFile: File, altText: string = ''): Promise<{ id: number, image_url: string, alt_text: string }> {
   const formData = new FormData()
@@ -7,19 +7,10 @@ export async function uploadBlogImage(imageFile: File, altText: string = ''): Pr
     formData.append('alt_text', altText)
   }
 
-  const response = await fetch(`${API_URL}blog/images/upload/`, {
+  return await apiClient<{ id: number, image_url: string, alt_text: string }>('blog/images/upload/', {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-    },
     body: formData,
+    isFormData: true
   })
-
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(`Blog image upload failed: ${JSON.stringify(error)}`)
-  }
-
-  return await response.json()
 }
 

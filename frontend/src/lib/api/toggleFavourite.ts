@@ -1,20 +1,8 @@
-import { API_URL } from '../config'
-
+import { apiClient } from './apiClient'
 
 export async function toggleFavourite(propertyId: string, isFavourite: boolean) {
-  const response = await fetch(`${API_URL}property/toggle-favourite/`, {
+  return await apiClient('property/toggle-favourite/', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-    },
-    body: JSON.stringify({ property_id: propertyId, is_favourite: isFavourite })
+    body: { property_id: propertyId, is_favourite: isFavourite }
   })
-
-  if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.message || 'Failed to update favourite')
-  }
-
-  return await response.json()
 } 

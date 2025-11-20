@@ -400,12 +400,21 @@ export function BookingCard({
       let roomPrice = 0;
 
       // Check if we should use monthly or yearly rate
-      if (bookingType === 'monthly' || (isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0)) {
-        // Use monthly rate for monthly bookings or hostels
+      // Check bookingType first, then fallback to available rates
+      if (bookingType === 'yearly' && room.yearly_rate && parseFloat(room.yearly_rate) > 0) {
+        // Use yearly rate for yearly bookings
+        const basePrice = parseFloat(room.yearly_rate || '0');
+        roomPrice = basePrice * quantity;
+      } else if (bookingType === 'monthly' && room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
+        // Use monthly rate for monthly bookings
         const basePrice = parseFloat(room.monthly_rate || '0');
         roomPrice = basePrice * quantity;
-      } else if (bookingType === 'yearly' && room.yearly_rate && parseFloat(room.yearly_rate) > 0) {
-        // Use yearly rate for yearly bookings
+      } else if (isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
+        // Fallback: For hostels, use monthly rate if available
+        const basePrice = parseFloat(room.monthly_rate || '0');
+        roomPrice = basePrice * quantity;
+      } else if (isHostel && room.yearly_rate && parseFloat(room.yearly_rate) > 0) {
+        // Fallback: For hostels, use yearly rate if monthly not available
         const basePrice = parseFloat(room.yearly_rate || '0');
         roomPrice = basePrice * quantity;
       } else {
@@ -511,13 +520,22 @@ export function BookingCard({
   const getPriceLabel = () => {
     const selectedRoomsArray = Array.from(selectedRoomMap.values()).filter(room => room.quantity > 0);
 
-    if (bookingType === 'yearly' && selectedRoomsArray.length > 0 && selectedRoomsArray[0].yearly_rate && parseFloat(selectedRoomsArray[0].yearly_rate || '0') > 0) {
+    // Check bookingType first
+    if (bookingType === 'yearly') {
       return "/year";
-    } else if (bookingType === 'monthly' || (isHostel && selectedRoomsArray.length > 0 && selectedRoomsArray[0].monthly_rate && parseFloat(selectedRoomsArray[0].monthly_rate || '0') > 0)) {
+    } else if (bookingType === 'monthly') {
       return "/month";
-    } else {
-      return bookingType === 'hourly' ? "/hour" : "/night";
+    } else if (bookingType === 'hourly') {
+      return "/hour";
+    } else if (isHostel && selectedRoomsArray.length > 0) {
+      // Fallback for hostels: check available rates
+      if (selectedRoomsArray[0].monthly_rate && parseFloat(selectedRoomsArray[0].monthly_rate || '0') > 0) {
+        return "/month";
+      } else if (selectedRoomsArray[0].yearly_rate && parseFloat(selectedRoomsArray[0].yearly_rate || '0') > 0) {
+        return "/year";
+      }
     }
+    return "/night";
   };
 
   // Debug booking information

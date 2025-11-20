@@ -5,93 +5,6 @@ import { useState, useEffect, Suspense } from 'react';
 import { DetailSection } from '@/components/DetailSection';
 import { LoginDialog } from '@/components/LoginDialog';
 
-// Testimonial data - move from main page to here
-const hostelTestimonials = [
-  {
-    author: {
-      name: "Sarah Traveler",
-      handle: "Backpacker",
-      avatar: "/placeholder.svg?height=150&width=150",
-    },
-    text: "Great atmosphere and met so many cool people! The staff was super friendly and helpful. Will definitely stay again on my next trip.",
-  },
-  {
-    author: {
-      name: "Mike Johnson",
-      handle: "Digital Nomad",
-      avatar: "/placeholder.svg?height=150&width=150",
-    },
-    text: "Perfect for remote work with fast WiFi and comfortable common areas. The social events made it easy to connect with other travelers.",
-  },
-  {
-    author: {
-      name: "Lena Kim",
-      handle: "Solo Traveler",
-      avatar: "/placeholder.svg?height=150&width=150",
-    },
-    text: "As a solo female traveler, I felt very safe and welcomed. The location was perfect for exploring the city and the beds were surprisingly comfortable!",
-  },
-  {
-    author: {
-      name: "Carlos Rodriguez",
-      handle: "Budget Explorer",
-      avatar: "/placeholder.svg?height=150&width=150",
-    },
-    text: "Incredible value for money! Clean facilities, free breakfast, and the best location. This hostel chain never disappoints.",
-  },
-  {
-    author: {
-      name: "Emma Wilson",
-      handle: "Gap Year Student",
-      avatar: "/placeholder.svg?height=150&width=150",
-    },
-    text: "The pub crawls and city tours organized by the hostel made my stay unforgettable. Met lifelong friends here!",
-  },
-];
-
-const hotelTestimonials = [
-  {
-    author: {
-      name: "John Doe",
-      handle: "Business Traveler",
-      avatar: "/placeholder.svg?height=150&width=150",
-    },
-    text: "Amazing experience! The hotel exceeded all our expectations. The staff went above and beyond to make our stay perfect. Will definitely come back again.",
-  },
-  {
-    author: {
-      name: "Emily Parker",
-      handle: "Luxury Seeker",
-      avatar: "/placeholder.svg?height=150&width=150",
-    },
-    text: "The attention to detail was impeccable. From the welcome champagne to the turndown service, everything was perfect. The spa treatments were divine!",
-  },
-  {
-    author: {
-      name: "Robert Chen",
-      handle: "Executive",
-      avatar: "/placeholder.svg?height=150&width=150",
-    },
-    text: "Perfect for business travel. The meeting facilities were top-notch and the room service was prompt. The bed was the most comfortable I've ever slept in.",
-  },
-  {
-    author: {
-      name: "Sophia Martinez",
-      handle: "Honeymoon",
-      avatar: "/placeholder.svg?height=150&width=150",
-    },
-    text: "We chose this hotel for our honeymoon and it was magical. The romantic dinner on the terrace and the special touches made it unforgettable.",
-  },
-  {
-    author: {
-      name: "James Wilson",
-      handle: "Family Vacation",
-      avatar: "/placeholder.svg?height=150&width=150",
-    },
-    text: "Our family had an incredible stay. The kids loved the pool and activities while we enjoyed the relaxing atmosphere. Perfect balance for everyone.",
-  },
-];
-
 // Create a client component that uses useSearchParams
 function HomeContent() {
   const searchParams = useSearchParams();
@@ -144,8 +57,6 @@ function HomeContent() {
         isLoggedIn={isLoggedIn}
         userName={userName}
         onClose={handleClose}
-        hotelTestimonials={hotelTestimonials}
-        hostelTestimonials={hostelTestimonials}
         setShowDetailSection={setShowDetailSection}
         handleLoginClick={handleLoginClick}
       />

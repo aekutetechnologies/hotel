@@ -65,12 +65,61 @@ class Booking(models.Model):
     booking_room_types = models.JSONField(null=True, blank=True)
     is_review_created = models.BooleanField(default=False)
     review_id = models.CharField(max_length=255, null=True, blank=True)
+    booking_id = models.CharField(max_length=20, unique=True, null=True, blank=True, db_index=True)
 
     def clean(self):
         if self.booking_type == 'hourly' and not self.room.hourly_rate:
             raise ValidationError("This room does not support hourly bookings.")
         if self.booking_type == 'daily' and not self.room.daily_rate:
             raise ValidationError("This room does not support daily bookings.")
+
+    def generate_booking_id(self):
+        """Generate booking ID in format: DDMMYYYYHHMM + 3-digit sequence"""
+        from django.utils import timezone
+        from django.db.models import Max
+        
+        now = timezone.now()
+        # Format: DDMMYYYYHHMM
+        date_time_str = now.strftime('%d%m%Y%H%M')
+        
+        # Get the last booking_id created in the same minute
+        last_booking = Booking.objects.filter(
+            booking_id__startswith=date_time_str
+        ).aggregate(Max('booking_id'))
+        
+        if last_booking['booking_id__max']:
+            # Extract sequence number and increment
+            last_seq = int(last_booking['booking_id__max'][-3:])
+            new_seq = last_seq + 1
+        else:
+            new_seq = 1
+        
+        # Format sequence as 3 digits (001, 002, etc.)
+        sequence = f"{new_seq:03d}"
+        
+        return f"{date_time_str}{sequence}"
+
+    def save(self, *args, **kwargs):
+        # Generate booking_id only on creation (when pk is None) and if booking_id is not already set
+        if not self.pk and not self.booking_id:
+            # Keep trying to generate a unique booking_id
+            max_attempts = 10
+            for attempt in range(max_attempts):
+                try:
+                    self.booking_id = self.generate_booking_id()
+                    # Check if this booking_id already exists
+                    if not Booking.objects.filter(booking_id=self.booking_id).exclude(pk=self.pk if self.pk else None).exists():
+                        break
+                except Exception:
+                    # If generation fails, use a fallback
+                    from django.utils import timezone
+                    import random
+                    now = timezone.now()
+                    date_time_str = now.strftime('%d%m%Y%H%M')
+                    sequence = f"{random.randint(1, 999):03d}"
+                    self.booking_id = f"{date_time_str}{sequence}"
+                    break
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Booking {self.id} by {self.user.mobile}"

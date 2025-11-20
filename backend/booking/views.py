@@ -1,6 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+import logging
 from .models import Booking, BookingDocument, HostelVisit
 from .serializers import BookingSerializer, BookingUserViewSerializer, BookingViewSerializer, BookingDocumentSerializer, BookingDocumentViewSerializer, HostelVisitSerializer, HostelVisitViewSerializer
 from users.decorators import custom_authentication_and_permissions
@@ -10,29 +11,34 @@ from users.models import HsUser, UserHsPermission
 from property.models import UserProperty
 import requests
 from urllib.parse import quote as urlquote
+
+logger = logging.getLogger("booking")
 @api_view(['GET', 'POST'])
 @custom_authentication_and_permissions()
 def booking_list(request):
+    logger.info(f"booking_list called with method {request.method}", extra={"request_method": request.method})
     if request.method == 'GET':
         bookings = Booking.objects.all().order_by('-created_at')
         serializer = BookingViewSerializer(bookings, many=True)
+        logger.info(f"Retrieved {len(serializer.data)} bookings", extra={"request_method": request.method, "count": len(serializer.data)})
         return Response(serializer.data)
     elif request.method == 'POST':
-        print(request.data)
         serializer = BookingSerializer(data=request.data)
-        print(serializer.is_valid())
         if serializer.is_valid():
             serializer.save()
+            logger.info(f"Booking created successfully with id {serializer.data.get('id')}", extra={"request_method": request.method, "booking_id": serializer.data.get('id')})
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        print(serializer.errors)
+        logger.warning(f"Failed to create booking: {serializer.errors}", extra={"request_method": request.method, "errors": serializer.errors})
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET', 'PUT', 'DELETE'])
 @custom_authentication_and_permissions()
 def booking_detail(request, pk):
+    logger.info(f"booking_detail called with method {request.method} for pk {pk}", extra={"request_method": request.method, "pk": pk})
     booking = get_object_or_404(Booking, pk=pk)
     if request.method == 'GET':
         serializer = BookingSerializer(booking)
+        logger.info(f"Retrieved booking {pk}", extra={"request_method": request.method, "pk": pk})
         return Response(serializer.data)
     elif request.method == 'PUT':
         booking = get_object_or_404(Booking, pk=pk)
@@ -77,9 +83,11 @@ def booking_detail(request, pk):
 
         booking.save()
         serializer = BookingSerializer(booking) # Reserialize to return updated data
+        logger.info(f"Booking {pk} updated successfully", extra={"request_method": request.method, "pk": pk})
         return Response(serializer.data)
     elif request.method == 'DELETE':
         booking.delete()
+        logger.info(f"Booking {pk} deleted successfully", extra={"request_method": request.method, "pk": pk})
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -93,7 +101,7 @@ def booking_list_by_user(request):
         Response: A list of booking objects with serialized property details.
     """
     user_id = request.query_params.get("user_id")
-    print(user_id)
+    logger.info(f"booking_list_by_user called for user_id {user_id}", extra={"request_method": request.method, "user_id": user_id})
     if user_id:
         user = get_object_or_404(HsUser, id=user_id)
     else:
@@ -108,60 +116,68 @@ def booking_list_by_user(request):
         bookings = Booking.objects.filter(user=user).order_by('-created_at')
     else:
         user_properties = UserProperty.objects.filter(user=user, is_active=True).values_list('property_id', flat=True)
-        print(user_properties)
         bookings = Booking.objects.filter(property__in=user_properties).order_by('-created_at')
     serializer = BookingUserViewSerializer(bookings, many=True)
+    logger.info(f"Retrieved {len(serializer.data)} bookings for user {user.id}", extra={"request_method": request.method, "user_id": user.id, "count": len(serializer.data)})
     return Response(serializer.data)
 
 
 @api_view(['PUT'])
 @custom_authentication_and_permissions()
 def update_booking_status(request, pk):
+    logger.info(f"update_booking_status called for booking {pk}", extra={"request_method": request.method, "pk": pk, "new_status": request.data.get('status')})
     booking = get_object_or_404(Booking, pk=pk)
     booking.status = request.data['status']
     booking.save()
+    logger.info(f"Booking {pk} status updated to {booking.status}", extra={"request_method": request.method, "pk": pk, "status": booking.status})
     return Response({'message': 'Booking status updated successfully.'}, status=status.HTTP_200_OK)
 
 
 @api_view(['GET', 'POST'])
 @custom_authentication_and_permissions()
 def upload_booking_document(request, pk):
+    logger.info(f"upload_booking_document called with method {request.method} for booking {pk}", extra={"request_method": request.method, "booking_id": pk})
     booking = get_object_or_404(Booking, id=pk)
     if request.method == 'GET':
-        print(booking)
         documents = BookingDocument.objects.filter(booking=booking)
-        print(documents)
         serializer = BookingDocumentViewSerializer(documents, many=True)
+        logger.info(f"Retrieved {len(serializer.data)} documents for booking {pk}", extra={"request_method": request.method, "booking_id": pk, "count": len(serializer.data)})
         return Response(serializer.data)
     elif request.method == 'POST':
         file = request.FILES['file']
-        print(file)
         serializer = BookingDocumentSerializer(data={'booking': booking.id, 'document': file})
         if serializer.is_valid():
             serializer.save()
+            logger.info(f"Document uploaded successfully for booking {pk} with id {serializer.data.get('id')}", extra={"request_method": request.method, "booking_id": pk, "document_id": serializer.data.get('id')})
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        logger.warning(f"Failed to upload document for booking {pk}: {serializer.errors}", extra={"request_method": request.method, "booking_id": pk, "errors": serializer.errors})
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET', 'DELETE'])
 @custom_authentication_and_permissions()
 def booking_document_view(request, pk):
+    logger.info(f"booking_document_view called with method {request.method} for pk {pk}", extra={"request_method": request.method, "pk": pk})
     if request.method == 'GET':
         booking_documents = BookingDocument.objects.filter(id=pk)
         serializer = BookingDocumentViewSerializer(booking_documents, many=True)
+        logger.info(f"Retrieved booking document {pk}", extra={"request_method": request.method, "pk": pk})
         return Response(serializer.data)
     
     elif request.method == 'DELETE':
         booking_document = BookingDocument.objects.get(id=pk)
         booking_document.delete()
+        logger.info(f"Booking document {pk} deleted successfully", extra={"request_method": request.method, "pk": pk})
         return Response({'message': 'Booking document deleted successfully.'}, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
 @custom_authentication_and_permissions()
 def booking_list_by_user_id(request, user_id):
+    logger.info(f"booking_list_by_user_id called for user_id {user_id}", extra={"request_method": request.method, "user_id": user_id})
     bookings = Booking.objects.filter(user_id=user_id).order_by('-created_at')
     serializer = BookingUserViewSerializer(bookings, many=True)
+    logger.info(f"Retrieved {len(serializer.data)} bookings for user {user_id}", extra={"request_method": request.method, "user_id": user_id, "count": len(serializer.data)})
     return Response(serializer.data)
 
 
@@ -173,6 +189,7 @@ def hostel_visit_list(request):
     GET: List all hostel visits (admin view - requires auth)
     POST: Create a new hostel visit (no authentication required)
     """
+    logger.info(f"hostel_visit_list called with method {request.method}", extra={"request_method": request.method})
     if request.method == 'GET':
         # Check if user is authenticated
         auth = request.headers.get('Authorization')
@@ -208,6 +225,7 @@ def hostel_visit_list(request):
         serializer = HostelVisitSerializer(data=data)
         if serializer.is_valid():
             visit = serializer.save()
+            logger.info(f"Hostel visit created successfully with id {visit.id}", extra={"request_method": request.method, "visit_id": visit.id, "property_id": visit.property.id if visit.property else None})
             
             # Send WhatsApp notification programmatically
             try:
@@ -247,23 +265,26 @@ Please confirm this visit booking."""
                 # Trigger WhatsApp URL programmatically (opens WhatsApp Web/App)
                 try:
                     requests.get(whatsapp_url, timeout=5)
-                    print(f"✓ WhatsApp notification sent successfully")
+                    logger.info(f"WhatsApp notification sent successfully for visit {visit.id}", extra={"request_method": request.method, "visit_id": visit.id})
                 except requests.RequestException as e:
-                    print(f"⚠ Could not send WhatsApp notification: {str(e)}")
+                    logger.warning(f"Could not send WhatsApp notification for visit {visit.id}: {str(e)}", extra={"request_method": request.method, "visit_id": visit.id, "error": str(e)})
                 
             except Exception as e:
-                print(f"Error sending WhatsApp notification: {str(e)}")
+                logger.exception(f"Error sending WhatsApp notification for visit {visit.id}: {str(e)}", extra={"request_method": request.method, "visit_id": visit.id})
             
             # Return the detailed view
             return_serializer = HostelVisitViewSerializer(visit)
             return Response(return_serializer.data, status=status.HTTP_201_CREATED)
+        logger.warning(f"Failed to create hostel visit: {serializer.errors}", extra={"request_method": request.method, "errors": serializer.errors})
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 def hostel_visit_list_get(request):
     """Helper function for GET request that requires authentication"""
+    logger.info("hostel_visit_list_get called", extra={"request_method": request.method})
     visits = HostelVisit.objects.all().order_by('-visit_date', '-visit_time')
     serializer = HostelVisitViewSerializer(visits, many=True)
+    logger.info(f"Retrieved {len(serializer.data)} hostel visits", extra={"request_method": request.method, "count": len(serializer.data)})
     return Response(serializer.data)
 
 
@@ -275,10 +296,12 @@ def hostel_visit_detail(request, pk):
     PUT: Update a hostel visit
     DELETE: Delete a hostel visit
     """
+    logger.info(f"hostel_visit_detail called with method {request.method} for pk {pk}", extra={"request_method": request.method, "pk": pk})
     visit = get_object_or_404(HostelVisit, pk=pk)
     
     if request.method == 'GET':
         serializer = HostelVisitViewSerializer(visit)
+        logger.info(f"Retrieved hostel visit {pk}", extra={"request_method": request.method, "pk": pk})
         return Response(serializer.data)
     
     elif request.method == 'PUT':
@@ -286,11 +309,14 @@ def hostel_visit_detail(request, pk):
         if serializer.is_valid():
             visit = serializer.save()
             return_serializer = HostelVisitViewSerializer(visit)
+            logger.info(f"Hostel visit {pk} updated successfully", extra={"request_method": request.method, "pk": pk})
             return Response(return_serializer.data)
+        logger.warning(f"Failed to update hostel visit {pk}: {serializer.errors}", extra={"request_method": request.method, "pk": pk, "errors": serializer.errors})
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     elif request.method == 'DELETE':
         visit.delete()
+        logger.info(f"Hostel visit {pk} deleted successfully", extra={"request_method": request.method, "pk": pk})
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -298,6 +324,8 @@ def hostel_visit_detail(request, pk):
 @custom_authentication_and_permissions()
 def hostel_visit_list_by_user(request):
     """Get all visits for the logged-in user"""
+    logger.info(f"hostel_visit_list_by_user called for user {request.user.id}", extra={"request_method": request.method, "user_id": request.user.id})
     visits = HostelVisit.objects.filter(user=request.user).order_by('-visit_date', '-visit_time')
     serializer = HostelVisitViewSerializer(visits, many=True)
+    logger.info(f"Retrieved {len(serializer.data)} visits for user {request.user.id}", extra={"request_method": request.method, "user_id": request.user.id, "count": len(serializer.data)})
     return Response(serializer.data)

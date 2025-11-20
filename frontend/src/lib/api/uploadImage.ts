@@ -1,4 +1,4 @@
-import { API_URL } from '../config'
+import { apiClient } from './apiClient'
 import { ImageCategory } from '@/types/property'
 
 export interface UploadImageResponse {
@@ -15,18 +15,9 @@ export async function uploadImage(imageFile: File, categoryId?: number | null): 
     formData.append('category', String(categoryId))
   }
 
-  const response = await fetch(`${API_URL}property/images/upload/`, {
+  return await apiClient<UploadImageResponse>('property/images/upload/', {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-    },
     body: formData,
+    isFormData: true
   })
-
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(`Image upload failed: ${JSON.stringify(error)}`)
-  }
-
-  return await response.json() as UploadImageResponse
 } 

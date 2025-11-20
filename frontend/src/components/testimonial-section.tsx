@@ -5,14 +5,30 @@ import Image from "next/image";
 import { ArrowUpRight, Star, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { fetchTopReviews } from "@/lib/api/fetchTopReviews";
 
-export default function TestimonialSection({ testimonials, theme }: any) {
+interface Testimonial {
+  text: string;
+  author: {
+    name: string;
+  };
+  rating: number;
+}
+
+interface TestimonialSectionProps {
+  theme: "hotel" | "hostel";
+}
+
+export default function TestimonialSection({ theme }: TestimonialSectionProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
   const testimonialRefs = useRef<(HTMLDivElement | null)[]>([]);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const scrollDuration = 8000; // Increased from 4000ms to 8000ms for slower scrolling
   const detailSectionRef = useRef<HTMLDivElement>(null);
+  const scrollDuration = 8000;
 
   const themeColors = {
     maroon: {
@@ -58,7 +74,45 @@ export default function TestimonialSection({ testimonials, theme }: any) {
   }, []);
 
   useEffect(() => {
-    // Auto-scroll with increased interval for slower scrolling
+    let isMounted = true;
+    setIsLoading(true);
+    setHasError(false);
+
+    fetchTopReviews(theme === "hostel" ? "hostel" : "hotel")
+      .then((data) => {
+        if (!isMounted) return;
+        const transformed = (data || []).map((review) => ({
+          text: review.review,
+          author: {
+            name:
+              review.user?.name ||
+              review.user?.mobile ||
+              review.property?.name ||
+              "Guest",
+          },
+          rating: review.rating || 5,
+        }));
+        setTestimonials(transformed);
+        setActiveIndex(0);
+      })
+      .catch((err) => {
+        console.error("Failed to load testimonials", err);
+        if (isMounted) setHasError(true);
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [theme]);
+
+  useEffect(() => {
+    if (!testimonials.length) {
+      return;
+    }
+
     intervalRef.current = setInterval(() => {
       setActiveIndex((prevIndex) =>
         prevIndex === testimonials.length - 1 ? 0 : prevIndex + 1
@@ -70,7 +124,6 @@ export default function TestimonialSection({ testimonials, theme }: any) {
     };
   }, [testimonials.length, scrollDuration]);
 
-  // Pause scrolling on hover
   const handleMouseEnter = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
   };
@@ -105,6 +158,71 @@ export default function TestimonialSection({ testimonials, theme }: any) {
         behavior: 'smooth',
       });
     }
+  };
+
+  const renderTestimonials = () => {
+    if (isLoading) {
+      return (
+        <div className="p-6 rounded-2xl bg-gray-100 text-gray-600 animate-pulse">
+          Loading reviews...
+        </div>
+      );
+    }
+
+    if (hasError) {
+      return (
+        <div className="p-6 rounded-2xl bg-red-50 text-red-700">
+          We’re having trouble loading guest reviews right now. Please try again later.
+        </div>
+      );
+    }
+
+    if (!testimonials.length) {
+      return (
+        <div className="p-6 rounded-2xl bg-gray-100 text-gray-600">
+          Be the first to share your experience!
+        </div>
+      );
+    }
+
+    return testimonials.map((testimonial, index) => (
+      <div
+        key={`${testimonial.author.name}-${index}`}
+        ref={(el) => {
+          testimonialRefs.current[index] = el;
+        }}
+        className={`p-6 rounded-2xl relative transition-colors duration-300 ${
+          index === activeIndex
+            ? `${colors?.primary} text-white`
+            : "bg-gray-100 text-gray-800"
+        }`}
+      >
+        <div className="flex justify-between items-start">
+          <div className="flex gap-1 mb-2">
+            {[...Array(5)].map((_, i) => {
+              const isActiveCard = index === activeIndex;
+              const isFilledStar = i < testimonial.rating;
+              // Dark stars on light background, light stars on dark background
+              const starColor = isActiveCard
+                ? (isFilledStar ? "text-white" : "text-white/50")
+                : (isFilledStar ? "text-[#A31C44]" : "text-gray-400");
+              
+              return (
+                <span key={i} className={starColor}>
+                  ★
+                </span>
+              );
+            })}
+          </div>
+        </div>
+        <p className="text-sm md:text-base mb-4">"{testimonial.text}"</p>
+        <div className="flex items-center gap-3">
+          <div>
+            <p className="font-semibold">{testimonial.author?.name}</p>
+          </div>
+        </div>
+      </div>
+    ));
   };
 
   return (
@@ -174,33 +292,7 @@ export default function TestimonialSection({ testimonials, theme }: any) {
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
-          {testimonials?.map((testimonial: any, index: number) => (
-            <div
-              key={index}
-              ref={(el) => {
-                testimonialRefs.current[index] = el;
-              }}
-              className={`p-6 rounded-2xl relative transition-colors duration-300 ${
-                index === activeIndex ? `${colors?.primary} text-white` : "bg-gray-100 text-gray-800"
-              }`}
-            >
-              <div className="flex justify-between items-start">
-                <div className="flex gap-1 mb-2">
-                  {[...Array(5)].map((_, i) => (
-                    <span key={i} className={index === activeIndex ? colors?.starActive : colors?.starInactive}>
-                      ★
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <p className="text-sm md:text-base mb-4">"{testimonial.text}"</p>
-              <div className="flex items-center gap-3">
-                <div>
-                  <p className="font-semibold">{testimonial.author?.name}</p>
-                </div>
-              </div>
-            </div>
-          ))}
+          {renderTestimonials()}
         </div>
       </div>
     </div>

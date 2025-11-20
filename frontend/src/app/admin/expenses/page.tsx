@@ -36,6 +36,7 @@ import {
 
 export default function Expenses() {
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedPropertyId, setSelectedPropertyId] = useState<number | null>(null)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDocumentModalOpen, setIsDocumentModalOpen] = useState(false)
@@ -102,10 +103,17 @@ export default function Expenses() {
     }
   }, [isDocumentListModalOpen, selectedExpense, fetchDocuments])
 
-  const filteredExpenses = expenses.filter(expense =>
-    expense.property.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    expense.category.name.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredExpenses = expenses.filter(expense => {
+    // Property filter
+    const matchesProperty = !selectedPropertyId || expense.property.id === selectedPropertyId
+    
+    // Search filter
+    const matchesSearch = 
+      expense.property.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      expense.category.name.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    return matchesProperty && matchesSearch
+  })
 
   const handleAddExpense = async (newExpense: ExpenseFormData) => {
     try {
@@ -233,15 +241,33 @@ export default function Expenses() {
       </div>
 
       <div className="mb-6">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          <Input
-            type="search"
-            placeholder="Search expenses..."
-            className="pl-10"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-grow">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Input
+                type="search"
+                placeholder="Search expenses..."
+                className="pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="md:w-64">
+            <select
+              className="w-full border rounded-md px-3 py-2 bg-white"
+              value={selectedPropertyId || ''}
+              onChange={(e) => setSelectedPropertyId(e.target.value ? Number(e.target.value) : null)}
+            >
+              <option value="">All Properties</option>
+              {properties.map((property) => (
+                <option key={property.id} value={property.id}>
+                  {property.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 

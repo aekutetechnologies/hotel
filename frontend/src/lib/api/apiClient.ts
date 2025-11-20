@@ -1,6 +1,11 @@
 import { API_URL } from '../config'
 import { isAuthError, handleInvalidToken } from '../errorHandling'
+import { refreshToken } from './refreshToken'
 import { toast } from 'react-toastify'
+
+// Track if we're currently refreshing to avoid multiple simultaneous refresh attempts
+let isRefreshing = false
+let refreshPromise: Promise<any> | null = null
 
 interface ApiOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
@@ -99,8 +104,110 @@ export async function apiClient<T = any>(
       }
     }
 
-    // Check for auth errors
-    if (isAuthError(response.status, errorData)) {
+    // Check for auth errors (401 Unauthorized)
+    // Don't try to refresh if this is the refresh endpoint itself to avoid infinite loops
+    const isRefreshEndpoint = url.includes('/refresh-token/')
+    if (response.status === 401 && includeAuth && !isRefreshEndpoint) {
+      // Try to refresh the token
+      try {
+        // If we're already refreshing, wait for that to complete
+        if (isRefreshing && refreshPromise) {
+          await refreshPromise
+          // Retry the original request with new token
+          const newToken = localStorage.getItem('accessToken')
+          if (newToken) {
+            // Rebuild headers for retry - important for FormData
+            const retryHeaders: Record<string, string> = { ...headers }
+            retryHeaders.Authorization = `Bearer ${newToken}`
+            // Don't set Content-Type for FormData - browser will set it with boundary
+            if (isFormData) {
+              delete retryHeaders['Content-Type']
+            } else {
+              retryHeaders['Content-Type'] = 'application/json'
+            }
+            
+            const retryOptions: RequestInit = {
+              method,
+              headers: retryHeaders,
+              body: requestOptions.body // Preserve original body (FormData or JSON string)
+            }
+            
+            const retryResponse = await fetch(url, retryOptions)
+            if (retryResponse.ok) {
+              if (retryResponse.headers.get('content-type')?.includes('application/json')) {
+                return await retryResponse.json()
+              }
+              return {} as T
+            }
+          }
+        } else if (!isRefreshing) {
+          // Start refresh process
+          isRefreshing = true
+          refreshPromise = refreshToken()
+          
+          const refreshResult = await refreshPromise
+          
+          if (refreshResult) {
+            // Retry the original request with new token
+            const newToken = localStorage.getItem('accessToken')
+            if (newToken) {
+              // Rebuild headers for retry - important for FormData
+              const retryHeaders: Record<string, string> = { ...headers }
+              retryHeaders.Authorization = `Bearer ${newToken}`
+              // Don't set Content-Type for FormData - browser will set it with boundary
+              if (isFormData) {
+                delete retryHeaders['Content-Type']
+              } else {
+                retryHeaders['Content-Type'] = 'application/json'
+              }
+              
+              const retryOptions: RequestInit = {
+                method,
+                headers: retryHeaders,
+                body: requestOptions.body // Preserve original body (FormData or JSON string)
+              }
+              
+              const retryResponse = await fetch(url, retryOptions)
+              if (retryResponse.ok) {
+                if (retryResponse.headers.get('content-type')?.includes('application/json')) {
+                  return await retryResponse.json()
+                }
+                return {} as T
+              }
+              // If retry still fails, parse the error
+              let retryErrorData: any = {}
+              try {
+                retryErrorData = await retryResponse.json()
+              } catch (e) {
+                retryErrorData = { message: `Request failed with status ${retryResponse.status}` }
+              }
+              errorData = retryErrorData
+            }
+          } else {
+            // Refresh failed, clear tokens and redirect
+            handleInvalidToken()
+            toast.error('Session expired. Please login again.')
+            throw new Error('Authentication error: Failed to refresh token')
+          }
+          
+          // Reset refresh state
+          isRefreshing = false
+          refreshPromise = null
+        }
+      } catch (refreshError) {
+        // Reset refresh state on error
+        isRefreshing = false
+        refreshPromise = null
+        
+        // If refresh failed, handle as invalid token
+        handleInvalidToken()
+        toast.error('Session expired. Please login again.')
+        throw new Error('Authentication error: ' + (errorData.message || 'Invalid token'))
+      }
+    }
+    
+    // Check for other auth errors (403 Forbidden, etc.)
+    if (isAuthError(response.status, errorData) && response.status !== 401) {
       // Handle invalid token
       handleInvalidToken()
       toast.error('Session expired. Please login again.')

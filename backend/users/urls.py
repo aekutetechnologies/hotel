@@ -4,6 +4,7 @@ from . import views
 urlpatterns = [
     path('send-otp/', views.send_otp, name='send-otp'),
     path('verify-otp/', views.verify_otp, name='verify-otp'),
+    path('refresh-token/', views.refresh_token, name='refresh-token'),
     path('profile/', views.profile, name='profile'),
     path('profile/<int:user_id>/', views.admin_profile, name='admin-profile'),
     path('profile/assign-permissions/', views.assign_group_permission_to_user, name='assign-group-permission-to-user'),

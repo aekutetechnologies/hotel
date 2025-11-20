@@ -43,9 +43,16 @@ export function PropertyCard({ property, searchParams }: PropertyCardProps) {
   const originalPrice = property.rooms && property.rooms.length > 0 ? 
     Math.min(...property.rooms.map(room => {
       if (isHostel) {
-        if (room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
-          return parseFloat(room.monthly_rate)
+        // For hostels, check bookingType first
+        if (bookingType === 'yearly' && room.yearly_rate && parseFloat(room.yearly_rate) > 0) {
+          return parseFloat(room.yearly_rate);
+        } else if (bookingType === 'monthly' && room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
+          return parseFloat(room.monthly_rate);
+        } else if (room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
+          // Fallback to monthly rate if available
+          return parseFloat(room.monthly_rate);
         } else if (room.yearly_rate && parseFloat(room.yearly_rate) > 0) {
+          // Fallback to yearly rate if available
           return parseFloat(room.yearly_rate);
         } else {
           return parseFloat('0');
@@ -75,13 +82,20 @@ export function PropertyCard({ property, searchParams }: PropertyCardProps) {
   // Calculate the appropriate price label based on property type and booking type
   const getPriceLabel = () => {
     if (isHostel) {
-      // Check if we're using monthly rate
-      if (property.rooms && property.rooms.some(room => room.monthly_rate && parseFloat(room.monthly_rate) > 0)) {
-        return ' per month';
-      } else if (property.rooms && property.rooms.some(room => room.yearly_rate && parseFloat(room.yearly_rate) > 0)) {
+      // Use bookingType to determine the label
+      if (bookingType === 'yearly') {
         return ' per year';
+      } else if (bookingType === 'monthly') {
+        return ' per month';
       } else {
-        return bookingType === 'hourly' ? ' per hour' : ' per night';
+        // For daily/hourly bookings in hostels, check if monthly rate exists
+        if (property.rooms && property.rooms.some(room => room.monthly_rate && parseFloat(room.monthly_rate) > 0)) {
+          return ' per month';
+        } else if (property.rooms && property.rooms.some(room => room.yearly_rate && parseFloat(room.yearly_rate) > 0)) {
+          return ' per year';
+        } else {
+          return bookingType === 'hourly' ? ' per hour' : ' per night';
+        }
       }
     } else {
       return bookingType === 'hourly' ? ' per hour' : ' per night';

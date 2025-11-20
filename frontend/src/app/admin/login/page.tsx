@@ -56,6 +56,9 @@ function AdminLogin() {
       const data = await verifyOtp({ mobileNumber, otp })
       console.log(data)
       localStorage.setItem('accessToken', data.access_token)
+      if (data.refresh_token) {
+        localStorage.setItem('refreshToken', data.refresh_token)
+      }
       localStorage.setItem('role', data.user_role)
       localStorage.setItem('userId', data.id.toString())
       localStorage.setItem('permissions', data.permissions.join(','))

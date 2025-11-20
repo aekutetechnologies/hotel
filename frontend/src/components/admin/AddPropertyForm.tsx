@@ -1534,7 +1534,7 @@ export function AddPropertyForm() {
                       id={`room-hourly-rate-${index}`}
                       type="number"
                       step="0.01"
-                      value={room.hourly_rate || ''}
+                      value={room.hourly_rate || '0.00'}
                       onChange={(e) => updateRoom(index, { hourly_rate: e.target.value })}
                       placeholder="Enter hourly rate"
                     />
@@ -1547,7 +1547,7 @@ export function AddPropertyForm() {
                       id={`room-daily-rate-${index}`}
                       type="number"
                       step="0.01"
-                      value={room.daily_rate || ''}
+                      value={room.daily_rate || '0.00'}
                       onChange={(e) => updateRoom(index, { daily_rate: e.target.value })}
                       placeholder="Enter daily rate"
                     />
@@ -1560,7 +1560,7 @@ export function AddPropertyForm() {
                       id={`room-monthly-rate-${index}`}
                       type="number"
                       step="0.01"
-                      value={room.monthly_rate || ''}
+                      value={room.monthly_rate || '0.00'}
                       onChange={(e) => updateRoom(index, { monthly_rate: e.target.value })}
                       placeholder="Enter monthly rate"
                     />
@@ -1573,7 +1573,7 @@ export function AddPropertyForm() {
                       id={`room-yearly-rate-${index}`}
                       type="number"
                       step="0.01"
-                      value={room.yearly_rate || ''}
+                      value={room.yearly_rate || '0.00'}
                       onChange={(e) => updateRoom(index, { yearly_rate: e.target.value })}
                       placeholder="Enter yearly rate"
                     />
@@ -1583,7 +1583,7 @@ export function AddPropertyForm() {
                     <Input
                       id={`room-discount-${index}`}
                       type="number"
-                      value={room.discount || ''}
+                      value={room.discount || '0.00'}
                       onChange={(e) => updateRoom(index, { discount: e.target.value })}
                       placeholder="Enter discount"
                     />
@@ -1592,7 +1592,7 @@ export function AddPropertyForm() {
                     <Label htmlFor={`room-size-${index}`}>Size</Label>
                     <Input
                       id={`room-size-${index}`}
-                      value={room.size || ''}
+                      value={room.size || '0.00'}
                       onChange={(e) => updateRoom(index, { size: e.target.value })}
                       placeholder="Enter size"
                     />
@@ -1604,7 +1604,7 @@ export function AddPropertyForm() {
                     <Input
                       id={`room-maxoccupancy-${index}`}
                       type="number"
-                      value={room.maxoccupancy || ''}
+                      value={room.maxoccupancy || '0'}
                       onChange={(e) => updateRoom(index, { maxoccupancy: parseInt(e.target.value) })}
                       placeholder="Enter max occupancy"
                       required
@@ -1617,7 +1617,7 @@ export function AddPropertyForm() {
                     <Input
                       id={`room-numberofrooms-${index}`}
                       type="number"
-                      value={room.number_of_rooms || ''}
+                      value={room.number_of_rooms || '0'}
                       onChange={(e) => updateRoom(index, { number_of_rooms: parseInt(e.target.value) })}
                       placeholder="Enter number of rooms"
                       required

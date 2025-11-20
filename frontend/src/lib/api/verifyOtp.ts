@@ -5,6 +5,7 @@ import { handleApiError } from '../errorHandling'
 
 export interface VerifyOtpResponse {
   access_token: string;
+  refresh_token: string;
   user_role: string;
   id: number;
   name: string;

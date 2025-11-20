@@ -12,10 +12,53 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import os
-from datetime import timedelta
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+from datetime import timedelta, datetime
+import logging
+from logging import Formatter, FileHandler
+# Paths
 BASE_DIR = Path(__file__).resolve().parent.parent
+LOG_DIR = Path.home() / "logs"
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+
+# Custom file handler that uses date-based filenames
+class DateBasedFileHandler(FileHandler):
+    def __init__(self, log_dir, base_filename, *args, **kwargs):
+        self.log_dir = Path(log_dir)
+        self.base_filename = base_filename
+        self.current_date = None
+        self.current_file = None
+        # Initialize with today's date
+        self._update_filename()
+        super().__init__(self.current_file, *args, **kwargs)
+    
+    def _update_filename(self):
+        today = datetime.now().strftime("%Y-%m-%d")
+        if today != self.current_date:
+            self.current_date = today
+            self.current_file = str(self.log_dir / f"{self.base_filename}-{today}.log")
+    
+    def emit(self, record):
+        # Update filename if date changed
+        self._update_filename()
+        # If filename changed, close old file and open new one
+        if self.baseFilename != self.current_file:
+            self.close()
+            self.baseFilename = self.current_file
+            self.stream = self._open()
+        super().emit(record)
+
+# Custom formatter to include request type
+class RequestFormatter(Formatter):
+    def format(self, record):
+        # Extract request method from record attributes (set via extra dict) or default to '-'
+        request_method = getattr(record, 'request_method', '-')
+        
+        # Extract module name from logger name
+        module_name = record.name.split('.')[-1] if '.' in record.name else record.name
+        
+        # Format: time - request type - module - logger message
+        record.msg = f"{request_method} - {module_name} - {record.msg}"
+        return super().format(record)
 
 WEBSITE_URL = "http://localhost:8000"
 # WEBSITE_URL = "http://192.168.18.16:8000"
@@ -170,16 +213,68 @@ SIMPLE_JWT = {
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{asctime} - {message}",
+            "style": "{",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+        },
+        "request_formatter": {
+            "()": RequestFormatter,
+            "format": "{asctime} - {message}",
+            "style": "{",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+        },
+        "simple": {
+            "format": "{levelname}:{name}:{message}",
+            "style": "{",
+        },
+    },
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+        "backend_file": {
+            "()": DateBasedFileHandler,
+            "log_dir": LOG_DIR,
+            "base_filename": "hsquare-backend-log",
+            "formatter": "request_formatter",
+            "encoding": "utf-8",
+        },
+        "request_file": {
+            "()": DateBasedFileHandler,
+            "log_dir": LOG_DIR,
+            "base_filename": "hsquare-backend-requests",
+            "formatter": "request_formatter",
+            "encoding": "utf-8",
         },
     },
     "loggers": {
-        "users": {
+        "django": {
             "handlers": ["console"],
-            "level": "DEBUG",
+            "level": "INFO",
             "propagate": True,
+        },
+        "django.request": {
+            "handlers": ["request_file", "console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "property": {
+            "handlers": ["backend_file", "console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "users": {
+            "handlers": ["backend_file", "console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "hsquare": {
+            "handlers": ["backend_file", "console"],
+            "level": "INFO",
+            "propagate": False,
         },
     },
 }
@@ -197,8 +292,8 @@ CORS_ALLOWED_ORIGINS = [
     "https://www.hsquareliving.in",
     "https://hsquareliving.com",
     "https://www.hsquareliving.com",
-    "http://192.168.18.16:8000",
     "http://192.168.18.16:3000",
+    "http://192.168.68.108:3000",
 ]
 
 CORS_ALLOW_METHODS = (

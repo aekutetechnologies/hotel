@@ -15,6 +15,7 @@ urlpatterns = [
     path('properties/', views.property_list, name='property-list'),
     path('properties/<int:pk>/', views.property_detail, name='property-detail'),
     path('reviews/', views.review_list, name='review-list'),
+    path('reviews/top/', views.top_reviews_by_property_type, name='top-reviews-by-property-type'),
     path('reviews/<int:pk>/', views.review_detail, name='review-detail'),
     path('replies/', views.reply_list, name='reply-list'),
     path('replies/<int:pk>/', views.reply_detail, name='reply-detail'),

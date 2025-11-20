@@ -27,6 +27,9 @@ export function SignIn({ onClose, setIsLoggedIn }: { onClose: () => void, setIsL
       console.log("Verify OTP Response:", response)
       console.log(response)
       localStorage.setItem('accessToken', response.access_token)
+      if (response.refresh_token) {
+        localStorage.setItem('refreshToken', response.refresh_token)
+      }
       localStorage.setItem('role', response.user_role)
       localStorage.setItem('userId', String(response.id))
       localStorage.setItem('name', response.name)

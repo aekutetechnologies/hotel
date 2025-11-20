@@ -85,6 +85,7 @@ interface BookingUser {
 
 export interface Booking {
   id: number;
+  booking_id?: string;
   property: number | BookingProperty | null;
   room: number;
   price: string;
@@ -156,6 +157,11 @@ export default function Bookings() {
   const [openEndDate, setOpenEndDate] = useState(false)
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false)
   const [bookingDetails, setBookingDetails] = useState<Booking | null>(null)
+  const [selectedPropertyId, setSelectedPropertyId] = useState<number | null>(null)
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([])
+  
+  // All possible booking statuses
+  const allStatuses = ['pending', 'confirmed', 'cancelled', 'completed', 'checked_in', 'checked_out', 'no_show']
 
   const getBookingsData = useCallback(async () => {
     console.log("Fetching bookings data...")
@@ -320,7 +326,7 @@ export default function Bookings() {
     }
   }
 
-  // Function to filter bookings based on search term and date range
+  // Function to filter bookings based on search term, date range, property, and status
   const filteredBookings = bookings.filter(booking => {
     // Search term filter
     const searchTermLower = searchTerm.toLowerCase()
@@ -333,8 +339,9 @@ export default function Bookings() {
     const bookingTimeMatch = booking.booking_time?.toLowerCase().includes(searchTermLower)
     const propertyMatch = booking.property && typeof booking.property === 'object' && 
       booking.property.name?.toLowerCase().includes(searchTermLower)
+    const bookingIdMatch = booking.booking_id?.toLowerCase().includes(searchTermLower)
     
-    const matchesSearch = !searchTerm || guestMatch || paymentTypeMatch || bookingTimeMatch || propertyMatch
+    const matchesSearch = !searchTerm || guestMatch || paymentTypeMatch || bookingTimeMatch || propertyMatch || bookingIdMatch
     
     // Date range filter
     let matchesDateRange = true
@@ -361,7 +368,15 @@ export default function Bookings() {
       matchesDateRange = matchesDateRange && checkoutDateLocal <= endDateLocal
     }
     
-    return matchesSearch && matchesDateRange
+    // Property filter
+    const matchesProperty = !selectedPropertyId || 
+      (booking.property && typeof booking.property === 'object' && booking.property.id === selectedPropertyId) ||
+      (typeof booking.property === 'number' && booking.property === selectedPropertyId)
+    
+    // Status filter
+    const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(booking.status)
+    
+    return matchesSearch && matchesDateRange && matchesProperty && matchesStatus
   })
   
   // Calculate pagination
@@ -411,12 +426,22 @@ export default function Bookings() {
   // Reset current page when search or filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchTerm, startDate, endDate])
+  }, [searchTerm, startDate, endDate, selectedPropertyId, selectedStatuses])
 
   const clearFilters = () => {
     setSearchTerm('')
     setStartDate(undefined)
     setEndDate(undefined)
+    setSelectedPropertyId(null)
+    setSelectedStatuses([])
+  }
+  
+  const toggleStatus = (status: string) => {
+    setSelectedStatuses(prev => 
+      prev.includes(status) 
+        ? prev.filter(s => s !== status)
+        : [...prev, status]
+    )
   }
 
   // Function to render the booking room types
@@ -518,21 +543,39 @@ export default function Bookings() {
         </TooltipProvider>
       </div>
 
-      <div className="mb-6 grid grid-cols-1 md:grid-cols-12 gap-4">
-        {/* Search Box */}
-        <div className="relative md:col-span-5">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          <Input
-            type="text"
-            placeholder="Search by guest, payment type, booking time..."
-            className="pl-10"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        
-        {/* Date Filters */}
-        <div className="flex space-x-2 md:col-span-6">
+      <div className="mb-6 space-y-4">
+        {/* First Row: Search and Property Filter */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+          {/* Search Box */}
+          <div className="relative md:col-span-5">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Search by booking ID, guest, payment type, booking time..."
+              className="pl-10"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          {/* Property Filter */}
+          <div className="md:col-span-3">
+            <select
+              className="w-full border rounded-md px-3 py-2 bg-white"
+              value={selectedPropertyId || ''}
+              onChange={(e) => setSelectedPropertyId(e.target.value ? Number(e.target.value) : null)}
+            >
+              <option value="">All Properties</option>
+              {properties.map((property) => (
+                <option key={property.id} value={property.id}>
+                  {property.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          {/* Date Filters */}
+          <div className="flex space-x-2 md:col-span-4">
           {/* Start Date */}
           <div className="flex-1">
             <Popover open={openStartDate} onOpenChange={setOpenStartDate}>
@@ -587,7 +630,7 @@ export default function Bookings() {
                   variant="neutral" 
                   size="icon"
                   onClick={clearFilters}
-                  disabled={!searchTerm && !startDate && !endDate}
+                  disabled={!searchTerm && !startDate && !endDate && !selectedPropertyId && selectedStatuses.length === 0}
                   className="ml-2"
                 >
                   <X className="h-4 w-4" />
@@ -598,6 +641,26 @@ export default function Bookings() {
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+          </div>
+        </div>
+        
+        {/* Second Row: Status Filters */}
+        <div className="flex flex-wrap gap-2 items-center">
+          <span className="text-sm font-medium text-gray-700">Status:</span>
+          {allStatuses.map((status) => (
+            <button
+              key={status}
+              type="button"
+              onClick={() => toggleStatus(status)}
+              className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
+                selectedStatuses.includes(status)
+                  ? 'bg-blue-500 text-white border-blue-500'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              {status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -605,6 +668,7 @@ export default function Bookings() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Booking ID</TableHead>
               <TableHead>Property</TableHead>
               <TableHead>Guest</TableHead>
               <TableHead>Created At</TableHead>
@@ -619,7 +683,7 @@ export default function Bookings() {
           <TableBody>
             {isLoadingBookings ? (
               <TableRow>
-              <TableCell colSpan={7} className="text-center py-6">
+              <TableCell colSpan={10} className="text-center py-6">
                 <div className="flex justify-center items-center h-[70vh]">
                   <Spinner className="h-12 w-12" />
                 </div>
@@ -627,13 +691,16 @@ export default function Bookings() {
             </TableRow>
             ) : paginatedBookings.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-6 text-gray-500">
+                <TableCell colSpan={10} className="text-center py-6 text-gray-500">
                   No bookings found
                 </TableCell>
               </TableRow>
             ) : (
               paginatedBookings.map((booking) => (
                 <TableRow key={booking.id}>
+                  <TableCell className="font-medium font-mono">
+                    {booking.booking_id || `#${booking.id}`}
+                  </TableCell>
                   <TableCell className="font-medium">
                     {booking.property && typeof booking.property === 'object' ? booking.property.name : ''}
                   </TableCell>
@@ -888,7 +955,7 @@ export default function Bookings() {
             setBookingDetails(null)
           }}
           title="Booking Details"
-          description={`Detailed information for Booking #${bookingDetails.id}`}
+          description={`Detailed information for Booking ${bookingDetails.booking_id || `#${bookingDetails.id}`}`}
         >
           <div className="max-h-[70vh] overflow-y-auto p-2">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

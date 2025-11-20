@@ -129,6 +129,9 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
       if (response && response.access_token) {
         console.log("Verify OTP Response:", response)
         localStorage.setItem('accessToken', response.access_token)
+        if (response.refresh_token) {
+          localStorage.setItem('refreshToken', response.refresh_token)
+        }
         localStorage.setItem('role', response.user_role)
         localStorage.setItem('userId', String(response.id))
         localStorage.setItem('name', response.name)

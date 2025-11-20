@@ -20,8 +20,6 @@ interface DetailSectionProps {
   isLoggedIn: boolean;
   userName: string;
   onClose: (e: React.MouseEvent<HTMLDivElement>) => void;
-  hotelTestimonials: any[];
-  hostelTestimonials: any[];
   handleLoginClick: (e?: React.MouseEvent) => void;
   setShowDetailSection: (section: "hotels" | "hostels" | null) => void;
 }
@@ -45,8 +43,6 @@ export function DetailSection({
   isLoggedIn,
   userName,
   onClose,
-  hotelTestimonials,
-  hostelTestimonials,
   setShowDetailSection,
   handleLoginClick,
 }: DetailSectionProps) {
@@ -263,11 +259,6 @@ export function DetailSection({
           {/* Reviews Section */}
           <div className="py-16 bg-white">
             <TestimonialSection
-              testimonials={
-                sectionType === "hotels"
-                  ? hotelTestimonials
-                  : hostelTestimonials
-              }
               theme={getSingularType(sectionType)}
             />
           </div>

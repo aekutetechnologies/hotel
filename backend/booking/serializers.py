@@ -5,6 +5,8 @@ from users.serializers import UserSerializer
 from django.conf import settings
 
 class BookingSerializer(serializers.ModelSerializer):
+    booking_id = serializers.CharField(read_only=True)
+    
     class Meta:
         model = Booking
         fields = '__all__'

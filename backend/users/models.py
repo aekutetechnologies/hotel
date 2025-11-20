@@ -112,3 +112,24 @@ class UserDocument(models.Model):
 
     def __str__(self):
         return f"{self.user.mobile} - {self.document.name}"
+
+class RefreshToken(models.Model):
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(HsUser, on_delete=models.CASCADE)
+    token = models.CharField(max_length=500, unique=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    expires_at = models.DateTimeField()
+    is_active = models.BooleanField(default=True)
+    
+    class Meta:
+        db_table = 'refresh_tokens'
+        indexes = [
+            models.Index(fields=['token']),
+            models.Index(fields=['user', 'is_active']),
+        ]
+    
+    def __str__(self):
+        return f"Refresh token for {self.user.mobile}"
+    
+    def is_expired(self):
+        return timezone.now() > self.expires_at

@@ -1,58 +1,22 @@
-import { API_URL, getApiEndpoint, DEFAULT_TIMEOUT } from '../config';
+import { apiClient } from './apiClient';
 
 export async function fetchState() {
   try {
-    const endpoint = getApiEndpoint('property/state/');
-    console.log(`Fetching states from ${endpoint}`);
+    console.log(`Fetching states`);
     
-    // Check if access token exists
-    const accessToken = localStorage.getItem('accessToken');
-    if (!accessToken) {
-      console.warn("No access token found in localStorage. Proceeding with unauthenticated request.");
-    }
-    
-    // Use AbortController for timeout handling
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT);
-    
-    try {
-      const response = await fetch(endpoint, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {})
-        },
-        signal: controller.signal
-      });
+    // Use apiClient which automatically handles token refresh
+    // includeAuth will be true by default, so if token exists it will be included and refreshed if expired
+    const data = await apiClient<any[]>('property/state/', {
+      includeAuth: !!localStorage.getItem('accessToken'), // Only include auth if token exists
+      throwOnError: false // Don't throw, return empty array on error
+    });
 
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        // Try to get error details as text first in case it's not valid JSON
-        let errorText = '';
-        try {
-          errorText = await response.text();
-          console.error(`API Error (${response.status}): ${errorText}`);
-        } catch (textError) {
-          console.error(`API Error (${response.status}): Could not parse error response`);
-        }
-        
-        // Return empty array as fallback instead of throwing to prevent component crashes
-        console.warn("Returning empty state list as fallback");
-        return [];
-      }
-
-      const data = await response.json();
-      console.log(`Successfully fetched ${data.length || 0} states`);
+    if (Array.isArray(data) && data.length > 0) {
+      console.log(`Successfully fetched ${data.length} states`);
       return data;
-    } catch (fetchError: unknown) {
-      if ((fetchError as { name?: string }).name === 'AbortError') {
-        console.error("Request timed out after", DEFAULT_TIMEOUT, "ms");
-        return [];
-      }
-      throw fetchError;
-    } finally {
-      clearTimeout(timeoutId);
+    } else {
+      console.warn("Received empty or invalid states list from API");
+      return [];
     }
   } catch (error) {
     console.error("Error in fetchState:", error);

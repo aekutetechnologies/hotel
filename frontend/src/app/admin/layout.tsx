@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Building2, CalendarCheck, CircleDollarSign, Users, Tag, Menu, X, LogOut, UserRound, Home, BookOpen, Eye, FileText } from 'lucide-react'
+import { Building2, CalendarCheck, CircleDollarSign, Users, Tag, Menu, X, LogOut, UserRound, Home, BookOpen, Eye, FileText, FileBarChart } from 'lucide-react'
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ProtectedRoute } from '@/components/ProtectedRoute'
@@ -41,6 +41,7 @@ export default function AdminLayout({
     { name: 'Offers', href: '/admin/offers', icon: Tag, permissions: ['admin:offer:view'] },
     { name: 'Pages', href: '/admin/pages', icon: FileText, permissions: ['admin:pages:manage'] },
     { name: 'Blogs', href: '/admin/blogs', icon: BookOpen, permissions: ['blog:view'] },
+    { name: 'Reports', href: '/admin/reports', icon: FileBarChart, permissions: ['admin:reports:view'] },
   ]
 
   // Handle logout

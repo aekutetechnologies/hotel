@@ -31,6 +31,7 @@ export function handleInvalidToken(router?: any): void {
   // Clear all relevant localStorage items
   if (typeof window !== 'undefined') {
     localStorage.removeItem('accessToken')
+    localStorage.removeItem('refreshToken')
     localStorage.removeItem('userId')
     localStorage.removeItem('role')
     localStorage.removeItem('permissions')

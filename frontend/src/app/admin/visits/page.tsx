@@ -20,6 +20,8 @@ import { toast } from 'react-toastify'
 import Link from 'next/link'
 import { usePermissions } from '@/hooks/usePermissions'
 import { fetchVisits, updateVisitStatus, HostelVisit } from '@/lib/api/visitManagement'
+import { fetchProperties } from '@/lib/api/fetchProperties'
+import { type Property } from '@/types/property'
 
 export default function HostelVisitsPage() {
   const { can } = usePermissions()
@@ -28,14 +30,17 @@ export default function HostelVisitsPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [selectedPropertyId, setSelectedPropertyId] = useState<number | null>(null)
+  const [properties, setProperties] = useState<Property[]>([])
 
   useEffect(() => {
     loadVisits()
+    loadProperties()
   }, [])
 
   useEffect(() => {
     filterVisits()
-  }, [visits, searchTerm, statusFilter])
+  }, [visits, searchTerm, statusFilter, selectedPropertyId])
 
   const loadVisits = async () => {
     try {
@@ -50,12 +55,27 @@ export default function HostelVisitsPage() {
     }
   }
 
+  const loadProperties = async () => {
+    try {
+      const data = await fetchProperties()
+      setProperties(data)
+    } catch (error) {
+      console.error('Failed to load properties:', error)
+      toast.error('Failed to load properties')
+    }
+  }
+
   const filterVisits = () => {
     let filtered = [...visits]
 
     // Status filter
     if (statusFilter !== 'all') {
       filtered = filtered.filter(visit => visit.status === statusFilter)
+    }
+
+    // Property filter
+    if (selectedPropertyId) {
+      filtered = filtered.filter(visit => visit.property.id === selectedPropertyId)
     }
 
     // Search filter
@@ -122,17 +142,33 @@ export default function HostelVisitsPage() {
       {/* Filters */}
       <Card className="mb-6">
         <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-grow">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <Input
-                  type="text"
-                  placeholder="Search by property, user name, or mobile..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-grow">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                  <Input
+                    type="text"
+                    placeholder="Search by property, user name, or mobile..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              <div className="md:w-64">
+                <select
+                  className="w-full border rounded-md px-3 py-2 bg-white"
+                  value={selectedPropertyId || ''}
+                  onChange={(e) => setSelectedPropertyId(e.target.value ? Number(e.target.value) : null)}
+                >
+                  <option value="">All Properties</option>
+                  {properties.map((property) => (
+                    <option key={property.id} value={property.id}>
+                      {property.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
             <div className="flex gap-2 flex-wrap">

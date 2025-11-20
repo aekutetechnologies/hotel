@@ -1,4 +1,4 @@
-import { API_URL } from '../config'
+import { apiClient } from './apiClient'
 
 export interface OfferImage {
   id: number
@@ -6,17 +6,5 @@ export interface OfferImage {
 }
 
 export async function listOfferimage(offerId: string): Promise<OfferImage[]> {
-  const response = await fetch(`${API_URL}offers/offers/${offerId}/images/`, {
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-    }
-  })
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch expense documents')
-  }
-
-  const data = await response.json()
-  return data as OfferImage[]
+  return await apiClient<OfferImage[]>(`offers/offers/${offerId}/images/`)
 } 

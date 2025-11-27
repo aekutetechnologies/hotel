@@ -68,6 +68,20 @@ export function ImageCropper({ image, aspectRatio, onCropComplete, onCancel }: I
   )
 }
 
+const inferMimeType = (imageSrc: string): string => {
+  const dataUrlMatch = imageSrc.match(/^data:(image\/[a-zA-Z0-9.+-]+);/i)
+  if (dataUrlMatch && dataUrlMatch[1]) {
+    return dataUrlMatch[1].toLowerCase()
+  }
+
+  const loweredSrc = imageSrc.toLowerCase()
+  if (loweredSrc.endsWith('.png')) return 'image/png'
+  if (loweredSrc.endsWith('.gif')) return 'image/gif'
+  if (loweredSrc.endsWith('.webp')) return 'image/webp'
+  if (loweredSrc.endsWith('.bmp')) return 'image/bmp'
+  return 'image/jpeg'
+}
+
 async function getCroppedImg(imageSrc: string, pixelCrop: any, aspectRatio: number): Promise<Blob | null> {
   if (!pixelCrop) {
     console.error('No pixel crop data provided')
@@ -100,6 +114,9 @@ async function getCroppedImg(imageSrc: string, pixelCrop: any, aspectRatio: numb
     canvas.height
   )
 
+  const mimeType = inferMimeType(imageSrc)
+  const quality = mimeType === 'image/png' || mimeType === 'image/gif' ? undefined : 0.95
+
   return new Promise((resolve) => {
     canvas.toBlob(
       (blob) => {
@@ -110,8 +127,8 @@ async function getCroppedImg(imageSrc: string, pixelCrop: any, aspectRatio: numb
           resolve(blob)
         }
       },
-      'image/webp',
-      0.9
+      mimeType,
+      quality
     )
   })
 }

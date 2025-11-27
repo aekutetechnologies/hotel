@@ -43,7 +43,10 @@ export function FileUpload({ onFileUpload }: FileUploadProps) {
     setShowCropper(false)
     
     // Create a file from the blob
-    const croppedFile = new File([croppedImage], file!.name, { type: 'image/jpeg' })
+    const blobType = croppedImage.type || file?.type || 'image/jpeg'
+    const baseName = file?.name?.replace(/\.[^/.]+$/, '') || 'cropped_image'
+    const extension = blobType.split('/')[1] || 'jpg'
+    const croppedFile = new File([croppedImage], `${baseName}.${extension}`, { type: blobType })
     onFileUpload(croppedFile)
   }
 

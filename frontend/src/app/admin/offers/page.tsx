@@ -338,7 +338,9 @@ export default function Offers() {
 
   const handleCropComplete = async (croppedImageBlob: Blob, offerId: number) => {
     try {
-      const file = new File([croppedImageBlob], 'cropped-image.jpg', { type: 'image/jpeg' })
+      const blobType = croppedImageBlob.type || 'image/jpeg'
+      const extension = blobType.split('/')[1] || 'jpg'
+      const file = new File([croppedImageBlob], `offer_image.${extension}`, { type: blobType })
       await uploadOfferImage(offerId, file)
       toast.success('Image uploaded successfully.')
       setIsDocumentModalOpen(false)

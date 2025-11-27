@@ -302,7 +302,11 @@ export function ViewPropertyForm({ initialData, isEditing = false }: PropertyFor
         return
       }
 
-      const imageFile = new File([croppedImageBlob], "cropped_image.webp", { type: "image/webp" })
+      const blobType = (croppedImageBlob.type || '').toLowerCase()
+      const isPng = blobType === 'image/png'
+      const targetType = isPng ? 'image/png' : 'image/jpeg'
+      const targetExtension = isPng ? 'png' : 'jpg'
+      const imageFile = new File([croppedImageBlob], `property_image.${targetExtension}`, { type: targetType })
       const uploadResult = await uploadImage(imageFile)
       if (uploadResult && uploadResult.id) {
         setImages((prevImages) => [
@@ -330,7 +334,11 @@ export function ViewPropertyForm({ initialData, isEditing = false }: PropertyFor
         return;
       }
 
-      const imageFile = new File([croppedImageBlob], "room_cropped_image.webp", { type: "image/webp" });
+      const blobType = (croppedImageBlob.type || '').toLowerCase()
+      const isPng = blobType === 'image/png'
+      const targetType = isPng ? 'image/png' : 'image/jpeg'
+      const targetExtension = isPng ? 'png' : 'jpg'
+      const imageFile = new File([croppedImageBlob], `room_image.${targetExtension}`, { type: targetType });
       const uploadResult = await uploadRoomImage(imageFile);
       if (uploadResult && uploadResult.id && selectedRoomIndexForImage !== null) {
         setRooms(prevRooms => {

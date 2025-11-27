@@ -34,7 +34,6 @@ import { fetchImageCategories, createImageCategory, updateImageCategory, deleteI
 import { updatePropertyImage } from '@/lib/api/propertyImages'
 import { ManageConfigModal } from '@/components/admin/ManageConfigModal'
 import { ImageCategory } from '@/types/property'
-import imageCompression from 'browser-image-compression'
 
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png']
 const UNCATEGORIZED_IMAGE_CATEGORY = 'uncategorized'
@@ -514,26 +513,7 @@ export function AddPropertyForm() {
       const targetType = isPng ? 'image/png' : 'image/jpeg'
       const targetExtension = isPng ? 'png' : 'jpg'
 
-      const croppedFile = new File([croppedImageBlob], `property_image.${targetExtension}`, { type: targetType })
-
-      const compressionOptions = {
-        maxSizeMB: 1.5,
-        useWebWorker: true,
-        fileType: targetType,
-        initialQuality: 0.8,
-        maxIteration: 10
-      }
-
-      const compressedFile = await imageCompression(croppedFile, compressionOptions)
-      const fileToUpload =
-        compressedFile instanceof File
-          ? compressedFile
-          : new File([compressedFile], `property_image.${targetExtension}`, { type: targetType })
-
-      if (fileToUpload.size > 1.5 * 1024 * 1024) {
-        toast.warning("Compressed image exceeds 1.5 MB. Please crop a smaller area or choose a different image.")
-        return
-      }
+      const fileToUpload = new File([croppedImageBlob], `property_image.${targetExtension}`, { type: targetType })
 
       const categoryId =
         selectedImageCategoryId === UNCATEGORIZED_IMAGE_CATEGORY
@@ -585,26 +565,7 @@ export function AddPropertyForm() {
       const targetType = isPng ? 'image/png' : 'image/jpeg'
       const targetExtension = isPng ? 'png' : 'jpg'
 
-      const croppedFile = new File([croppedImageBlob], `room_image.${targetExtension}`, { type: targetType })
-
-      const compressionOptions = {
-        maxSizeMB: 1.5,
-        useWebWorker: true,
-        fileType: targetType,
-        initialQuality: 0.8,
-        maxIteration: 10
-      }
-
-      const compressedFile = await imageCompression(croppedFile, compressionOptions)
-      const fileToUpload =
-        compressedFile instanceof File
-          ? compressedFile
-          : new File([compressedFile], `room_image.${targetExtension}`, { type: targetType })
-
-      if (fileToUpload.size > 1.5 * 1024 * 1024) {
-        toast.warning("Compressed image exceeds 1.5 MB. Please crop a smaller area or choose a different image.")
-        return
-      }
+      const fileToUpload = new File([croppedImageBlob], `room_image.${targetExtension}`, { type: targetType })
 
       const uploadResult = await uploadRoomImage(fileToUpload);
 

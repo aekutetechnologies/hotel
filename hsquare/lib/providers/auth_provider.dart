@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hsquare/services/auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -14,8 +15,9 @@ class AuthProvider with ChangeNotifier {
   Future<void> checkLoginStatus() async {
     _isAuthenticated = await _authService.isLoggedIn();
     if (_isAuthenticated) {
-      // Ideally fetch user profile here or load from prefs
-      // For now, we assume session is valid if token exists
+      // Load user name from preferences
+      final prefs = await SharedPreferences.getInstance();
+      _userName = prefs.getString('user_name');
     }
     notifyListeners();
   }
@@ -49,6 +51,11 @@ class AuthProvider with ChangeNotifier {
     await _authService.logout();
     _isAuthenticated = false;
     _userName = null;
+    notifyListeners();
+  }
+
+  void updateUserName(String name) {
+    _userName = name;
     notifyListeners();
   }
 }

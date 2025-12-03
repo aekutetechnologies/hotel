@@ -458,9 +458,59 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
         ? (discountedPrice * parseFloat(selectedOffer.offer.discount_percentage || '0')) / 100 
         : 0
       
-      // Calculate taxes (assuming 18% GST)
-      const taxRate = 0.18
-      const taxes = (discountedPrice - offerDiscount) * taxRate
+      // Calculate GST per room based on room price
+      let totalTaxes = 0
+      
+      for (const [_, room] of selectedRooms.entries()) {
+        const quantity = room.quantity || 1
+        
+        // Calculate price per room per unit time (for GST rate determination)
+        let pricePerRoomForGST = 0
+        let pricePerRoomTotal = 0
+        
+        if (booking.bookingTime === 'monthly') {
+          pricePerRoomForGST = parseFloat(room.monthly_rate || '0')
+          pricePerRoomTotal = pricePerRoomForGST * booking.months
+        } else if (booking.bookingTime === 'yearly') {
+          pricePerRoomForGST = parseFloat(room.yearly_rate || '0')
+          pricePerRoomTotal = pricePerRoomForGST * booking.years
+        } else if (booking.bookingTime === 'hourly' && booking.checkInTime && booking.checkOutTime) {
+          const startHour = parseInt(booking.checkInTime, 10)
+          const endHour = parseInt(booking.checkOutTime, 10)
+          const hours = endHour > startHour ? endHour - startHour : (24 - startHour) + endHour
+          pricePerRoomForGST = parseFloat(room.hourly_rate || '0') * hours
+          pricePerRoomTotal = pricePerRoomForGST
+        } else {
+          pricePerRoomForGST = parseFloat(room.daily_rate || '0') * nights
+          pricePerRoomTotal = pricePerRoomForGST
+        }
+        
+        // Apply room discount
+        const roomDiscount = parseFloat(room.discount || '0')
+        const discountedPricePerRoomForGST = pricePerRoomForGST - (pricePerRoomForGST * roomDiscount / 100)
+        const discountedPricePerRoomTotal = pricePerRoomTotal - (pricePerRoomTotal * roomDiscount / 100)
+        
+        // Apply offer discount proportionally
+        const roomUnitTotalBeforeOffer = discountedPricePerRoomForGST * quantity
+        const roomUnitProportion = basePrice > 0 ? roomUnitTotalBeforeOffer / basePrice : 0
+        const roomUnitOfferDiscount = offerDiscount * roomUnitProportion
+        const taxablePricePerRoomUnit = Math.max(discountedPricePerRoomForGST - (roomUnitOfferDiscount / quantity), 0)
+        
+        // Determine GST rate based on price per room per unit (< 5000 = 5%, >= 5000 = 18%)
+        const roomTaxRate = taxablePricePerRoomUnit < 5000 ? 0.05 : 0.18
+        
+        // Calculate total price per room for tax calculation
+        const roomTotalBeforeOffer = discountedPricePerRoomTotal * quantity
+        const roomProportion = basePrice > 0 ? roomTotalBeforeOffer / basePrice : 0
+        const roomOfferDiscount = offerDiscount * roomProportion
+        const taxablePricePerRoomTotal = Math.max(discountedPricePerRoomTotal - (roomOfferDiscount / quantity), 0)
+        
+        // Calculate tax for this room type
+        const roomTax = taxablePricePerRoomTotal * quantity * roomTaxRate
+        totalTaxes += roomTax
+      }
+      
+      const taxes = totalTaxes
       
       // Calculate final price
       const finalPrice = discountedPrice - offerDiscount + taxes
@@ -1117,7 +1167,7 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
                       </div>
                     )}
                     <div className="flex justify-between">
-                      <span>Taxes (18%)</span>
+                      <span>Taxes (GST as applicable)</span>
                       <span>₹{Math.round(taxes)}</span>
                     </div>
                     <Separator />

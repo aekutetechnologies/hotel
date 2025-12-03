@@ -1,6 +1,5 @@
 'use client'
 
-import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Clock, Eye } from 'lucide-react'
 import { Blog } from '@/types/blog'
@@ -13,7 +12,7 @@ interface SimilarBlogsCardProps {
 
 export function SimilarBlogsCard({ blog }: SimilarBlogsCardProps) {
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-all duration-200 group">
+    <div className="rounded-xl border border-gray-100 bg-white shadow-lg transition-shadow hover:shadow-xl overflow-hidden group">
       <Link href={`/blog/${blog.slug}`}>
         <div className="relative h-32 w-full">
           {blog.featured_image?.image_url ? (
@@ -33,7 +32,7 @@ export function SimilarBlogsCard({ blog }: SimilarBlogsCardProps) {
         </div>
       </Link>
       
-      <CardContent className="p-3">
+      <div className="p-3">
         <Link href={`/blog/${blog.slug}`}>
           <h3 className="font-semibold text-gray-900 hover:text-[#B11E43] mb-2 text-sm leading-tight group-hover:text-[#B11E43] transition-colors overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: '1.2em', maxHeight: '2.4em' }}>
             {blog.title}
@@ -59,7 +58,7 @@ export function SimilarBlogsCard({ blog }: SimilarBlogsCardProps) {
             {blog.category.name}
           </Badge>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

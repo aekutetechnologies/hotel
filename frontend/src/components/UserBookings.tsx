@@ -117,7 +117,7 @@ export function UserBookings() {
                       {booking.status}
                     </span>
                   </div>
-                  {booking.status === 'Completed' || booking.status === 'checked_out' && (
+                  {booking.status === 'completed' || booking.status === 'checked_out' && (
                     <Button
                       variant="neutral"
                       onClick={() => setSelectedBooking(booking.id)}

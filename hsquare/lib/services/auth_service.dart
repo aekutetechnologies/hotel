@@ -59,4 +59,27 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('access_token');
   }
+
+  Future<Map<String, dynamic>?> refreshToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final refreshToken = prefs.getString('refresh_token');
+    
+    if (refreshToken == null) return null;
+    
+    final response = await http.post(
+      Uri.parse('$_baseUrl/users/refresh-token/'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'refresh_token': refreshToken}),
+    );
+    
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      await prefs.setString('access_token', data['access_token']);
+      if (data['name'] != null) {
+        await prefs.setString('user_name', data['name']);
+      }
+      return data;
+    }
+    return null;
+  }
 }

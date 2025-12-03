@@ -302,7 +302,7 @@ export default function BookingPage() {
                         </div>
                         
                         <div className="flex flex-wrap gap-4">
-                          {booking.status === 'completed' || booking.status === 'checked_out' && !booking.is_review_created && (
+                          {(booking.status === 'completed' || booking.status === 'checked_out') && !booking.is_review_created && (
                             <Button
                               variant="neutral"
                               onClick={() => handleReviewAction(booking, 'write')}
@@ -311,7 +311,7 @@ export default function BookingPage() {
                             </Button>
                           )}
                           
-                          {booking.status === 'completed' || booking.status === 'checked_out' && booking.is_review_created && (
+                          {(booking.status === 'completed' || booking.status === 'checked_out') && booking.is_review_created && (
                             <Button
                               variant="neutral"
                               onClick={() => handleReviewAction(booking, 'view')}

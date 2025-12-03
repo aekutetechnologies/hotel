@@ -4,9 +4,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CgDetailsMore } from "react-icons/cg";
 import { RxCross2 } from "react-icons/rx";
-import { ArrowRight, Facebook, Instagram, Linkedin, PhoneCall, User } from "lucide-react";
+import { ArrowRight, Facebook, Instagram, Linkedin, PhoneCall, User, CalendarDays, Heart, LogOut, Settings } from "lucide-react";
 import Image from "next/image";
-import { ProfileDropdown } from "./profile-dropdown";
 import { NewButton } from "./ui/new-button";
 import { LogIn } from "lucide-react";
 import Link from "next/link";
@@ -14,6 +13,8 @@ import { fetchCityArea } from "@/lib/api/fetchCityArea";
 import { fetchOffers } from "@/lib/api/fetchOffers";
 import { toast } from "react-toastify";
 import { createPortal } from "react-dom";
+import { PermissionGuard } from "./PermissionGuard";
+import { useRouter } from "next/navigation";
 
 interface NavbarProps {
   isLoggedIn: boolean;
@@ -62,8 +63,9 @@ const Navbar: React.FC<NavbarProps> = ({
     handleNavModalToggle(false);
   };
 
-  // Guest dropdown component (inline) ------------------------------------------------------
-  const GuestDropdown: React.FC = () => {
+  // Unified dropdown component (works for both logged-in and logged-out states) ------------
+  const UnifiedDropdown: React.FC = () => {
+    const router = useRouter();
     const [open, setOpen] = useState(false);
     const [buttonRect, setButtonRect] = useState<DOMRect | null>(null);
     const ref = useRef<HTMLDivElement | null>(null);
@@ -92,6 +94,25 @@ const Navbar: React.FC<NavbarProps> = ({
       setOpen(v => !v);
     };
 
+    // Enhanced logout function to clear all localStorage and redirect
+    const handleLogoutClick = () => {
+      handleLogout();
+      localStorage.clear();
+      router.push('/home?type=hotels');
+      setOpen(false);
+    };
+
+    // Handle menu item click - navigate or trigger login
+    const handleMenuItemClick = (href: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      setOpen(false);
+      if (!isLoggedIn) {
+        handleLoginClick();
+      } else {
+        // Navigation will be handled by Link component
+      }
+    };
+
     return (
       <>
         <div ref={ref}>
@@ -111,7 +132,7 @@ const Navbar: React.FC<NavbarProps> = ({
           {open && buttonRect && createPortal(
             <div 
               ref={dropdownRef}
-              className={`fixed w-64 bg-white shadow-lg rounded-md z-[9999] ${navModal ? 'text-white bg-black/50' : ''}`} 
+              className={`fixed w-64 bg-white shadow-lg rounded-md z-[9999] border border-gray-200 ${navModal ? 'text-white bg-black/50' : ''}`} 
               style={{ 
                 minWidth: 220,
                 top: buttonRect.bottom + 8,
@@ -122,26 +143,81 @@ const Navbar: React.FC<NavbarProps> = ({
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-2">
-                <div className="border-b pb-2 mb-2">
-                  <button
-                    onClick={(e) => { 
-                      console.log("Login/Signup clicked");
-                      e.stopPropagation();
-                      setOpen(false); 
-                      handleLoginClick(); 
-                    }}
-                    className="w-full text-left px-2 py-2 rounded hover:bg-gray-100 cursor-pointer"
+                {/* My Profile */}
+                {isLoggedIn ? (
+                  <Link href="/profile" onClick={(e) => { e.stopPropagation(); setOpen(false); }}>
+                    <div className="cursor-pointer text-base rounded-md my-1 hover:bg-gray-50 px-2 py-2 flex items-center">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>My Profile</span>
+                    </div>
+                  </Link>
+                ) : (
+                  <div 
+                    onClick={(e) => handleMenuItemClick('/profile', e)}
+                    className="cursor-pointer text-base rounded-md my-1 hover:bg-gray-50 px-2 py-2 flex items-center"
                   >
-                    Login / Signup
-                  </button>
-                </div>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>My Profile</span>
+                  </div>
+                )}
 
+                {/* My Bookings */}
+                {isLoggedIn ? (
+                  <Link href="/booking" onClick={(e) => { e.stopPropagation(); setOpen(false); }}>
+                    <div className="cursor-pointer text-base rounded-md my-1 hover:bg-gray-50 px-2 py-2 flex items-center">
+                      <CalendarDays className="mr-2 h-4 w-4" />
+                      <span>My Bookings</span>
+                    </div>
+                  </Link>
+                ) : (
+                  <div 
+                    onClick={(e) => handleMenuItemClick('/booking', e)}
+                    className="cursor-pointer text-base rounded-md my-1 hover:bg-gray-50 px-2 py-2 flex items-center"
+                  >
+                    <CalendarDays className="mr-2 h-4 w-4" />
+                    <span>My Bookings</span>
+                  </div>
+                )}
+
+                {/* My Favorites */}
+                {isLoggedIn ? (
+                  <Link href="/favorites" onClick={(e) => { e.stopPropagation(); setOpen(false); }}>
+                    <div className="cursor-pointer text-base rounded-md my-1 hover:bg-gray-50 px-2 py-2 flex items-center">
+                      <Heart className="mr-2 h-4 w-4" />
+                      <span>My Favorites</span>
+                    </div>
+                  </Link>
+                ) : (
+                  <div 
+                    onClick={(e) => handleMenuItemClick('/favorites', e)}
+                    className="cursor-pointer text-base rounded-md my-1 hover:bg-gray-50 px-2 py-2 flex items-center"
+                  >
+                    <Heart className="mr-2 h-4 w-4" />
+                    <span>My Favorites</span>
+                  </div>
+                )}
+
+                {/* Admin Dashboard - only shown when logged in and user has permission */}
+                {isLoggedIn && (
+                  <PermissionGuard permission="admin:dashboard:view">
+                    <Link href="/admin/dashboard" onClick={(e) => { e.stopPropagation(); setOpen(false); }}>
+                      <div className="cursor-pointer text-base rounded-md my-1 hover:bg-gray-50 px-2 py-2 flex items-center">
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Admin Dashboard</span>
+                      </div>
+                    </Link>
+                  </PermissionGuard>
+                )}
+
+                {/* Separator */}
+                <div className="border-t my-2"></div>
+
+                {/* Quick Links Section */}
                 <div className="mb-2 pt-2">
                   <p className="text-xs uppercase text-gray-500 px-2 mb-1">Quick links</p>
                   <Link 
                     href="/about" 
                     onClick={(e) => {
-                      console.log("About Us clicked");
                       e.stopPropagation();
                       setOpen(false);
                     }} 
@@ -200,6 +276,23 @@ const Navbar: React.FC<NavbarProps> = ({
                     Career
                   </Link>
                 </div>
+
+                {/* Logout - only shown when logged in */}
+                {isLoggedIn && (
+                  <>
+                    <div className="border-t my-2"></div>
+                    <div 
+                      className="cursor-pointer text-red-600 rounded-md my-1 hover:bg-red-50 px-2 py-2 flex items-center" 
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        handleLogoutClick(); 
+                      }}
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Logout</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>,
             document.body
@@ -391,12 +484,8 @@ const Navbar: React.FC<NavbarProps> = ({
             </div>
           </Link>
 
-          {isLoggedIn ? (
-            <ProfileDropdown userName={userName} onLogout={handleLogout} />
-          ) : (
-            // Guest dropdown: icon-only button that shows login + nav options
-            <GuestDropdown />
-          )}
+          {/* Unified dropdown - works for both logged-in and logged-out states */}
+          <UnifiedDropdown />
         </div>
       </div>
 

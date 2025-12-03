@@ -506,14 +506,93 @@ export function BookingCard({
   const taxableBasePerUnit = Math.max(discountedPrice - offerDiscount, 0)
   const totalTaxableBase = taxableBasePerUnit * bookingMultiplier * guestMultiplier
 
-  const taxRate = useMemo(() => {
-    if (totalTaxableBase <= 0) return 0
-    return totalTaxableBase < 7500 ? 0.05 : 0.18
-  }, [totalTaxableBase])
+  // Calculate GST per room based on room price
+  const calculateTaxesPerRoom = useMemo(() => {
+    if (!selectedRoomMap || selectedRoomMap.size === 0) return 0;
 
-  const taxes = taxableBasePerUnit * taxRate // Tax based on dynamic threshold
+    const selectedRooms = Array.from(selectedRoomMap.values()).filter(room => room.quantity > 0);
+    if (selectedRooms.length === 0) return 0;
 
-  // Safely handle offer discount
+    let totalTaxes = 0;
+
+    for (const room of selectedRooms) {
+      const quantity = room.quantity || 0;
+      if (quantity <= 0) continue;
+
+      // Calculate base price per room per unit time (for GST determination)
+      // For monthly/yearly, use rate for 1 month/1 year to determine GST rate
+      // For daily/hourly, use the actual duration
+      let pricePerRoomForGST = 0;
+      let pricePerRoomTotal = 0;
+
+      if (bookingType === 'yearly' && room.yearly_rate && parseFloat(room.yearly_rate) > 0) {
+        // For GST, check price per year (1 year rate)
+        pricePerRoomForGST = parseFloat(room.yearly_rate || '0');
+        pricePerRoomTotal = pricePerRoomForGST * years;
+      } else if (bookingType === 'monthly' && room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
+        // For GST, check price per month (1 month rate)
+        pricePerRoomForGST = parseFloat(room.monthly_rate || '0');
+        pricePerRoomTotal = pricePerRoomForGST * months;
+      } else if (isHostel && room.monthly_rate && parseFloat(room.monthly_rate) > 0) {
+        pricePerRoomForGST = parseFloat(room.monthly_rate || '0');
+        pricePerRoomTotal = pricePerRoomForGST * months;
+      } else if (isHostel && room.yearly_rate && parseFloat(room.yearly_rate) > 0) {
+        pricePerRoomForGST = parseFloat(room.yearly_rate || '0');
+        pricePerRoomTotal = pricePerRoomForGST * years;
+      } else {
+        const basePrice = bookingType === 'hourly'
+          ? parseFloat(room.hourly_rate || '0')
+          : parseFloat(room.daily_rate || '0');
+
+        let duration = 0;
+        if (bookingType === 'hourly' && checkInTime && checkOutTime && date) {
+          const startTime = new Date(date);
+          const endTime = new Date(date);
+          startTime.setHours(parseInt(checkInTime, 10), 0, 0, 0);
+          endTime.setHours(parseInt(checkOutTime, 10), 0, 0, 0);
+          duration = (endTime.getTime() - startTime.getTime()) / (1000 * 3600);
+          if (duration <= 0) duration += 24;
+        } else if (date && checkOut) {
+          duration = Math.max(1, (checkOut.getTime() - date.getTime()) / (1000 * 3600 * 24));
+        } else {
+          duration = 1;
+        }
+        pricePerRoomForGST = basePrice * duration;
+        pricePerRoomTotal = pricePerRoomForGST;
+      }
+
+      // Apply room discount to price per room
+      const roomDiscount = room.discount ? parseFloat(String(room.discount)) : 0;
+      const discountedPricePerRoomForGST = pricePerRoomForGST - (pricePerRoomForGST * roomDiscount / 100);
+
+      // Apply offer discount proportionally - calculate proportion based on unit price
+      const roomUnitTotalBeforeOffer = discountedPricePerRoomForGST * quantity;
+      const roomUnitProportion = totalPrice > 0 ? roomUnitTotalBeforeOffer / totalPrice : 0;
+      const roomUnitOfferDiscount = offerDiscount * roomUnitProportion;
+      const taxablePricePerRoomUnit = Math.max(discountedPricePerRoomForGST - (roomUnitOfferDiscount / quantity), 0);
+
+      // Determine GST rate based on price per room per unit time (< 5000 = 5%, >= 5000 = 18%)
+      const roomTaxRate = taxablePricePerRoomUnit < 5000 ? 0.05 : 0.18;
+
+      // Calculate total price per room (with all multipliers) for tax calculation
+      const discountedPricePerRoomTotal = pricePerRoomTotal - (pricePerRoomTotal * roomDiscount / 100);
+      const roomTotalBeforeOffer = discountedPricePerRoomTotal * quantity;
+      const roomProportion = totalPrice > 0 ? roomTotalBeforeOffer / totalPrice : 0;
+      const roomOfferDiscount = offerDiscount * roomProportion;
+      const taxablePricePerRoomTotal = Math.max(discountedPricePerRoomTotal - (roomOfferDiscount / quantity), 0);
+
+      // Calculate tax for this room type (total price per room * quantity * tax rate)
+      const roomTax = taxablePricePerRoomTotal * quantity * roomTaxRate;
+      totalTaxes += roomTax;
+    }
+
+    return totalTaxes;
+  }, [selectedRoomMap, bookingType, months, years, isHostel, date, checkOut, checkInTime, checkOutTime, offerDiscount, totalPrice])
+
+  // Taxes are calculated per room (per unit, multipliers applied in display)
+  const taxes = calculateTaxesPerRoom
+
+  // Safely handle offer discount (finalPrice is per unit, multipliers applied in display)
   const finalPrice = taxableBasePerUnit + taxes
 
   // Determine the price label based on property type and room
@@ -914,7 +993,7 @@ export function BookingCard({
               </div>
             )}
             <div className="flex justify-between">
-              <span>Taxes ({(taxRate * 100).toFixed(0)}%)</span>
+              <span>Taxes (GST as applicable)</span>
               <span>₹{bookingType === 'monthly'
                 ? (taxes * months * guests).toFixed(2)
                 : bookingType === 'yearly'

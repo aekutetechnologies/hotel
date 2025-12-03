@@ -1,22 +1,14 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:hsquare/models/property.dart';
-import 'package:hsquare/utils/constants.dart';
+import 'package:hsquare/services/api_client.dart';
 
 class PropertyService {
-  final String _baseUrl = AppConstants.baseUrl;
+  final ApiClient _apiClient = ApiClient();
 
   Future<List<Property>> fetchProperties({String? type}) async {
-    // Using public search endpoint or all properties endpoint
-    // Assuming /api/property/public/search/ returns list
-    // Or /api/property/properties/
-    
-    // Let's try /api/property/properties/ first, filtering by type if possible
-    // If backend doesn't support filtering by type in list, we might need to filter client side
-    // But looking at urls.py: path('properties/', views.property_list, name='property-list')
-    
-    final response = await http.get(
-      Uri.parse('$_baseUrl/property/properties/'),
+    final response = await _apiClient.get(
+      '/property/properties/',
+      requiresAuth: false,
     );
 
     if (response.statusCode == 200) {
@@ -31,5 +23,52 @@ class PropertyService {
     } else {
       throw Exception('Failed to load properties: ${response.body}');
     }
+  }
+
+  Future<List<Property>> searchProperties({
+    String? propertyType,
+    String? city,
+    String? checkInDate,
+    String? checkOutDate,
+    int? rooms,
+    int? guests,
+    String? bookingType,
+  }) async {
+    final queryParams = <String, String>{};
+    if (propertyType != null) queryParams['property_type'] = propertyType;
+    if (city != null) queryParams['city'] = city;
+    if (checkInDate != null) queryParams['checkin_date'] = checkInDate;
+    if (checkOutDate != null) queryParams['checkout_date'] = checkOutDate;
+    if (rooms != null) queryParams['rooms'] = rooms.toString();
+    if (guests != null) queryParams['guests'] = guests.toString();
+    if (bookingType != null) queryParams['booking_type'] = bookingType;
+    
+    String endpoint = '/property/public/search/';
+    if (queryParams.isNotEmpty) {
+      final queryString = queryParams.entries
+          .map((e) => '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}')
+          .join('&');
+      endpoint += '?$queryString';
+    }
+    
+    final response = await _apiClient.get(endpoint, requiresAuth: false);
+    
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => Property.fromJson(json)).toList();
+    }
+    throw Exception('Failed to search properties: ${response.body}');
+  }
+
+  Future<Property> getProperty(int propertyId) async {
+    final response = await _apiClient.get(
+      '/property/properties/$propertyId/',
+      requiresAuth: false,
+    );
+    
+    if (response.statusCode == 200) {
+      return Property.fromJson(jsonDecode(response.body));
+    }
+    throw Exception('Failed to fetch property: ${response.body}');
   }
 }

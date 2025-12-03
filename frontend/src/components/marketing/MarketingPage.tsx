@@ -1,11 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Header } from '@/components/Header'
+import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { fetchSitePage } from '@/lib/api/sitePages'
 import type { SitePage, SitePageSection } from '@/types/sitePage'
 import { Spinner } from '@/components/ui/spinner'
+import { LoginDialog } from '@/components/LoginDialog'
 
 interface MarketingPageProps {
   slug: string
@@ -33,6 +34,22 @@ const normalizeSections = (sections?: SitePageSection[] | null): SitePageSection
 export function MarketingPage({ slug, defaultContent, sectionType = 'hotels' }: MarketingPageProps) {
   const [page, setPage] = useState<SitePage | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [userName, setUserName] = useState("")
+  const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false)
+  const [isClosed, setIsClosed] = useState(false)
+  const [isNavModalOpen, setIsNavModalOpen] = useState(false)
+
+  // Load login state from localStorage
+  useEffect(() => {
+    const storedName = localStorage.getItem("name")
+    const storedAccessToken = localStorage.getItem("accessToken")
+    
+    if (storedName && storedAccessToken) {
+      setIsLoggedIn(true)
+      setUserName(storedName)
+    }
+  }, [])
 
   useEffect(() => {
     let isMounted = true
@@ -67,6 +84,31 @@ export function MarketingPage({ slug, defaultContent, sectionType = 'hotels' }: 
     }
   }, [slug])
 
+  const handleLoginClick = () => {
+    setIsLoginDialogOpen(true)
+  }
+
+  const handleLoginSuccess = (name: string) => {
+    setIsLoggedIn(true)
+    setUserName(name)
+    setIsLoginDialogOpen(false)
+  }
+
+  const handleLogout = () => {
+    localStorage.clear()
+    setIsLoggedIn(false)
+    setUserName("")
+    window.location.href = "/"
+  }
+
+  const setShowDetailSection = (section: string) => {
+    window.location.href = `/home?type=${section}`
+  }
+
+  const handleNavModalChange = (isOpen: boolean) => {
+    setIsNavModalOpen(isOpen)
+  }
+
   const heroTitle = page?.hero_title || page?.title || defaultContent.heroTitle
   const heroDescription = page?.hero_description || defaultContent.heroDescription
   const sections = page?.sections && page.sections.length > 0
@@ -75,7 +117,16 @@ export function MarketingPage({ slug, defaultContent, sectionType = 'hotels' }: 
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
-      <Header />
+      <Navbar
+        isLoggedIn={isLoggedIn}
+        userName={userName}
+        handleLogout={handleLogout}
+        handleLoginClick={handleLoginClick}
+        setShowDetailSection={setShowDetailSection}
+        isClosed={isClosed}
+        currentSection={sectionType === 'hostels' ? 'hostel' : 'hotel'}
+        onNavModalChange={handleNavModalChange}
+      />
 
       <main className="flex-1">
         <section className="bg-gradient-to-br from-[#A31C44] via-[#b11e43] to-[#8f1836] text-white">
@@ -165,6 +216,12 @@ export function MarketingPage({ slug, defaultContent, sectionType = 'hotels' }: 
       </main>
 
       <Footer sectionType={sectionType} />
+      
+      <LoginDialog 
+        isOpen={isLoginDialogOpen}
+        onClose={() => setIsLoginDialogOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
+      />
     </div>
   )
 }

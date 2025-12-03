@@ -63,7 +63,7 @@ class BlogListSerializer(serializers.ModelSerializer):
             'id', 'title', 'slug', 'author', 'featured_image', 'images',
             'category', 'tags', 'is_highlighted', 'is_published',
             'published_at', 'views_count', 'created_at', 'updated_at',
-            'read_time'
+            'read_time', 'content'
         ]
 
 

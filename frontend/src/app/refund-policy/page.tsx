@@ -5,33 +5,65 @@ import { useRouter } from "next/navigation"
 import { ChevronLeft } from "lucide-react"
 import Link from "next/link"
 import Footer from "@/components/Footer"
-import { Header } from "@/components/Header"
+import Navbar from "@/components/Navbar"
+import { LoginDialog } from '@/components/LoginDialog'
 
 export default function RefundPolicyPage() {
   const router = useRouter()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [userName, setUserName] = useState("")
+  const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false)
+  const [isClosed, setIsClosed] = useState(false)
+  const [isNavModalOpen, setIsNavModalOpen] = useState(false)
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken")
-    const name = localStorage.getItem("name")
+    const storedName = localStorage.getItem("name")
+    const storedAccessToken = localStorage.getItem("accessToken")
     
-    if (name) {
-      setUserName(name)
+    if (storedName && storedAccessToken) {
       setIsLoggedIn(true)
+      setUserName(storedName)
     }
   }, [])
+
+  const handleLoginClick = () => {
+    setIsLoginDialogOpen(true)
+  }
+
+  const handleLoginSuccess = (name: string) => {
+    setIsLoggedIn(true)
+    setUserName(name)
+    setIsLoginDialogOpen(false)
+  }
 
   const handleLogout = () => {
     localStorage.clear()
     setIsLoggedIn(false)
+    setUserName("")
     router.push("/")
+  }
+
+  const setShowDetailSection = (section: string) => {
+    window.location.href = `/home?type=${section}`
+  }
+
+  const handleNavModalChange = (isOpen: boolean) => {
+    setIsNavModalOpen(isOpen)
   }
 
   return (
     <div className="flex flex-col min-h-screen">
       {/* Navbar */}
-      <Header />
+      <Navbar
+        isLoggedIn={isLoggedIn}
+        userName={userName}
+        handleLogout={handleLogout}
+        handleLoginClick={handleLoginClick}
+        setShowDetailSection={setShowDetailSection}
+        isClosed={isClosed}
+        currentSection="hotels"
+        onNavModalChange={handleNavModalChange}
+      />
       
       {/* Main content */}
       <main className="flex-1 bg-gray-50 py-8">
@@ -113,6 +145,12 @@ export default function RefundPolicyPage() {
       
       {/* Footer */}
       <Footer sectionType="hotels" />
+      
+      <LoginDialog 
+        isOpen={isLoginDialogOpen}
+        onClose={() => setIsLoginDialogOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
+      />
     </div>
   )
 } 

@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
-import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,6 +13,7 @@ import { Blog, BlogCategory } from '@/types/blog'
 import Image from 'next/image'
 import Link from 'next/link'
 import { format } from 'date-fns'
+import { extractPlainTextFromLexical } from '@/lib/utils/lexicalToHtml'
 import { LoadingIndicator } from '@/components/ui/LoadingIndicator'
 import { LoginDialog } from '@/components/LoginDialog'
 
@@ -206,7 +206,7 @@ export default function BlogListPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {blogs.map((blog) => (
-                <Card key={blog.id} className="overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col">
+                <div key={blog.id} className="rounded-xl border border-gray-100 bg-white shadow-lg transition-shadow hover:shadow-xl overflow-hidden flex flex-col">
                   <Link href={`/blog/${blog.slug}`}>
                     <div className="relative h-48 w-full overflow-hidden">
                       {blog.featured_image?.image_url ? (
@@ -231,15 +231,15 @@ export default function BlogListPage() {
                     </div>
                   </Link>
 
-                  <CardContent className="p-6 flex-grow flex flex-col">
+                  <div className="p-6 flex-grow flex flex-col">
                     <Link href={`/blog/${blog.slug}`}>
                       <h2 className="text-xl font-semibold text-gray-900 mb-3 hover:text-[#B11E43] transition-colors line-clamp-2">
                         {blog.title}
                       </h2>
                     </Link>
                     
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-3 flex-grow">
-                      {blog.content ? blog.content.replace(/<[^>]*>/g, '').substring(0, 150) + '...' : 'No content available'}
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-2 flex-grow">
+                      {blog.content ? extractPlainTextFromLexical(blog.content) || 'No content available' : 'No content available'}
                     </p>
 
                     <div className="flex items-center justify-between text-sm text-gray-500">
@@ -254,8 +254,8 @@ export default function BlogListPage() {
                         <span>{blog.read_time} min read</span>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               ))}
             </div>
           )}

@@ -29,6 +29,7 @@ interface ExtendedBookingProperty {
     hourly_rate?: string;
     daily_rate?: string;
     monthly_rate?: string;
+    yearly_rate?: string;
     discount?: string;
   }[];
   images: { image: string }[];
@@ -93,6 +94,20 @@ export function generatePDFInvoice(booking: BookingData) {
   const textColor = [51, 51, 51]; // #333333
   const mediumGray = [150, 150, 150]; // #969696
   
+  // Helper function to format status
+  const formatStatus = (status: string): string => {
+    if (!status) return 'N/A';
+    return status.split('_').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    ).join(' ');
+  };
+  
+  // Helper function to format payment type
+  const formatPaymentType = (paymentType: string | undefined): string => {
+    if (!paymentType) return 'N/A';
+    return paymentType.toUpperCase();
+  };
+  
   // Add logo from public folder
   try {
     doc.addImage('/logo.png', 'PNG', 15, 15, 60, 15);
@@ -113,7 +128,7 @@ export function generatePDFInvoice(booking: BookingData) {
   doc.text(`Date: ${new Date().toLocaleDateString('en-IN', { 
     year: 'numeric', month: 'short', day: '2-digit' 
   })}`, 195, 40, { align: 'right' });
-  doc.text(`Status: ${booking.status.toUpperCase()}`, 195, 45, { align: 'right' });
+  doc.text(`Status: ${formatStatus(booking.status)}`, 195, 45, { align: 'right' });
   
   // Add company details
   doc.setFontSize(10);
@@ -222,20 +237,25 @@ export function generatePDFInvoice(booking: BookingData) {
     
     durationLabel = `${duration} night${duration > 1 ? 's' : ''}`;
   } else if (booking.booking_time === 'monthly') {
-
     const checkinDate = new Date(booking.checkin_date);
     const checkoutDate = new Date(booking.checkout_date);
     const diffTime = Math.abs(checkoutDate.getTime() - checkinDate.getTime());
     const rawMonths = diffTime / (1000 * 60 * 60 * 24 * 30); // approximate months
     duration = Math.round(rawMonths);
-
     durationLabel = `${duration} month${duration !== 1 ? 's' : ''}`;
-
+  } else if (booking.booking_time === 'yearly') {
+    const checkinDate = new Date(booking.checkin_date);
+    const checkoutDate = new Date(booking.checkout_date);
+    const diffTime = Math.abs(checkoutDate.getTime() - checkinDate.getTime());
+    const rawYears = diffTime / (1000 * 60 * 60 * 24 * 365); // approximate years
+    duration = Math.round(rawYears);
+    durationLabel = `${duration} year${duration !== 1 ? 's' : ''}`;
   }
   
-  // Prepare room data rows for the table
+  // Prepare room data rows for the table and calculate taxes per room
   const tableRows = [];
   let totalAmount = 0;
+  let totalTaxes = 0;
   
   if (booking.booking_room_types && booking.booking_room_types.length > 0) {
     booking.booking_room_types.forEach((roomTypeObj) => {
@@ -252,23 +272,49 @@ export function generatePDFInvoice(booking: BookingData) {
           roomRate = roomInfo.daily_rate;
         } else if (roomInfo.monthly_rate) {
           roomRate = roomInfo.monthly_rate;
+        } else if (roomInfo.yearly_rate && booking.booking_time === 'yearly') {
+          roomRate = roomInfo.yearly_rate;
         }
         
         const roomDiscount = parseFloat(roomInfo.discount || '0');
         const roomBasePrice = parseFloat(roomRate);
         const roomDiscountedPrice = roomBasePrice * (1 - (roomDiscount / 100));
         
+        // Calculate price per room per unit time (for GST determination)
+        let pricePerRoomUnit = roomDiscountedPrice;
+        if (booking.booking_time === 'yearly') {
+          pricePerRoomUnit = roomDiscountedPrice; // Yearly rate is for 1 year
+        } else if (booking.booking_time === 'monthly') {
+          pricePerRoomUnit = roomDiscountedPrice; // Monthly rate is for 1 month
+        } else if (booking.booking_time === 'hourly') {
+          pricePerRoomUnit = roomDiscountedPrice; // Already per hour
+        } else {
+          pricePerRoomUnit = roomDiscountedPrice; // Daily rate is per day
+        }
+        
         // Calculate line amount based on property type and booking type
         let lineAmount = 0;
         if (booking.booking_time === 'monthly' && booking.property.property_type === 'hostel') {
           // For hostels with monthly booking, multiply by guests for shared rooms
           lineAmount = roomDiscountedPrice * quantity * duration * booking.number_of_guests;
+        } else if (booking.booking_time === 'yearly') {
+          // For yearly bookings, use years as duration
+          const checkinDate = new Date(booking.checkin_date);
+          const checkoutDate = new Date(booking.checkout_date);
+          const diffTime = Math.abs(checkoutDate.getTime() - checkinDate.getTime());
+          const years = Math.round(diffTime / (1000 * 60 * 60 * 24 * 365));
+          lineAmount = roomDiscountedPrice * quantity * Math.max(years, 1);
         } else {
           // For hotels or non-monthly bookings
           lineAmount = roomDiscountedPrice * quantity * duration;
         }
         
         totalAmount += lineAmount;
+        
+        // Calculate GST per room (5% if room price < 5000, 18% if >= 5000)
+        const roomTaxRate = pricePerRoomUnit < 5000 ? 0.05 : 0.18;
+        const roomTax = lineAmount * roomTaxRate;
+        totalTaxes += roomTax;
         
         tableRows.push([
           roomInfo.name,
@@ -291,23 +337,40 @@ export function generatePDFInvoice(booking: BookingData) {
         roomRate = roomInfo.daily_rate;
       } else if (roomInfo.monthly_rate) {
         roomRate = roomInfo.monthly_rate;
+      } else if (roomInfo.yearly_rate && booking.booking_time === 'yearly') {
+        roomRate = roomInfo.yearly_rate;
       }
       
       const roomDiscount = parseFloat(roomInfo.discount || '0');
       const roomBasePrice = parseFloat(roomRate);
       const roomDiscountedPrice = roomBasePrice * (1 - (roomDiscount / 100));
       
+      // Calculate price per room per unit time (for GST determination)
+      let pricePerRoomUnit = roomDiscountedPrice;
+      
       // Calculate line amount based on property type and booking type
       let lineAmount = 0;
       if (booking.booking_time === 'monthly' && booking.property.property_type === 'hostel') {
         // For hostels with monthly booking, multiply by guests for shared rooms
         lineAmount = roomDiscountedPrice * (booking.number_of_rooms || 1) * duration * booking.number_of_guests;
+      } else if (booking.booking_time === 'yearly') {
+        // For yearly bookings, use years as duration
+        const checkinDate = new Date(booking.checkin_date);
+        const checkoutDate = new Date(booking.checkout_date);
+        const diffTime = Math.abs(checkoutDate.getTime() - checkinDate.getTime());
+        const years = Math.round(diffTime / (1000 * 60 * 60 * 24 * 365));
+        lineAmount = roomDiscountedPrice * (booking.number_of_rooms || 1) * Math.max(years, 1);
       } else {
         // For hotels or non-monthly bookings
         lineAmount = roomDiscountedPrice * (booking.number_of_rooms || 1) * duration;
       }
       
       totalAmount += lineAmount;
+      
+      // Calculate GST per room (5% if room price < 5000, 18% if >= 5000)
+      const roomTaxRate = pricePerRoomUnit < 5000 ? 0.05 : 0.18;
+      const roomTax = lineAmount * roomTaxRate;
+      totalTaxes += roomTax;
       
       tableRows.push([
         roomInfo.name,
@@ -345,22 +408,25 @@ export function generatePDFInvoice(booking: BookingData) {
   // Get the last table's Y position
   const finalY = (doc as any).lastAutoTable.finalY + 5;
   
-  // Use calculated totalAmount for tax calculations
-  // This ensures taxes are calculated based on the actual sum of line items
-  const taxRate = 18;
-  const taxAmount = (totalAmount * taxRate / 100);
+  // Use calculated per-room taxes (GST is calculated per room: 5% if < 5000, 18% if >= 5000)
   const subtotal = totalAmount;
+  const taxAmount = totalTaxes;
   const cgst = taxAmount / 2;
   const sgst = taxAmount / 2;
   const grandTotal = subtotal + taxAmount;
+  
+  // Calculate effective tax rate for display (weighted average)
+  const effectiveTaxRate = subtotal > 0 ? ((taxAmount / subtotal) * 100) : 0;
+  const cgstRate = effectiveTaxRate / 2;
+  const sgstRate = effectiveTaxRate / 2;
   
   // Add the summary table using autoTable - Now right-aligned
   autoTable(doc, {
     startY: finalY,
     body: [
       ['', 'Subtotal:', `${subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
-      ['', 'CGST (9%):', `${cgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
-      ['', 'SGST (9%):', `${sgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
+      ['', `CGST (${cgstRate.toFixed(1)}%):`, `${cgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
+      ['', `SGST (${sgstRate.toFixed(1)}%):`, `${sgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
       ['', 'TOTAL:', `${grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`]
     ],
     theme: 'plain',
@@ -394,8 +460,8 @@ export function generatePDFInvoice(booking: BookingData) {
   autoTable(doc, {
     startY: summaryY + 5,
     body: [
-      ['Payment Method:', `${booking.payment_type?.toUpperCase() || 'ONLINE'}`],
-      ['Payment Status:', `${booking.status.toUpperCase()}`],
+      ['Payment Method:', formatPaymentType(booking.payment_type)],
+      ['Payment Status:', formatStatus(booking.status)],
       ['Payment Date:', `${new Date(booking.created_at || new Date()).toLocaleDateString('en-IN', { 
         year: 'numeric', month: 'short', day: '2-digit' 
       })}`]

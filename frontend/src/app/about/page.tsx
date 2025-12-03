@@ -1,14 +1,66 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Footer from '@/components/Footer'
-import { Header } from '@/components/Header'
+import Navbar from '@/components/Navbar'
+import { LoginDialog } from '@/components/LoginDialog'
 
 const ABOUT_TEXT = "At HSquare Living, we are more than just a team; we are a closely-knit family of handpicked individuals, each possessing exceptional expertise and a shared passion for excellence. Discover luxury and comfort with our carefully curated selection of premium hotels across India."
 
 export default function AboutPage() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [userName, setUserName] = useState("")
+  const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false)
+  const [isClosed, setIsClosed] = useState(false)
+  const [isNavModalOpen, setIsNavModalOpen] = useState(false)
+
+  useEffect(() => {
+    const storedName = localStorage.getItem("name")
+    const storedAccessToken = localStorage.getItem("accessToken")
+    
+    if (storedName && storedAccessToken) {
+      setIsLoggedIn(true)
+      setUserName(storedName)
+    }
+  }, [])
+
+  const handleLoginClick = () => {
+    setIsLoginDialogOpen(true)
+  }
+
+  const handleLoginSuccess = (name: string) => {
+    setIsLoggedIn(true)
+    setUserName(name)
+    setIsLoginDialogOpen(false)
+  }
+
+  const handleLogout = () => {
+    localStorage.clear()
+    setIsLoggedIn(false)
+    setUserName("")
+    window.location.href = "/"
+  }
+
+  const setShowDetailSection = (section: string) => {
+    window.location.href = `/home?type=${section}`
+  }
+
+  const handleNavModalChange = (isOpen: boolean) => {
+    setIsNavModalOpen(isOpen)
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
-      <Header />
+      <Navbar
+        isLoggedIn={isLoggedIn}
+        userName={userName}
+        handleLogout={handleLogout}
+        handleLoginClick={handleLoginClick}
+        setShowDetailSection={setShowDetailSection}
+        isClosed={isClosed}
+        currentSection="hotels"
+        onNavModalChange={handleNavModalChange}
+      />
 
       <main className="flex-1">
         <section className="bg-gradient-to-br from-[#A31C44] via-[#b11e43] to-[#8f1836] text-white">
@@ -98,6 +150,12 @@ export default function AboutPage() {
       </main>
 
       <Footer sectionType="hotels" />
+      
+      <LoginDialog 
+        isOpen={isLoginDialogOpen}
+        onClose={() => setIsLoginDialogOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
+      />
     </div>
   )
 }

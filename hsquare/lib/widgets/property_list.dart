@@ -21,7 +21,11 @@ class _PropertyListState extends State<PropertyList> {
   @override
   void initState() {
     super.initState();
-    _propertiesFuture = _propertyService.fetchProperties(type: widget.propertyType);
+    // Use search endpoint instead of properties endpoint for better filtering
+    _propertiesFuture = _propertyService.searchProperties(
+      propertyType: widget.propertyType,
+      city: widget.location,
+    );
   }
 
   @override

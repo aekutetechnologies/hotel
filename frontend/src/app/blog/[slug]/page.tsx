@@ -6,7 +6,6 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { Clock, Calendar, Eye, ArrowLeft, Share2 } from 'lucide-react'
 import { fetchBlogBySlug } from '@/lib/api/fetchBlogBySlug'
 import { fetchRelatedBlogs } from '@/lib/api/fetchRelatedBlogs'
@@ -313,7 +312,7 @@ export default function BlogDetailPage() {
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Related Blogs</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {relatedBlogs.map((relatedBlog) => (
-                  <Card key={relatedBlog.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                  <div key={relatedBlog.id} className="rounded-xl border border-gray-100 bg-white shadow-lg transition-shadow hover:shadow-xl overflow-hidden">
                     <Link href={`/blog/${relatedBlog.slug}`}>
                       <div className="relative h-40 w-full">
                         {relatedBlog.featured_image?.image_url ? (
@@ -332,7 +331,7 @@ export default function BlogDetailPage() {
                         )}
                       </div>
                     </Link>
-                    <CardContent className="p-4">
+                    <div className="p-4">
                       <Link href={`/blog/${relatedBlog.slug}`}>
                         <h3 className="font-semibold text-gray-900 hover:text-[#B11E43] mb-2 overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: '1.2em', maxHeight: '2.4em' }}>
                           {relatedBlog.title}
@@ -341,8 +340,8 @@ export default function BlogDetailPage() {
                       <p className="text-sm text-gray-600 overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: '1.2em', maxHeight: '2.4em' }}>
                         {relatedBlog.content ? relatedBlog.content.replace(/<[^>]*>/g, '').substring(0, 150) + '...' : 'No content available'}
                       </p>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>

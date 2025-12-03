@@ -106,9 +106,17 @@ class HomeScreen extends StatelessWidget {
           ),
           if (authProvider.isAuthenticated)
             PopupMenuButton<String>(
-              onSelected: (value) {
+              onSelected: (value) async {
                 if (value == 'logout') {
                   authProvider.logout();
+                } else if (value == 'profile') {
+                  Navigator.pushNamed(context, '/profile');
+                } else if (value == 'bookings') {
+                  Navigator.pushNamed(context, '/bookings');
+                } else if (value == 'favorites') {
+                  Navigator.pushNamed(context, '/favorites');
+                } else if (value == 'blog') {
+                  Navigator.pushNamed(context, '/blog');
                 }
               },
               child: Row(
@@ -131,8 +139,55 @@ class HomeScreen extends StatelessWidget {
               itemBuilder: (BuildContext context) {
                 return [
                   const PopupMenuItem<String>(
+                    value: 'profile',
+                    child: Row(
+                      children: [
+                        Icon(Icons.person, size: 20),
+                        SizedBox(width: 8),
+                        Text('Profile'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'bookings',
+                    child: Row(
+                      children: [
+                        Icon(Icons.event, size: 20),
+                        SizedBox(width: 8),
+                        Text('My Bookings'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'favorites',
+                    child: Row(
+                      children: [
+                        Icon(Icons.favorite, size: 20),
+                        SizedBox(width: 8),
+                        Text('Favorites'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'blog',
+                    child: Row(
+                      children: [
+                        Icon(Icons.article, size: 20),
+                        SizedBox(width: 8),
+                        Text('Blog'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuDivider(),
+                  const PopupMenuItem<String>(
                     value: 'logout',
-                    child: Text('Logout'),
+                    child: Row(
+                      children: [
+                        Icon(Icons.logout, size: 20),
+                        SizedBox(width: 8),
+                        Text('Logout'),
+                      ],
+                    ),
                   ),
                 ];
               },

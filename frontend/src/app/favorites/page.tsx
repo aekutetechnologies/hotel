@@ -4,12 +4,16 @@ import { FavoriteProperties } from "@/components/favorite-properties"
 import { useEffect, useState, Suspense } from "react"
 import { useRouter } from "next/navigation"
 import Footer from "@/components/Footer"
-import { Header } from "@/components/Header"
+import Navbar from "@/components/Navbar"
+import { LoginDialog } from '@/components/LoginDialog'
 
 export default function FavoritesPage() {
   const router = useRouter()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [userName, setUserName] = useState("")
+  const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false)
+  const [isClosed, setIsClosed] = useState(false)
+  const [isNavModalOpen, setIsNavModalOpen] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken")
@@ -26,21 +30,49 @@ export default function FavoritesPage() {
     }
   }, [router])
 
+  const handleLoginClick = () => {
+    setIsLoginDialogOpen(true)
+  }
+
+  const handleLoginSuccess = (name: string) => {
+    setIsLoggedIn(true)
+    setUserName(name)
+    setIsLoginDialogOpen(false)
+  }
+
   const handleLogout = () => {
     // Clear all localStorage items
     localStorage.clear()
     
     // Update state
     setIsLoggedIn(false)
+    setUserName("")
     
     // Redirect to home page
     router.push("/")
   }
 
+  const setShowDetailSection = (section: string) => {
+    window.location.href = `/home?type=${section}`
+  }
+
+  const handleNavModalChange = (isOpen: boolean) => {
+    setIsNavModalOpen(isOpen)
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Navbar */}
-      <Header />
+      <Navbar
+        isLoggedIn={isLoggedIn}
+        userName={userName}
+        handleLogout={handleLogout}
+        handleLoginClick={handleLoginClick}
+        setShowDetailSection={setShowDetailSection}
+        isClosed={isClosed}
+        currentSection="hotels"
+        onNavModalChange={handleNavModalChange}
+      />
       
       {/* Main content */}
       <main className="flex-1 bg-gray-50">
@@ -58,6 +90,12 @@ export default function FavoritesPage() {
       
       {/* Footer */}
       <Footer sectionType="hotels" />
+      
+      <LoginDialog 
+        isOpen={isLoginDialogOpen}
+        onClose={() => setIsLoginDialogOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
+      />
     </div>
   )
 } 

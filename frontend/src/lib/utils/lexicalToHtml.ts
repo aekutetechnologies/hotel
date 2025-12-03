@@ -69,3 +69,56 @@ export function lexicalToHtml(lexicalJson: string): string {
   }
 }
 
+/**
+ * Extract plain text from Lexical editor JSON
+ * Handles both string (JSON) and already parsed object formats
+ */
+export function extractPlainTextFromLexical(content: string | object | null | undefined): string {
+  if (!content) return ''
+  
+  try {
+    // Parse if it's a string
+    let editorState: any
+    if (typeof content === 'string') {
+      try {
+        editorState = JSON.parse(content)
+      } catch {
+        // If parsing fails, try stripping HTML tags
+        return content.replace(/<[^>]*>/g, '').trim()
+      }
+    } else {
+      editorState = content
+    }
+    
+    if (!editorState || !editorState.root) {
+      return ''
+    }
+
+    // Recursively extract text from nodes
+    const extractText = (node: any): string => {
+      if (!node) return ''
+      
+      // Text node
+      if (node.type === 'text') {
+        return node.text || ''
+      }
+      
+      // Get children content
+      if (node.children && Array.isArray(node.children)) {
+        return node.children.map(extractText).join('')
+      }
+      
+      return ''
+    }
+
+    return extractText(editorState.root).trim()
+  } catch (error) {
+    console.error('Error extracting text from Lexical content:', error)
+    // Fallback: if content is a string, try stripping HTML tags
+    if (typeof content === 'string') {
+      return content.replace(/<[^>]*>/g, '').trim()
+    }
+    return ''
+  }
+}
+

@@ -64,6 +64,7 @@ WEBSITE_URL = "http://localhost:8000"
 # WEBSITE_URL = "http://192.168.18.16:8000"
 # WEBSITE_URL = 'http://147.93.97.63/api'
 # WEBSITE_URL = 'https://hsquareliving.com/api'
+# WEBSITE_URL = 'http://10.0.2.2:8000/api'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/

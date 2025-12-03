@@ -11,6 +11,7 @@ import { Blog } from '@/types/blog'
 import Image from 'next/image'
 import Link from 'next/link'
 import { format } from 'date-fns'
+import { extractPlainTextFromLexical } from '@/lib/utils/lexicalToHtml'
 
 interface HighlightedBlogsProps {
   type: 'hotel' | 'hostel'
@@ -91,7 +92,7 @@ export default function HighlightedBlogs({ type }: HighlightedBlogsProps) {
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            Discover insights, tips, and stories from our community
+            Discover our latest insights, tips, and stories from the world of hospitality
           </motion.p>
         </div>
 
@@ -139,8 +140,8 @@ export default function HighlightedBlogs({ type }: HighlightedBlogsProps) {
                     </div>
                   )}
                   
-                  <p className="text-gray-600 text-base mb-5 line-clamp-3 flex-grow">
-                    {blog.content ? blog.content.replace(/<[^>]*>/g, '').substring(0, 150) + '...' : "Discover more about this topic and explore our latest insights."}
+                  <p className="text-gray-600 text-base mb-5 line-clamp-2 flex-grow">
+                    {blog.content ? extractPlainTextFromLexical(blog.content) || "Discover more about this topic and explore our latest insights." : "Discover more about this topic and explore our latest insights."}
                   </p>
 
                   {/* CTA - Prominent like in the image */}

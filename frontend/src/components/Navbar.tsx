@@ -464,7 +464,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 onClick={() => { }}
                 className={`px-3 py-1 rounded-md transition-colors text-sm font-medium cursor-not-allowed opacity-60 ${isActiveSection('hcommunity') ? 'bg-[#FFEEF0] text-[#7A1633]' : getMenuTextColor()}`}
               >
-                Housing Community
+                H-Community
               </button>
               {/* Coming Soon Tooltip */}
               <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-0.5 px-1.5 py-0.5 bg-gray-800 text-white text-xs rounded-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">

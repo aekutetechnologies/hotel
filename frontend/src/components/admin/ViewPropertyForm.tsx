@@ -664,7 +664,7 @@ export function ViewPropertyForm({ initialData, isEditing = false }: PropertyFor
             </div>
           </div>
           <div className="mt-4">
-            {location.address ? (
+            {location.address && (location.address.startsWith('http://') || location.address.startsWith('https://')) ? (
               <div className="relative h-[200px] w-full rounded-lg overflow-hidden">
                 <img src={location.address} alt="Map" className="w-full h-full object-cover" loading="lazy"/>
                 <Button 

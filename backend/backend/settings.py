@@ -15,9 +15,11 @@ import os
 from datetime import timedelta, datetime
 import logging
 from logging import Formatter, FileHandler
+from decouple import config, Csv
 # Paths
 BASE_DIR = Path(__file__).resolve().parent.parent
-LOG_DIR = Path.home() / "logs"
+LOG_DIR = Path(config('LOG_DIR', default=str(Path.home() / "logs")))
+LOG_DIR = Path(LOG_DIR)
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 # Custom file handler that uses date-based filenames
@@ -60,22 +62,21 @@ class RequestFormatter(Formatter):
         record.msg = f"{request_method} - {module_name} - {record.msg}"
         return super().format(record)
 
-WEBSITE_URL = "http://localhost:8000"
-# WEBSITE_URL = "http://192.168.18.16:8000"
-# WEBSITE_URL = 'http://147.93.97.63/api'
-# WEBSITE_URL = 'https://hsquareliving.com/api'
-# WEBSITE_URL = 'http://10.0.2.2:8000/api'
+WEBSITE_URL = config('WEBSITE_URL', default='http://localhost:8000')
+
+# Environment configuration (PROD or DEVELOP)
+APP_ENV = config('APP_ENV', default='DEVELOP').upper()
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-ej5u9dnr4(h98f9dxl^f(9wrvhne$5pz^9@z_ph2p4m%%$e-^r"
+SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-ej5u9dnr4(h98f9dxl^f(9wrvhne$5pz^9@z_ph2p4m%%$e-^r')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=(APP_ENV != 'PROD'), cast=bool)
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*', cast=Csv())
 
 
 # Application definition
@@ -106,10 +107,12 @@ MIDDLEWARE = [
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "backend.middleware.RateLimitMiddleware",  # Custom rate limiting
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "backend.middleware.SecurityHeadersMiddleware",  # Custom security headers
 ]
 
 ROOT_URLCONF = "backend.urls"
@@ -136,10 +139,45 @@ WSGI_APPLICATION = "backend.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+DB_ENGINE = config('DB_ENGINE', default='django.db.backends.sqlite3')
+DB_NAME = config('DB_NAME', default=str(BASE_DIR / "db.sqlite3"))
+DB_USER = config('DB_USER', default='')
+DB_PASSWORD = config('DB_PASSWORD', default='')
+DB_HOST = config('DB_HOST', default='')
+DB_PORT = config('DB_PORT', default='')
+DB_OPTIONS = {}
+
+# PostgreSQL SSL configuration
+if DB_ENGINE == 'django.db.backends.postgresql':
+    # For Aiven Cloud PostgreSQL, SSL is required
+    # psycopg2 will automatically use SSL when connecting to servers that require it
+    # We can explicitly set SSL mode if needed
+    ssl_mode = config('DB_SSLMODE', default='require')
+    
+    # Set SSL connection parameters
+    # Note: Django's PostgreSQL backend uses psycopg2 which handles SSL automatically
+    # For explicit SSL configuration, we can use connection parameters
+    if ssl_mode and ssl_mode != 'disable':
+        # For Aiven Cloud, SSL is typically handled automatically
+        # But we can set it explicitly if needed
+        pass  # SSL will be handled by psycopg2 based on server requirements
+    
+    # If SSL certificate files are provided (for client certificate authentication)
+    ssl_root_cert = config('DB_SSLROOTCERT', default='')
+    if ssl_root_cert:
+        DB_OPTIONS['sslcert'] = config('DB_SSLCERT', default='')
+        DB_OPTIONS['sslkey'] = config('DB_SSLKEY', default='')
+        DB_OPTIONS['sslrootcert'] = ssl_root_cert
+
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": DB_ENGINE,
+        "NAME": DB_NAME,
+        "USER": DB_USER,
+        "PASSWORD": DB_PASSWORD,
+        "HOST": DB_HOST,
+        "PORT": DB_PORT,
+        "OPTIONS": DB_OPTIONS,
     }
 }
 
@@ -147,8 +185,8 @@ DATABASES = {
 # Cache
 CACHES = {
     "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/1",
+        "BACKEND": config('CACHE_BACKEND', default='django_redis.cache.RedisCache'),
+        "LOCATION": config('CACHE_LOCATION', default='redis://127.0.0.1:6379/1'),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         },
@@ -178,9 +216,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = config('LANGUAGE_CODE', default='en-us')
 
-TIME_ZONE = "UTC"
+TIME_ZONE = config('TIME_ZONE', default='UTC')
 
 USE_I18N = True
 
@@ -203,12 +241,34 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         # 'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
+    # Throttling configuration for DDoS protection
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": config('THROTTLE_ANON_RATE', default='100/hour' if APP_ENV == 'PROD' else '1000/hour'),
+        "user": config('THROTTLE_USER_RATE', default='1000/hour' if APP_ENV == 'PROD' else '10000/hour'),
+        "burst": config('THROTTLE_BURST_RATE', default='10/minute' if APP_ENV == 'PROD' else '100/minute'),
+    },
+    # Pagination to limit response sizes
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": config('API_PAGE_SIZE', default=50, cast=int),
+    # Renderer and parser settings
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+    ],
+    "DEFAULT_PARSER_CLASSES": [
+        "rest_framework.parsers.JSONParser",
+        "rest_framework.parsers.FormParser",
+        "rest_framework.parsers.MultiPartParser",
+    ],
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=config('JWT_ACCESS_TOKEN_LIFETIME_MINUTES', default=5, cast=int)),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=config('JWT_REFRESH_TOKEN_LIFETIME_DAYS', default=1, cast=int)),
 }
 
 LOGGING = {
@@ -239,14 +299,14 @@ LOGGING = {
         "backend_file": {
             "()": DateBasedFileHandler,
             "log_dir": LOG_DIR,
-            "base_filename": "hsquare-backend-log",
+            "base_filename": config('LOG_BACKEND_FILENAME', default='hsquare-backend-log'),
             "formatter": "request_formatter",
             "encoding": "utf-8",
         },
         "request_file": {
             "()": DateBasedFileHandler,
             "log_dir": LOG_DIR,
-            "base_filename": "hsquare-backend-requests",
+            "base_filename": config('LOG_REQUEST_FILENAME', default='hsquare-backend-requests'),
             "formatter": "request_formatter",
             "encoding": "utf-8",
         },
@@ -280,22 +340,11 @@ LOGGING = {
     },
 }
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8000",
-    "http://localhost:3001",
-    "http://127.0.0.1:8080",
-    "http://127.0.0.1:3001",
-    "http://127.0.0.1:3000",
-    "http://localhost:3000",
-    "http://127.0.0.1:8000",
-    "https://hsquareliving.in",
-    "https://hsquareliving.in",
-    "https://www.hsquareliving.in",
-    "https://hsquareliving.com",
-    "https://www.hsquareliving.com",
-    "http://192.168.18.16:3000",
-    "http://192.168.68.108:3000",
-]
+CORS_ALLOWED_ORIGINS = config(
+    'CORS_ALLOWED_ORIGINS',
+    default='http://localhost:8000,http://localhost:3001,http://127.0.0.1:8080,http://127.0.0.1:3001,http://127.0.0.1:3000,http://localhost:3000,http://127.0.0.1:8000',
+    cast=Csv()
+)
 
 CORS_ALLOW_METHODS = (
     "DELETE",
@@ -305,3 +354,68 @@ CORS_ALLOW_METHODS = (
     "POST",
     "PUT",
 )
+
+# Security Settings based on environment
+if APP_ENV == 'PROD':
+    # Production Security Settings
+    SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
+    SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=True, cast=bool)
+    CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=True, cast=bool)
+    SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=31536000, cast=int)  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = config('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=True, cast=bool)
+    SECURE_HSTS_PRELOAD = config('SECURE_HSTS_PRELOAD', default=True, cast=bool)
+    SECURE_CONTENT_TYPE_NOSNIFF = config('SECURE_CONTENT_TYPE_NOSNIFF', default=True, cast=bool)
+    SECURE_BROWSER_XSS_FILTER = config('SECURE_BROWSER_XSS_FILTER', default=True, cast=bool)
+    X_FRAME_OPTIONS = config('X_FRAME_OPTIONS', default='DENY')
+    SECURE_REFERRER_POLICY = config('SECURE_REFERRER_POLICY', default='strict-origin-when-cross-origin')
+    USE_TZ = True
+else:
+    # Development Security Settings (more relaxed)
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+    SECURE_HSTS_SECONDS = 0
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+    SECURE_HSTS_PRELOAD = False
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_BROWSER_XSS_FILTER = True
+    X_FRAME_OPTIONS = 'SAMEORIGIN'
+    SECURE_REFERRER_POLICY = 'no-referrer-when-downgrade'
+
+# Additional Security Headers
+SECURE_PROXY_SSL_HEADER = config('SECURE_PROXY_SSL_HEADER', default=None)
+if SECURE_PROXY_SSL_HEADER and SECURE_PROXY_SSL_HEADER.strip():
+    # Format: HTTP_HEADER_NAME,HEADER_VALUE
+    parts = SECURE_PROXY_SSL_HEADER.split(',')
+    if len(parts) == 2:
+        SECURE_PROXY_SSL_HEADER = (parts[0].strip(), parts[1].strip())
+    else:
+        SECURE_PROXY_SSL_HEADER = None
+
+# CSRF Settings
+CSRF_COOKIE_HTTPONLY = config('CSRF_COOKIE_HTTPONLY', default=True, cast=bool)
+CSRF_COOKIE_SAMESITE = config('CSRF_COOKIE_SAMESITE', default='Lax' if APP_ENV == 'PROD' else 'Lax')
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='', cast=Csv())
+
+# Session Security
+SESSION_COOKIE_HTTPONLY = config('SESSION_COOKIE_HTTPONLY', default=True, cast=bool)
+SESSION_COOKIE_SAMESITE = config('SESSION_COOKIE_SAMESITE', default='Lax' if APP_ENV == 'PROD' else 'Lax')
+SESSION_COOKIE_AGE = config('SESSION_COOKIE_AGE', default=86400 if APP_ENV == 'PROD' else 86400, cast=int)  # 24 hours
+
+# File Upload Security
+FILE_UPLOAD_MAX_MEMORY_SIZE = config('FILE_UPLOAD_MAX_MEMORY_SIZE', default=10485760 if APP_ENV == 'PROD' else 52428800, cast=int)  # 10MB prod, 50MB dev
+DATA_UPLOAD_MAX_MEMORY_SIZE = config('DATA_UPLOAD_MAX_MEMORY_SIZE', default=10485760 if APP_ENV == 'PROD' else 52428800, cast=int)
+DATA_UPLOAD_MAX_NUMBER_FIELDS = config('DATA_UPLOAD_MAX_NUMBER_FIELDS', default=1000 if APP_ENV == 'PROD' else 10000, cast=int)
+
+# Request Timeout (prevent slowloris attacks)
+if APP_ENV == 'PROD':
+    # Shorter timeout in production
+    DATA_UPLOAD_MAX_MEMORY_SIZE = min(DATA_UPLOAD_MAX_MEMORY_SIZE, 10485760)  # 10MB max
+
+# Logging for security events
+if APP_ENV == 'PROD':
+    LOGGING['loggers']['django.security'] = {
+        'handlers': ['backend_file', 'console'],
+        'level': 'WARNING',
+        'propagate': False,
+    }

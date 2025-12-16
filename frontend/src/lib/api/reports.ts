@@ -7,6 +7,17 @@ export interface ReportFilters {
 }
 
 /**
+ * Sanitize filename to prevent path traversal and XSS attacks
+ */
+function sanitizeFilename(filename: string): string {
+  // Remove path separators and dangerous characters
+  return filename
+    .replace(/[\/\\<>:"|?*\x00-\x1f]/g, '')
+    .replace(/\.\./g, '')
+    .trim();
+}
+
+/**
  * Download a report file (Excel or PDF)
  */
 async function downloadReport(
@@ -64,10 +75,8 @@ async function downloadReport(
     const downloadUrl = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = downloadUrl;
-    link.download = filename;
-    document.body.appendChild(link);
+    link.download = sanitizeFilename(filename);
     link.click();
-    document.body.removeChild(link);
     window.URL.revokeObjectURL(downloadUrl);
   } catch (error) {
     console.error('Error downloading report:', error);
@@ -127,4 +136,3 @@ export async function downloadCustomerDemographicsReport(filters: ReportFilters)
   const filename = `Customer_Demographics_Report_${filters.start_date || 'start'}_to_${filters.end_date || 'end'}.xlsx`;
   return downloadReport('stats/reports/customer-demographics/excel/', filters, filename);
 }
-

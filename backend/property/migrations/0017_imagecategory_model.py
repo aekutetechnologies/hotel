@@ -54,21 +54,21 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.CreateModel(
-            name='ImageCategory',
-            fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False)),
-                ('name', models.CharField(max_length=255, unique=True)),
-                ('code', models.SlugField(max_length=50, unique=True)),
-                ('description', models.TextField(blank=True, null=True)),
-                ('created_at', models.DateTimeField(default=django.utils.timezone.now)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('is_active', models.BooleanField(default=True)),
-            ],
-            options={
-                'ordering': ['name'],
-            },
-        ),
+        # migrations.CreateModel(
+        #     name='ImageCategory',
+        #     fields=[
+        #         ('id', models.AutoField(primary_key=True, serialize=False)),
+        #         ('name', models.CharField(max_length=255, unique=True)),
+        #         ('code', models.SlugField(max_length=50, unique=True)),
+        #         ('description', models.TextField(blank=True, null=True)),
+        #         ('created_at', models.DateTimeField(default=django.utils.timezone.now)),
+        #         ('updated_at', models.DateTimeField(auto_now=True)),
+        #         ('is_active', models.BooleanField(default=True)),
+        #     ],
+        #     options={
+        #         'ordering': ['name'],
+        #     },
+        # ),
         migrations.RemoveField(
             model_name='propertyimage',
             name='category',

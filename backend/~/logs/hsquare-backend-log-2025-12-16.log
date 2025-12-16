@@ -1,0 +1,29 @@
+2025-12-16 19:29:18 - POST - views - Static login number detected: 8342091661, skipping OTP send
+2025-12-16 19:29:26 - POST - views - Static login verification for mobile: 8342091661, Expected OTP: 420916, Provided OTP: 430291
+2025-12-16 19:29:26 - POST - views - Invalid static OTP for mobile: 8342091661
+2025-12-16 19:29:45 - POST - views - Static login verification for mobile: 8342091661, Expected OTP: 420916, Provided OTP: 420916
+2025-12-16 19:29:45 - POST - views - Static login successful for mobile: 8342091661
+2025-12-16 19:31:45 - POST - views - Static login verification for mobile: 8342091661, Expected OTP: 420916, Provided OTP: 420916
+2025-12-16 19:31:45 - POST - views - Static login successful for mobile: 8342091661
+2025-12-16 19:31:45 - POST - views - User 8342091661 logged in
+2025-12-16 19:31:45 - GET - views - Profile viewed for user: 8342091661
+2025-12-16 19:31:50 - PUT - views - Profile updated for user: 8342091661
+2025-12-16 19:32:50 - POST - views - Static login number detected: 8342091661, skipping OTP send
+2025-12-16 19:32:54 - POST - views - Static login verification for mobile: 8342091661, Expected OTP: 420916, Provided OTP: 420916
+2025-12-16 19:32:54 - POST - views - Static login successful for mobile: 8342091661
+2025-12-16 19:32:54 - POST - views - User 8342091661 logged in
+2025-12-16 19:32:54 - GET - views - Profile viewed for user: 8342091661
+2025-12-16 19:33:10 - GET - property - get_all_properties called
+2025-12-16 19:33:10 - GET - property - Retrieved 0 properties
+2025-12-16 19:33:14 - GET - property - site_page_list called with method GET
+2025-12-16 19:33:14 - GET - property - Retrieved 3 site pages
+2025-12-16 19:38:11 - GET - property - property_list called with method GET
+2025-12-16 19:38:11 - GET - property - Retrieved 0 properties
+2025-12-16 19:38:58 - POST - views - Static login number detected: 9820769934, skipping OTP send
+2025-12-16 19:39:11 - POST - views - Static login verification for mobile: 9820769934, Expected OTP: 207699, Provided OTP: 207699
+2025-12-16 19:39:11 - POST - views - Static login successful for mobile: 9820769934
+2025-12-16 19:40:24 - POST - views - Static login verification for mobile: 9820769934, Expected OTP: 207699, Provided OTP: 207699
+2025-12-16 19:40:24 - POST - views - Static login successful for mobile: 9820769934
+2025-12-16 19:40:24 - POST - views - User 9820769934 logged in
+2025-12-16 19:40:24 - GET - views - Profile viewed for user: 9820769934
+2025-12-16 19:40:40 - PUT - views - Profile updated for user: 9820769934

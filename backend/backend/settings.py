@@ -62,10 +62,20 @@ class RequestFormatter(Formatter):
         record.msg = f"{request_method} - {module_name} - {record.msg}"
         return super().format(record)
 
-WEBSITE_URL = config('WEBSITE_URL', default='http://localhost:8000')
-
 # Environment configuration (PROD or DEVELOP)
 APP_ENV = config('APP_ENV', default='DEVELOP').upper()
+
+# Domain configuration
+DOMAIN = config('DOMAIN', default='localhost')
+API_DOMAIN = config('API_DOMAIN', default=f'api.{DOMAIN}' if DOMAIN != 'localhost' else 'localhost:8000')
+
+# Website URL configuration
+if APP_ENV == 'PROD' and DOMAIN != 'localhost':
+    # Production: Use API subdomain
+    WEBSITE_URL = config('WEBSITE_URL', default=f'https://{API_DOMAIN}')
+else:
+    # Development: Use localhost
+    WEBSITE_URL = config('WEBSITE_URL', default='http://localhost:8000')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -76,7 +86,12 @@ SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-ej5u9dnr4(h98f
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=(APP_ENV != 'PROD'), cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*', cast=Csv())
+# Allowed Hosts - include API subdomain
+if APP_ENV == 'PROD' and DOMAIN != 'localhost':
+    default_hosts = f'{API_DOMAIN},{DOMAIN},www.{DOMAIN}'
+else:
+    default_hosts = '*'
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default=default_hosts, cast=Csv())
 
 
 # Application definition
@@ -340,9 +355,15 @@ LOGGING = {
     },
 }
 
+# CORS Allowed Origins - allow main domain to access API subdomain
+if APP_ENV == 'PROD' and DOMAIN != 'localhost':
+    default_cors_origins = f'https://{DOMAIN},https://www.{DOMAIN}'
+else:
+    default_cors_origins = 'http://localhost:8000,http://localhost:3001,http://127.0.0.1:8080,http://127.0.0.1:3001,http://127.0.0.1:3000,http://localhost:3000,http://127.0.0.1:8000'
+
 CORS_ALLOWED_ORIGINS = config(
     'CORS_ALLOWED_ORIGINS',
-    default='http://localhost:8000,http://localhost:3001,http://127.0.0.1:8080,http://127.0.0.1:3001,http://127.0.0.1:3000,http://localhost:3000,http://127.0.0.1:8000',
+    default=default_cors_origins,
     cast=Csv()
 )
 
@@ -395,7 +416,14 @@ if SECURE_PROXY_SSL_HEADER and SECURE_PROXY_SSL_HEADER.strip():
 # CSRF Settings
 CSRF_COOKIE_HTTPONLY = config('CSRF_COOKIE_HTTPONLY', default=True, cast=bool)
 CSRF_COOKIE_SAMESITE = config('CSRF_COOKIE_SAMESITE', default='Lax' if APP_ENV == 'PROD' else 'Lax')
-CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='', cast=Csv())
+
+# CSRF Trusted Origins - include API subdomain and main domain
+if APP_ENV == 'PROD' and DOMAIN != 'localhost':
+    default_csrf_origins = f'https://{API_DOMAIN},https://{DOMAIN},https://www.{DOMAIN}'
+else:
+    default_csrf_origins = 'http://localhost:8000,http://127.0.0.1:8000'
+
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default=default_csrf_origins, cast=Csv())
 
 # Session Security
 SESSION_COOKIE_HTTPONLY = config('SESSION_COOKIE_HTTPONLY', default=True, cast=bool)

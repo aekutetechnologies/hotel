@@ -254,8 +254,8 @@ def refresh_token(request):
         return Response({'error': 'Refresh token is required'}, status=status.HTTP_400_BAD_REQUEST)
     
     try:
-        # Decode the refresh token
-        payload = jwt.decode(refresh_token_value, settings.SECRET_KEY, algorithms=['HS256'])
+        # Decode the refresh token with options to verify expiration
+        payload = jwt.decode(refresh_token_value, settings.SECRET_KEY, algorithms=['HS256'], options={"verify_exp": True})
         
         # Verify it's a refresh token
         if payload.get('type') != 'refresh':

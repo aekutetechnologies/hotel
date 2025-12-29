@@ -86,13 +86,15 @@ SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-ej5u9dnr4(h98f
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=(APP_ENV != 'PROD'), cast=bool)
 
+print("APP_ENV", APP_ENV)
 # Allowed Hosts - include API subdomain
 if APP_ENV == 'PROD' and DOMAIN != 'localhost':
     default_hosts = f'{API_DOMAIN},{DOMAIN},www.{DOMAIN}'
 else:
     default_hosts = '*'
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default=default_hosts, cast=Csv())
-
+print("ALLOWED_HOSTS", ALLOWED_HOSTS)
+ALLOWED_HOSTS.append('localhost')
 
 # Application definition
 

@@ -214,13 +214,19 @@ def hostel_visit_list(request):
                 import jwt
                 from django.conf import settings
                 from users.models import HsUser
+                from jwt.exceptions import InvalidSignatureError, ExpiredSignatureError, DecodeError, InvalidTokenError
                 token = auth[7:]
-                payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+                # Decode token with options to verify expiration
+                payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'], options={"verify_exp": True})
                 user_id = payload.get('user_id')
                 if user_id:
                     data['user'] = user_id
-            except:
-                pass  # If auth fails, continue without user
+            except (InvalidSignatureError, ExpiredSignatureError, DecodeError, InvalidTokenError):
+                # If JWT validation fails, continue without user (optional auth)
+                pass
+            except Exception:
+                # If any other error occurs, continue without user (optional auth)
+                pass
         
         serializer = HostelVisitSerializer(data=data)
         if serializer.is_valid():

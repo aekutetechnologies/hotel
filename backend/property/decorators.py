@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from users.models import HsUser, UserHsPermission
 from django.conf import settings
-from jwt.exceptions import InvalidSignatureError, ExpiredSignatureError, DecodeError
+from jwt.exceptions import InvalidSignatureError, ExpiredSignatureError, DecodeError, InvalidTokenError
 
 def custom_authentication_and_permissions(required_permissions=None, exempt_get_views=None):
     if exempt_get_views is None:
@@ -26,22 +26,27 @@ def custom_authentication_and_permissions(required_permissions=None, exempt_get_
             
             token = auth[7:]
             try:
-                payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+                # Decode token with options to verify expiration
+                payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'], options={"verify_exp": True})
                 user_id = payload.get('user_id')
                 if not user_id:
-                    return Response({'error': 'Invalid token'}, status=status.HTTP_401_UNAUTHORIZED)
+                    return Response({'error': 'Invalid token', 'detail': 'Token missing user_id'}, status=status.HTTP_401_UNAUTHORIZED)
                 
                 try:
                     user = HsUser.objects.get(id=user_id)
                     request.user = user
                 except HsUser.DoesNotExist:
                     return Response({'error': 'Invalid user'}, status=status.HTTP_401_UNAUTHORIZED)
-            except (InvalidSignatureError, ExpiredSignatureError, DecodeError):
-                return Response({'error': 'Invalid token'}, status=status.HTTP_401_UNAUTHORIZED)
+            except (InvalidSignatureError, ExpiredSignatureError, DecodeError, InvalidTokenError) as e:
+                # Catch all JWT exceptions to prevent Simple JWT from being invoked
+                return Response({'error': 'Invalid token', 'detail': str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+            except Exception as e:
+                # Catch any other unexpected exceptions during token validation
+                return Response({'error': 'Token validation failed', 'detail': str(e)}, status=status.HTTP_401_UNAUTHORIZED)
             
             # Check for required permissions
             if required_permissions:
-                user_permissions = UserHsPermission.objects.filter(user=user).values_list('permission__name', flat=True)
+                user_permissions = UserHsPermission.objects.filter(user=user).values_list('permission_group__permissions__name', flat=True)
                 user_permissions_set = set(user_permissions)  # Convert to set for faster lookup
                 
                 for perm in required_permissions:

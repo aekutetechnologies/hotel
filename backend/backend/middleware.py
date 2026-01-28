@@ -26,11 +26,12 @@ class RateLimitMiddleware(MiddlewareMixin):
             ip = request.META.get('REMOTE_ADDR')
 
         # Rate limit configuration based on environment
+        # Optimized for 5000+ DAU: allows normal usage while preventing abuse
         if settings.APP_ENV == 'PROD':
-            max_requests = 100  # requests per minute
+            max_requests = 500  # requests per minute (allows rapid interactions, form submissions, etc.)
             window = 60  # seconds
         else:
-            max_requests = 1000  # requests per minute
+            max_requests = 2000  # requests per minute (more lenient in development)
             window = 60  # seconds
 
         # Create cache key

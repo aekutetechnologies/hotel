@@ -51,6 +51,7 @@ from users.decorators import custom_authentication_and_permissions
 from django.shortcuts import get_object_or_404
 from backend.settings import WEBSITE_URL
 from django.db.models import Q
+from django.conf import settings
 from rest_framework.permissions import IsAuthenticated
 from booking.models import Booking
 
@@ -682,10 +683,12 @@ def image_upload(request):
     if serializer.is_valid():
         image_instance = serializer.save()
         logger.info(f"Property image uploaded successfully with id {image_instance.id}", extra={"request_method": request.method, "image_id": image_instance.id, "category_id": image_instance.category.id if image_instance.category else None})
+        # Construct URL consistently with PropertyImageViewSerializer
+        image_url = f"{settings.WEBSITE_URL}{settings.MEDIA_URL}{image_instance.image}"
         return Response(
             {
                 "id": image_instance.id,
-                "image_url": WEBSITE_URL + image_instance.image.url,
+                "image_url": image_url,
                 "category": ImageCategorySerializer(image_instance.category).data if image_instance.category else None,
                 "category_id": image_instance.category.id if image_instance.category else None,
             },
@@ -733,10 +736,12 @@ def room_image_upload(request):
     if serializer.is_valid():
         image_instance = serializer.save()
         logger.info(f"Room image uploaded successfully with id {image_instance.id}", extra={"request_method": request.method, "image_id": image_instance.id})
+        # Construct URL consistently with RoomImageViewSerializer
+        image_url = f"{settings.WEBSITE_URL}{settings.MEDIA_URL}{image_instance.image}"
         return Response(
             {
                 "id": image_instance.id,
-                "image_url": WEBSITE_URL + image_instance.image.url,
+                "image_url": image_url,
             },
             status=status.HTTP_201_CREATED,
         )

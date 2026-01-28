@@ -819,6 +819,13 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
 
     setLoading(true);
     try {
+      const toRate = (v: string | number | null | undefined) =>
+        (v === '' || v == null || v === undefined) ? '0' : String(v);
+      const toNum = (v: string | number | null | undefined) => {
+        if (v === '' || v == null || v === undefined) return 0;
+        const n = Number(v);
+        return Number.isFinite(n) ? n : 0;
+      };
       const preparedRooms = rooms.map(room => {
         // Ensure amenities are always numbers
         const processedAmenities = (room.amenities || []).map((amenity: any) => {
@@ -826,9 +833,16 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
           if (typeof amenity === 'object' && amenity.id) return Number(amenity.id);
           return 0;
         }).filter((id: number) => id > 0);
-        
+
         return {
           ...room,
+          daily_rate: toRate(room.daily_rate),
+          hourly_rate: toRate(room.hourly_rate),
+          monthly_rate: toRate(room.monthly_rate),
+          yearly_rate: toRate(room.yearly_rate),
+          discount: toRate(room.discount),
+          size: toRate(room.size),
+          maxoccupancy: toNum(room.maxoccupancy),
           amenities: processedAmenities,
           images: room.roomImages.map(img => Number(img.id)), // Convert to image IDs
         };
@@ -872,12 +886,12 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
       {
         id: Date.now().toString(),
         name: '',
-        daily_rate: '',
-        hourly_rate: '',
-        monthly_rate: '',
-        yearly_rate: '',
-        discount: '',
-        size: '',
+        daily_rate: '0',
+        hourly_rate: '0',
+        monthly_rate: '0',
+        yearly_rate: '0',
+        discount: '0',
+        size: '0',
         maxoccupancy: 0,
         amenities: [],
         bed_type: null,

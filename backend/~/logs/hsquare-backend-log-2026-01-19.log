@@ -1,0 +1,334 @@
+2026-01-19 17:18:06 - POST - views - Static login number detected: 8342091661, skipping OTP send
+2026-01-19 17:18:12 - POST - views - Static login verification for mobile: 8342091661, Expected OTP: 420916, Provided OTP: 420916
+2026-01-19 17:18:12 - POST - views - Static login successful for mobile: 8342091661
+2026-01-19 17:18:12 - POST - views - User 8342091661 logged in
+2026-01-19 17:18:12 - GET - views - Profile viewed for user: 8342091661
+2026-01-19 17:21:08 - GET - property - property_list called with method GET
+2026-01-19 17:21:09 - GET - property - Retrieved 3 properties
+2026-01-19 17:21:24 - GET - property - get_all_properties called
+2026-01-19 17:21:24 - GET - property - Fetching top reviews
+2026-01-19 17:21:24 - GET - property - Retrieved 0 top reviews for property_type hotel
+2026-01-19 17:21:25 - GET - property - Retrieved 3 properties
+2026-01-19 17:22:19 - GET - property - property_detail called with method GET for pk 4
+2026-01-19 17:22:19 - GET - property - Retrieved property 4
+2026-01-19 17:27:00 - GET - property - get_all_properties called
+2026-01-19 17:27:00 - GET - property - Fetching top reviews
+2026-01-19 17:27:00 - GET - property - Retrieved 0 top reviews for property_type hotel
+2026-01-19 17:27:00 - GET - property - Retrieved 3 properties
+2026-01-19 17:27:25 - GET - property - property_list called with method GET
+2026-01-19 17:27:26 - GET - property - Retrieved 3 properties
+2026-01-19 17:27:31 - GET - property - property_detail called with method GET for pk 2
+2026-01-19 17:27:31 - GET - property - Retrieved property 2
+2026-01-19 17:27:31 - GET - property - amenity_list called with method GET
+2026-01-19 17:27:31 - GET - property - Retrieved 8 amenities
+2026-01-19 17:27:31 - GET - property - rule_list called with method GET
+2026-01-19 17:27:31 - GET - property - Retrieved 9 rules
+2026-01-19 17:27:31 - GET - property - documentation_list called with method GET
+2026-01-19 17:27:31 - GET - property - Retrieved 8 documentations
+2026-01-19 17:27:32 - GET - property - list_states called
+2026-01-19 17:27:32 - GET - property - Retrieved 36 states
+2026-01-19 17:27:32 - GET - property - image_category_list called with method GET
+2026-01-19 17:27:32 - GET - property - Retrieved 9 image categories
+2026-01-19 17:27:32 - GET - property - amenity_list called with method GET
+2026-01-19 17:27:32 - GET - property - Retrieved 8 amenities
+2026-01-19 17:27:32 - GET - property - amenity_list called with method GET
+2026-01-19 17:27:32 - GET - property - rule_list called with method GET
+2026-01-19 17:27:32 - GET - property - Retrieved 8 amenities
+2026-01-19 17:27:32 - GET - property - Retrieved 9 rules
+2026-01-19 17:27:32 - GET - property - rule_list called with method GET
+2026-01-19 17:27:32 - GET - property - documentation_list called with method GET
+2026-01-19 17:27:32 - GET - property - Retrieved 9 rules
+2026-01-19 17:27:32 - GET - property - Retrieved 8 documentations
+2026-01-19 17:27:32 - GET - property - documentation_list called with method GET
+2026-01-19 17:27:32 - GET - property - list_states called
+2026-01-19 17:27:32 - GET - property - Retrieved 8 documentations
+2026-01-19 17:27:32 - GET - property - Retrieved 36 states
+2026-01-19 17:27:32 - GET - property - list_states called
+2026-01-19 17:27:32 - GET - property - image_category_list called with method GET
+2026-01-19 17:27:32 - GET - property - Retrieved 36 states
+2026-01-19 17:27:32 - GET - property - Retrieved 9 image categories
+2026-01-19 17:27:32 - GET - property - image_category_list called with method GET
+2026-01-19 17:27:32 - GET - property - Retrieved 9 image categories
+2026-01-19 17:27:32 - GET - property - amenity_list called with method GET
+2026-01-19 17:27:32 - GET - property - Retrieved 8 amenities
+2026-01-19 17:27:32 - GET - property - rule_list called with method GET
+2026-01-19 17:27:32 - GET - property - Retrieved 9 rules
+2026-01-19 17:27:32 - GET - property - documentation_list called with method GET
+2026-01-19 17:27:32 - GET - property - Retrieved 8 documentations
+2026-01-19 17:27:33 - GET - property - list_states called
+2026-01-19 17:27:33 - GET - property - Retrieved 36 states
+2026-01-19 17:27:33 - GET - property - image_category_list called with method GET
+2026-01-19 17:27:33 - GET - property - Retrieved 9 image categories
+2026-01-19 17:27:47 - GET - property - property_list called with method GET
+2026-01-19 17:27:48 - GET - property - Retrieved 3 properties
+2026-01-19 17:27:54 - GET - property - get_all_properties called
+2026-01-19 17:27:54 - GET - property - Fetching top reviews
+2026-01-19 17:27:54 - GET - property - Retrieved 0 top reviews for property_type hotel
+2026-01-19 17:27:55 - GET - property - Retrieved 3 properties
+2026-01-19 17:29:14 - GET - property - property_detail called with method GET for pk 2
+2026-01-19 17:29:14 - GET - property - Retrieved property 2
+2026-01-19 17:29:14 - GET - property - amenity_list called with method GET
+2026-01-19 17:29:14 - GET - property - Retrieved 8 amenities
+2026-01-19 17:29:14 - GET - property - rule_list called with method GET
+2026-01-19 17:29:14 - GET - property - Retrieved 9 rules
+2026-01-19 17:29:14 - GET - property - documentation_list called with method GET
+2026-01-19 17:29:15 - GET - property - Retrieved 8 documentations
+2026-01-19 17:29:15 - GET - property - list_states called
+2026-01-19 17:29:15 - GET - property - Retrieved 36 states
+2026-01-19 17:29:15 - GET - property - image_category_list called with method GET
+2026-01-19 17:29:15 - GET - property - Retrieved 9 image categories
+2026-01-19 17:29:15 - GET - property - amenity_list called with method GET
+2026-01-19 17:29:15 - GET - property - Retrieved 8 amenities
+2026-01-19 17:29:15 - GET - property - amenity_list called with method GET
+2026-01-19 17:29:15 - GET - property - rule_list called with method GET
+2026-01-19 17:29:15 - GET - property - Retrieved 9 rules
+2026-01-19 17:29:15 - GET - property - documentation_list called with method GET
+2026-01-19 17:29:15 - GET - property - Retrieved 8 amenities
+2026-01-19 17:29:15 - GET - property - Retrieved 8 documentations
+2026-01-19 17:29:15 - GET - property - rule_list called with method GET
+2026-01-19 17:29:15 - GET - property - Retrieved 9 rules
+2026-01-19 17:29:15 - GET - property - documentation_list called with method GET
+2026-01-19 17:29:15 - GET - property - list_states called
+2026-01-19 17:29:15 - GET - property - Retrieved 36 states
+2026-01-19 17:29:15 - GET - property - image_category_list called with method GET
+2026-01-19 17:29:15 - GET - property - Retrieved 8 documentations
+2026-01-19 17:29:15 - GET - property - Retrieved 9 image categories
+2026-01-19 17:29:15 - GET - property - list_states called
+2026-01-19 17:29:15 - GET - property - amenity_list called with method GET
+2026-01-19 17:29:15 - GET - property - Retrieved 36 states
+2026-01-19 17:29:15 - GET - property - image_category_list called with method GET
+2026-01-19 17:29:15 - GET - property - Retrieved 8 amenities
+2026-01-19 17:29:15 - GET - property - rule_list called with method GET
+2026-01-19 17:29:15 - GET - property - Retrieved 9 image categories
+2026-01-19 17:29:15 - GET - property - Retrieved 9 rules
+2026-01-19 17:29:15 - GET - property - documentation_list called with method GET
+2026-01-19 17:29:15 - GET - property - Retrieved 8 documentations
+2026-01-19 17:29:15 - GET - property - list_states called
+2026-01-19 17:29:15 - GET - property - Retrieved 36 states
+2026-01-19 17:29:15 - GET - property - image_category_list called with method GET
+2026-01-19 17:29:16 - GET - property - Retrieved 9 image categories
+2026-01-19 17:32:29 - GET - property - get_all_properties called
+2026-01-19 17:32:29 - GET - property - Retrieved 3 properties
+2026-01-19 17:32:35 - GET - property - get_all_properties called
+2026-01-19 17:32:35 - GET - property - Fetching top reviews
+2026-01-19 17:32:35 - GET - property - Retrieved 0 top reviews for property_type hotel
+2026-01-19 17:32:36 - GET - property - Retrieved 3 properties
+2026-01-19 17:42:26 - POST - views - Cached OTP: 934020, OTP: 234234
+2026-01-19 17:42:26 - POST - views - Invalid OTP for mobile: 7978655876
+2026-01-19 17:48:14 - POST - views - Static login number detected: 8342091661, skipping OTP send
+2026-01-19 17:48:26 - POST - views - Static login verification for mobile: 8342091661, Expected OTP: 420916, Provided OTP: 420916
+2026-01-19 17:48:26 - POST - views - Static login successful for mobile: 8342091661
+2026-01-19 17:48:26 - POST - views - User 8342091661 logged in
+2026-01-19 17:48:26 - GET - views - Profile viewed for user: 8342091661
+2026-01-19 17:48:57 - GET - property - property_list called with method GET
+2026-01-19 17:48:57 - GET - property - Retrieved 3 properties
+2026-01-19 17:49:07 - GET - property - amenity_list called with method GET
+2026-01-19 17:49:07 - GET - property - Retrieved 8 amenities
+2026-01-19 17:49:07 - GET - property - rule_list called with method GET
+2026-01-19 17:49:08 - GET - property - Retrieved 9 rules
+2026-01-19 17:49:08 - GET - property - documentation_list called with method GET
+2026-01-19 17:49:08 - GET - property - Retrieved 8 documentations
+2026-01-19 17:49:08 - GET - property - list_states called
+2026-01-19 17:49:08 - GET - property - Retrieved 36 states
+2026-01-19 17:49:08 - GET - property - image_category_list called with method GET
+2026-01-19 17:49:08 - GET - property - Retrieved 9 image categories
+2026-01-19 17:49:08 - GET - property - amenity_list called with method GET
+2026-01-19 17:49:08 - GET - property - Retrieved 8 amenities
+2026-01-19 17:49:08 - GET - property - amenity_list called with method GET
+2026-01-19 17:49:08 - GET - property - rule_list called with method GET
+2026-01-19 17:49:08 - GET - property - Retrieved 8 amenities
+2026-01-19 17:49:08 - GET - property - Retrieved 9 rules
+2026-01-19 17:49:08 - GET - property - rule_list called with method GET
+2026-01-19 17:49:08 - GET - property - documentation_list called with method GET
+2026-01-19 17:49:08 - GET - property - Retrieved 8 documentations
+2026-01-19 17:49:08 - GET - property - Retrieved 9 rules
+2026-01-19 17:49:08 - GET - property - documentation_list called with method GET
+2026-01-19 17:49:08 - GET - property - list_states called
+2026-01-19 17:49:08 - GET - property - Retrieved 8 documentations
+2026-01-19 17:49:08 - GET - property - Retrieved 36 states
+2026-01-19 17:49:08 - GET - property - image_category_list called with method GET
+2026-01-19 17:49:08 - GET - property - list_states called
+2026-01-19 17:49:08 - GET - property - Retrieved 36 states
+2026-01-19 17:49:08 - GET - property - Retrieved 9 image categories
+2026-01-19 17:49:08 - GET - property - image_category_list called with method GET
+2026-01-19 17:49:08 - GET - property - Retrieved 9 image categories
+2026-01-19 17:49:08 - GET - property - amenity_list called with method GET
+2026-01-19 17:49:09 - GET - property - Retrieved 8 amenities
+2026-01-19 17:49:09 - GET - property - rule_list called with method GET
+2026-01-19 17:49:09 - GET - property - Retrieved 9 rules
+2026-01-19 17:49:09 - GET - property - documentation_list called with method GET
+2026-01-19 17:49:09 - GET - property - Retrieved 8 documentations
+2026-01-19 17:49:09 - GET - property - list_states called
+2026-01-19 17:49:09 - GET - property - Retrieved 36 states
+2026-01-19 17:49:09 - GET - property - image_category_list called with method GET
+2026-01-19 17:49:09 - GET - property - Retrieved 9 image categories
+2026-01-19 17:50:09 - GET - property - amenity_list called with method GET
+2026-01-19 17:50:09 - GET - property - Retrieved 8 amenities
+2026-01-19 17:50:09 - GET - property - rule_list called with method GET
+2026-01-19 17:50:09 - GET - property - Retrieved 9 rules
+2026-01-19 17:50:09 - GET - property - documentation_list called with method GET
+2026-01-19 17:50:09 - GET - property - Retrieved 8 documentations
+2026-01-19 17:50:09 - GET - property - list_states called
+2026-01-19 17:50:09 - GET - property - Retrieved 36 states
+2026-01-19 17:50:09 - GET - property - image_category_list called with method GET
+2026-01-19 17:50:09 - GET - property - Retrieved 9 image categories
+2026-01-19 17:50:09 - GET - property - amenity_list called with method GET
+2026-01-19 17:50:09 - GET - property - Retrieved 8 amenities
+2026-01-19 17:50:09 - GET - property - amenity_list called with method GET
+2026-01-19 17:50:09 - GET - property - rule_list called with method GET
+2026-01-19 17:50:09 - GET - property - Retrieved 8 amenities
+2026-01-19 17:50:09 - GET - property - Retrieved 9 rules
+2026-01-19 17:50:09 - GET - property - rule_list called with method GET
+2026-01-19 17:50:09 - GET - property - documentation_list called with method GET
+2026-01-19 17:50:09 - GET - property - Retrieved 9 rules
+2026-01-19 17:50:09 - GET - property - Retrieved 8 documentations
+2026-01-19 17:50:09 - GET - property - documentation_list called with method GET
+2026-01-19 17:50:09 - GET - property - Retrieved 8 documentations
+2026-01-19 17:50:09 - GET - property - list_states called
+2026-01-19 17:50:09 - GET - property - Retrieved 36 states
+2026-01-19 18:00:14 - GET - property - amenity_list called with method GET
+2026-01-19 18:00:14 - GET - property - Retrieved 8 amenities
+2026-01-19 18:00:14 - GET - property - rule_list called with method GET
+2026-01-19 18:00:14 - GET - property - Retrieved 9 rules
+2026-01-19 18:00:14 - GET - property - documentation_list called with method GET
+2026-01-19 18:00:14 - GET - property - Retrieved 8 documentations
+2026-01-19 18:00:14 - GET - property - list_states called
+2026-01-19 18:00:14 - GET - property - Retrieved 36 states
+2026-01-19 18:00:14 - GET - property - image_category_list called with method GET
+2026-01-19 18:00:14 - GET - property - Retrieved 9 image categories
+2026-01-19 18:00:14 - GET - property - amenity_list called with method GET
+2026-01-19 18:00:14 - GET - property - Retrieved 8 amenities
+2026-01-19 18:00:14 - GET - property - amenity_list called with method GET
+2026-01-19 18:00:14 - GET - property - rule_list called with method GET
+2026-01-19 18:00:14 - GET - property - Retrieved 8 amenities
+2026-01-19 18:00:14 - GET - property - Retrieved 9 rules
+2026-01-19 18:00:14 - GET - property - rule_list called with method GET
+2026-01-19 18:00:14 - GET - property - documentation_list called with method GET
+2026-01-19 18:00:14 - GET - property - Retrieved 8 documentations
+2026-01-19 18:00:14 - GET - property - Retrieved 9 rules
+2026-01-19 18:00:14 - GET - property - documentation_list called with method GET
+2026-01-19 18:00:15 - GET - property - Retrieved 8 documentations
+2026-01-19 18:00:15 - GET - property - list_states called
+2026-01-19 18:00:15 - GET - property - Retrieved 36 states
+2026-01-19 18:00:15 - GET - property - image_category_list called with method GET
+2026-01-19 18:00:15 - GET - property - list_states called
+2026-01-19 18:00:15 - GET - property - Retrieved 9 image categories
+2026-01-19 18:00:15 - GET - property - Retrieved 36 states
+2026-01-19 18:00:15 - GET - property - image_category_list called with method GET
+2026-01-19 18:00:15 - GET - property - Retrieved 9 image categories
+2026-01-19 18:00:15 - GET - property - amenity_list called with method GET
+2026-01-19 18:00:15 - GET - property - Retrieved 8 amenities
+2026-01-19 18:00:15 - GET - property - rule_list called with method GET
+2026-01-19 18:00:15 - GET - property - Retrieved 9 rules
+2026-01-19 18:00:15 - GET - property - documentation_list called with method GET
+2026-01-19 18:00:15 - GET - property - Retrieved 8 documentations
+2026-01-19 18:00:15 - GET - property - list_states called
+2026-01-19 18:00:15 - GET - property - Retrieved 36 states
+2026-01-19 18:00:15 - GET - property - image_category_list called with method GET
+2026-01-19 18:00:15 - GET - property - Retrieved 9 image categories
+2026-01-19 18:16:11 - GET - property - property_list called with method GET
+2026-01-19 18:16:11 - GET - property - Retrieved 3 properties
+2026-01-19 18:16:14 - GET - property - amenity_list called with method GET
+2026-01-19 18:16:15 - GET - property - Retrieved 8 amenities
+2026-01-19 18:16:15 - GET - property - rule_list called with method GET
+2026-01-19 18:16:15 - GET - property - Retrieved 9 rules
+2026-01-19 18:16:15 - GET - property - documentation_list called with method GET
+2026-01-19 18:16:15 - GET - property - Retrieved 8 documentations
+2026-01-19 18:16:15 - GET - property - list_states called
+2026-01-19 18:16:15 - GET - property - Retrieved 36 states
+2026-01-19 18:16:15 - GET - property - image_category_list called with method GET
+2026-01-19 18:16:15 - GET - property - Retrieved 9 image categories
+2026-01-19 18:16:15 - GET - property - amenity_list called with method GET
+2026-01-19 18:16:15 - GET - property - Retrieved 8 amenities
+2026-01-19 18:16:15 - GET - property - amenity_list called with method GET
+2026-01-19 18:16:15 - GET - property - rule_list called with method GET
+2026-01-19 18:16:15 - GET - property - Retrieved 8 amenities
+2026-01-19 18:16:15 - GET - property - Retrieved 9 rules
+2026-01-19 18:16:15 - GET - property - rule_list called with method GET
+2026-01-19 18:16:15 - GET - property - documentation_list called with method GET
+2026-01-19 18:16:15 - GET - property - Retrieved 9 rules
+2026-01-19 18:16:15 - GET - property - Retrieved 8 documentations
+2026-01-19 18:16:15 - GET - property - documentation_list called with method GET
+2026-01-19 18:16:15 - GET - property - Retrieved 8 documentations
+2026-01-19 18:16:15 - GET - property - list_states called
+2026-01-19 18:16:16 - GET - property - Retrieved 36 states
+2026-01-19 18:16:16 - GET - property - image_category_list called with method GET
+2026-01-19 18:16:16 - GET - property - list_states called
+2026-01-19 18:16:16 - GET - property - Retrieved 9 image categories
+2026-01-19 18:16:16 - GET - property - Retrieved 36 states
+2026-01-19 18:16:16 - GET - property - image_category_list called with method GET
+2026-01-19 18:16:16 - GET - property - Retrieved 9 image categories
+2026-01-19 18:16:16 - GET - property - amenity_list called with method GET
+2026-01-19 18:16:16 - GET - property - Retrieved 8 amenities
+2026-01-19 18:16:16 - GET - property - rule_list called with method GET
+2026-01-19 18:16:16 - GET - property - Retrieved 9 rules
+2026-01-19 18:16:16 - GET - property - documentation_list called with method GET
+2026-01-19 18:16:16 - GET - property - Retrieved 8 documentations
+2026-01-19 18:16:16 - GET - property - list_states called
+2026-01-19 18:16:16 - GET - property - Retrieved 36 states
+2026-01-19 18:16:16 - GET - property - image_category_list called with method GET
+2026-01-19 18:16:16 - GET - property - Retrieved 9 image categories
+2026-01-19 18:18:16 - POST - property - image_upload called
+2026-01-19 18:18:17 - POST - property - Property image uploaded successfully with id 28
+2026-01-19 18:18:22 - PUT - property - image_detail called with method PUT for pk 28
+2026-01-19 18:18:22 - PUT - property - Property image 28 updated successfully
+2026-01-19 18:18:28 - POST - property - image_upload called
+2026-01-19 18:18:28 - POST - property - Property image uploaded successfully with id 29
+2026-01-19 18:21:11 - POST - property - image_upload called
+2026-01-19 18:21:11 - POST - property - Property image uploaded successfully with id 30
+2026-01-19 18:21:15 - PUT - property - image_detail called with method PUT for pk 30
+2026-01-19 18:21:15 - PUT - property - Property image 30 updated successfully
+2026-01-19 18:21:54 - POST - property - room_image_upload called
+2026-01-19 18:21:54 - POST - property - Room image uploaded successfully with id 7
+2026-01-19 18:21:57 - POST - property - property_list called with method POST
+2026-01-19 18:21:57 - POST - property - Property created successfully with id 5
+2026-01-19 18:21:58 - GET - property - property_list called with method GET
+2026-01-19 18:21:58 - GET - property - Retrieved 4 properties
+2026-01-19 18:22:09 - GET - property - property_detail called with method GET for pk 5
+2026-01-19 18:22:09 - GET - property - Retrieved property 5
+2026-01-19 18:22:09 - GET - property - amenity_list called with method GET
+2026-01-19 18:22:09 - GET - property - Retrieved 8 amenities
+2026-01-19 18:22:09 - GET - property - rule_list called with method GET
+2026-01-19 18:22:09 - GET - property - Retrieved 9 rules
+2026-01-19 18:22:09 - GET - property - documentation_list called with method GET
+2026-01-19 18:22:09 - GET - property - Retrieved 8 documentations
+2026-01-19 18:22:09 - GET - property - list_states called
+2026-01-19 18:22:09 - GET - property - Retrieved 36 states
+2026-01-19 18:22:09 - GET - property - image_category_list called with method GET
+2026-01-19 18:22:09 - GET - property - Retrieved 9 image categories
+2026-01-19 18:22:09 - GET - property - amenity_list called with method GET
+2026-01-19 18:22:09 - GET - property - Retrieved 8 amenities
+2026-01-19 18:22:09 - GET - property - amenity_list called with method GET
+2026-01-19 18:22:09 - GET - property - rule_list called with method GET
+2026-01-19 18:22:09 - GET - property - Retrieved 9 rules
+2026-01-19 18:22:09 - GET - property - Retrieved 8 amenities
+2026-01-19 18:22:09 - GET - property - documentation_list called with method GET
+2026-01-19 18:22:09 - GET - property - rule_list called with method GET
+2026-01-19 18:22:10 - GET - property - Retrieved 8 documentations
+2026-01-19 18:22:10 - GET - property - Retrieved 9 rules
+2026-01-19 18:22:10 - GET - property - documentation_list called with method GET
+2026-01-19 18:22:10 - GET - property - list_states called
+2026-01-19 18:22:10 - GET - property - Retrieved 36 states
+2026-01-19 18:22:10 - GET - property - Retrieved 8 documentations
+2026-01-19 18:22:10 - GET - property - image_category_list called with method GET
+2026-01-19 18:22:10 - GET - property - Retrieved 9 image categories
+2026-01-19 18:22:10 - GET - property - list_states called
+2026-01-19 18:22:10 - GET - property - Retrieved 36 states
+2026-01-19 18:22:10 - GET - property - amenity_list called with method GET
+2026-01-19 18:22:10 - GET - property - image_category_list called with method GET
+2026-01-19 18:22:10 - GET - property - Retrieved 8 amenities
+2026-01-19 18:22:10 - GET - property - Retrieved 9 image categories
+2026-01-19 18:22:10 - GET - property - rule_list called with method GET
+2026-01-19 18:22:10 - GET - property - Retrieved 9 rules
+2026-01-19 18:22:10 - GET - property - documentation_list called with method GET
+2026-01-19 18:22:10 - GET - property - Retrieved 8 documentations
+2026-01-19 18:22:10 - GET - property - list_states called
+2026-01-19 18:22:10 - GET - property - Retrieved 36 states
+2026-01-19 18:22:10 - GET - property - image_category_list called with method GET
+2026-01-19 18:22:10 - GET - property - Retrieved 9 image categories
+2026-01-19 18:22:40 - GET - property - get_all_properties called
+2026-01-19 18:22:40 - GET - property - Fetching top reviews
+2026-01-19 18:22:41 - GET - property - Retrieved 0 top reviews for property_type hostel
+2026-01-19 18:22:41 - GET - property - Retrieved 4 properties
+2026-01-19 18:27:10 - GET - property - property_detail called with method GET for pk 5
+2026-01-19 18:27:11 - GET - property - Retrieved property 5

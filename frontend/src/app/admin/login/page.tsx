@@ -123,13 +123,13 @@ function AdminLogin() {
               )}
               <div className="space-y-2">
                 <label htmlFor="otp" className="text-sm font-medium">
-                  {isStaticLogin ? 'Enter middle 6 digits of your phone number' : 'OTP'}
+                  {isStaticLogin ? 'Enter OTP' : 'OTP'}
                 </label>
                 <Input
                   id="otp"
                   name="otp"
                   type="text"
-                  placeholder={isStaticLogin ? "Enter middle 6 digits" : "Enter the OTP"}
+                  placeholder={isStaticLogin ? "Enter OTP" : "Enter the OTP"}
                   value={otp}
                   onChange={(e) => setOtp(e.target.value)}
                   required

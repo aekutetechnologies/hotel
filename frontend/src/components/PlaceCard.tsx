@@ -135,7 +135,7 @@ const PlaceCard = ({ type = "hotel" }: placeCardProps) => {
                   {/* Text Info Below Image */}
                   <div className="mt-4 px-1">
                     <h3 className="text-base font-semibold text-[#A31C44]">
-                      {property.name}, {property.location || "India"}
+                      {property.name}, {property.area || "India"}
                     </h3>
                   </div>
                 </div>

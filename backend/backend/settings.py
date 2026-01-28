@@ -260,14 +260,20 @@ REST_FRAMEWORK = {
         # 'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     # Throttling configuration for DDoS protection
+    # Using custom throttle classes that exempt read-only GET endpoints
     "DEFAULT_THROTTLE_CLASSES": [
-        "rest_framework.throttling.AnonRateThrottle",
-        "rest_framework.throttling.UserRateThrottle",
+        "backend.throttling.ReadOnlyExemptAnonThrottle",
+        "backend.throttling.ReadOnlyExemptThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {
-        "anon": config('THROTTLE_ANON_RATE', default='100/hour' if APP_ENV == 'PROD' else '1000/hour'),
-        "user": config('THROTTLE_USER_RATE', default='1000/hour' if APP_ENV == 'PROD' else '10000/hour'),
-        "burst": config('THROTTLE_BURST_RATE', default='10/minute' if APP_ENV == 'PROD' else '100/minute'),
+        # Throttling rates optimized for 5000+ DAU
+        # Anonymous users: 1000 requests/hour (allows browsing, search, property views)
+        "anon": config('THROTTLE_ANON_RATE', default='1000/hour' if APP_ENV == 'PROD' else '5000/hour'),
+        # Authenticated users: 5000 requests/hour (allows normal app usage, dashboard refreshes, etc.)
+        # With 5000 DAU, average user makes ~10-20 requests/hour during active use
+        "user": config('THROTTLE_USER_RATE', default='5000/hour' if APP_ENV == 'PROD' else '20000/hour'),
+        # Burst rate: 100 requests/minute (allows rapid interactions like form submissions, multiple API calls)
+        "burst": config('THROTTLE_BURST_RATE', default='100/minute' if APP_ENV == 'PROD' else '500/minute'),
     },
     # Pagination to limit response sizes
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",

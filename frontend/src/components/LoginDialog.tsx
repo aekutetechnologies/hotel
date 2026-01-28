@@ -40,6 +40,13 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
     setUserNameInput('')
     setUserEmailInput('')
     setIsStaticLogin(false)
+    setMessage(null)
+    setError(null)
+  }
+
+  const handleClose = () => {
+    resetDialogState()
+    onClose()
   }
 
   const benefits = [
@@ -183,7 +190,7 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
   const clearMessages = () => { setMessage(null); setError(null) }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">Log In/Sign Up</DialogTitle>
@@ -242,7 +249,7 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
               <div className="text-center space-y-2">
                 {isStaticLogin ? (
                   <p className="text-sm text-gray-600">
-                    For <span className="font-medium">+91-{phoneNumber}</span>, enter the middle 6 digits of your phone number as OTP.
+                    For <span className="font-medium">+91-{phoneNumber}</span>, enter the OTP.
                     <button className="text-blue-600 ml-2 hover:underline" onClick={() => setView("phone")}>
                       Change?
                     </button>

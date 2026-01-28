@@ -692,13 +692,25 @@ export function AddPropertyForm() {
 
     setLoading(true);
     try {
-      const preparedRooms = rooms.map(room => {
-      return {
-        ...room,
-          amenities: room.amenities,
-        images: room.roomImages.map(img => Number(img.id)), // Convert to image IDs
+      const toRate = (v: string | number | null | undefined) =>
+        (v === '' || v == null || v === undefined) ? '0' : String(v);
+      const toNum = (v: string | number | null | undefined) => {
+        if (v === '' || v == null || v === undefined) return 0;
+        const n = Number(v);
+        return Number.isFinite(n) ? n : 0;
       };
-    });
+      const preparedRooms = rooms.map(room => ({
+        ...room,
+        daily_rate: toRate(room.daily_rate),
+        hourly_rate: toRate(room.hourly_rate),
+        monthly_rate: toRate(room.monthly_rate),
+        yearly_rate: toRate(room.yearly_rate),
+        discount: toRate(room.discount),
+        size: toRate(room.size),
+        maxoccupancy: toNum(room.maxoccupancy),
+        amenities: room.amenities,
+        images: room.roomImages.map(img => Number(img.id)),
+      }));
   
     const propertyData: PropertyApiData = {
       name,
@@ -738,12 +750,12 @@ export function AddPropertyForm() {
       {
         id: Date.now().toString(),
         name: '',
-        daily_rate: '',
-        hourly_rate: '',
-        monthly_rate: '',
-        yearly_rate: '',
-        discount: '',
-        size: '',
+        daily_rate: '0.00',
+        hourly_rate: '0.00',
+        monthly_rate: '0.00',
+        yearly_rate: '0.00',
+        discount: '0.00',
+        size: '0',
         maxoccupancy: 0,
         amenities: [],
         bed_type: null,
@@ -1236,7 +1248,7 @@ export function AddPropertyForm() {
             )}
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {images.map((image, index) => (
+            {images.filter(img => img.image_url).map((image, index) => (
               <div key={index} className="space-y-2">
                 <div className="relative aspect-[4/3]">
                   <img
@@ -1244,8 +1256,15 @@ export function AddPropertyForm() {
                     alt={`Property ${index + 1}`}
                     className="w-full h-full object-cover rounded-lg"
                     onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      // Prevent infinite loop - if already trying to load placeholder, stop
+                      if (target.src.includes('data:image') || target.dataset.errorHandled === 'true') {
+                        return;
+                      }
                       console.error("Image load error for URL:", image.image_url);
-                      (e.target as HTMLImageElement).src = "/placeholder-image.jpg";
+                      // Use a transparent 1x1 pixel as fallback
+                      target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="1" height="1"%3E%3C/svg%3E';
+                      target.dataset.errorHandled = 'true';
                     }}
                     loading="lazy"
                   />
@@ -1358,39 +1377,41 @@ export function AddPropertyForm() {
       </Card>
 
       {/* Hotel Policies */}
-      <Card className="mb-4">
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Hotel Policies</h3>
-            <Button
-              type="button"
-              variant="neutral"
-              size="sm"
-              onClick={() => setManagePoliciesOpen(true)}
-            >
-              Manage
-            </Button>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {rules.map((rule) => (
-              <div key={rule.id} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`rule-${rule.id}`}
-                  checked={selectedPolicies.includes(Number(rule.id))}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      setSelectedPolicies(prev => [...prev, Number(rule.id)])
-                    } else {
-                      setSelectedPolicies(prev => prev.filter(p => p !== Number(rule.id)))
-                    }
-                  }}
-                />
-                <Label htmlFor={`rule-${rule.id}`}>{rule.name}</Label>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {propertyType !== 'hostel' && (
+        <Card className="mb-4">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Hotel Policies</h3>
+              <Button
+                type="button"
+                variant="neutral"
+                size="sm"
+                onClick={() => setManagePoliciesOpen(true)}
+              >
+                Manage
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {rules.map((rule) => (
+                <div key={rule.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`rule-${rule.id}`}
+                    checked={selectedPolicies.includes(Number(rule.id))}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedPolicies(prev => [...prev, Number(rule.id)])
+                      } else {
+                        setSelectedPolicies(prev => prev.filter(p => p !== Number(rule.id)))
+                      }
+                    }}
+                  />
+                  <Label htmlFor={`rule-${rule.id}`}>{rule.name}</Label>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Documentation */}
       <Card className="mb-4">
@@ -1487,32 +1508,37 @@ export function AddPropertyForm() {
                       required
                     />
                   </div>
-                  <div className="space-y-2">
-                      <RequiredHotelLabel>
-                        <Label htmlFor={`room-hourly-rate-${index}`}>Hourly Rate</Label>
-                      </RequiredHotelLabel>
-                    <Input
-                      id={`room-hourly-rate-${index}`}
-                      type="number"
-                      step="0.01"
-                      value={room.hourly_rate || '0.00'}
-                      onChange={(e) => updateRoom(index, { hourly_rate: e.target.value })}
-                      placeholder="Enter hourly rate"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                      <RequiredHotelLabel>
-                        <Label htmlFor={`room-daily-rate-${index}`}>Daily Rate</Label>
-                      </RequiredHotelLabel>
-                    <Input
-                      id={`room-daily-rate-${index}`}
-                      type="number"
-                      step="0.01"
-                      value={room.daily_rate || '0.00'}
-                      onChange={(e) => updateRoom(index, { daily_rate: e.target.value })}
-                      placeholder="Enter daily rate"
-                    />
-                  </div>
+                  {propertyType === 'hotel' && (
+                    <div className="space-y-2">
+                        <RequiredHotelLabel>
+                          <Label htmlFor={`room-hourly-rate-${index}`}>Hourly Rate</Label>
+                        </RequiredHotelLabel>
+                      <Input
+                        id={`room-hourly-rate-${index}`}
+                        type="number"
+                        step="0.01"
+                        value={room.hourly_rate ?? ''}
+                        onChange={(e) => updateRoom(index, { hourly_rate: e.target.value })}
+                        placeholder="Enter hourly rate"
+                      />
+                    </div>
+                    )}
+                    {propertyType === 'hotel' && (
+                    <div className="space-y-2">
+                        <RequiredHotelLabel>
+                          <Label htmlFor={`room-daily-rate-${index}`}>Daily Rate</Label>
+                        </RequiredHotelLabel>
+                      <Input
+                        id={`room-daily-rate-${index}`}
+                        type="number"
+                        step="0.01"
+                        value={room.daily_rate ?? ''}
+                        onChange={(e) => updateRoom(index, { daily_rate: e.target.value })}
+                        placeholder="Enter daily rate"
+                      />
+                    </div>
+                  )}
+                  {propertyType === 'hostel' && (
                   <div className="space-y-2">
                       <RequiredHostelLabel>
                         <Label htmlFor={`room-monthly-rate-${index}`}>Monthly Rate</Label>
@@ -1521,11 +1547,13 @@ export function AddPropertyForm() {
                       id={`room-monthly-rate-${index}`}
                       type="number"
                       step="0.01"
-                      value={room.monthly_rate || '0.00'}
+                      value={room.monthly_rate ?? ''}
                       onChange={(e) => updateRoom(index, { monthly_rate: e.target.value })}
                       placeholder="Enter monthly rate"
                     />
                   </div>
+                  )}
+                  {propertyType === 'hostel' && (
                   <div className="space-y-2">
                       <RequiredHostelLabel>
                         <Label htmlFor={`room-yearly-rate-${index}`}>Yearly Rate</Label>
@@ -1534,11 +1562,12 @@ export function AddPropertyForm() {
                       id={`room-yearly-rate-${index}`}
                       type="number"
                       step="0.01"
-                      value={room.yearly_rate || '0.00'}
+                      value={room.yearly_rate ?? ''}
                       onChange={(e) => updateRoom(index, { yearly_rate: e.target.value })}
                       placeholder="Enter yearly rate"
                     />
                   </div>
+                  )}
                   <div className="space-y-2">
                     <Label htmlFor={`room-discount-${index}`}>Discount</Label>
                     <Input
@@ -1643,14 +1672,21 @@ export function AddPropertyForm() {
                 <div className="mt-6 border-t pt-4">
                   <h5 className="font-medium mb-3">Room Images</h5>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {room.roomImages && room.roomImages.map((image, imageIndex) => (
+                    {room.roomImages && room.roomImages.filter(img => img.image_url).map((image, imageIndex) => (
                       <div key={imageIndex} className="relative aspect-[4/3]">
                         <img
                           src={image.image_url}
                           alt={`Room ${index + 1} Image ${imageIndex + 1}`}
                           className="w-full h-full object-cover rounded-lg"
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src = "/placeholder-image.jpg";
+                            const target = e.target as HTMLImageElement;
+                            // Prevent infinite loop - if already trying to load placeholder, stop
+                            if (target.src.includes('data:image') || target.dataset.errorHandled === 'true') {
+                              return;
+                            }
+                            // Use a transparent 1x1 pixel as fallback
+                            target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="1" height="1"%3E%3C/svg%3E';
+                            target.dataset.errorHandled = 'true';
                           }}
                           loading="lazy"
                         />

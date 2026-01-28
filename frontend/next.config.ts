@@ -17,6 +17,11 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'hsquareliving.com',
+        pathname: '/media/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'hsquareliving.com',
         pathname: '/api/media/**',
       },
       {

@@ -531,7 +531,7 @@ export default function Bookings() {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="neutral" onClick={() => setIsAddModalOpen(true)}>
+              <Button variant="default" onClick={() => setIsAddModalOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add New Booking
               </Button>

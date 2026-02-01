@@ -205,6 +205,59 @@ function PropertyMapSection({
     return `map-${Math.random().toString(36).substr(2, 9)}`;
   }, [location.latitude, location.longitude]);
 
+  // Map search state (OpenStreetMap / Nominatim)
+  const [mapSearchQuery, setMapSearchQuery] = useState('');
+  const [mapSearchResults, setMapSearchResults] = useState<any[]>([]);
+  const [isSearchingMap, setIsSearchingMap] = useState(false);
+
+  const handleMapSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value as string;
+    setMapSearchQuery(query);
+
+    if (!query || query.length < 3) {
+      setMapSearchResults([]);
+      return;
+    }
+
+    setIsSearchingMap(true);
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`
+      );
+      const data = await response.json();
+      if (Array.isArray(data)) {
+        setMapSearchResults(data);
+      } else {
+        setMapSearchResults([]);
+      }
+    } catch (error) {
+      console.error('Error searching location on map:', error);
+      setMapSearchResults([]);
+      toast.error('Could not search this location. Please try again.');
+    } finally {
+      setIsSearchingMap(false);
+    }
+  };
+
+  const handleMapResultSelect = (result: any) => {
+    const lat = parseFloat(result.lat);
+    const lng = parseFloat(result.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      return;
+    }
+
+    setLocation(prev => ({
+      ...prev,
+      latitude: lat.toFixed(6),
+      longitude: lng.toFixed(6),
+      address: result.display_name || prev.address,
+    }));
+
+    setMapSearchQuery(result.display_name || '');
+    setMapSearchResults([]);
+    toast.success('Location updated from search result');
+  };
+
   return (
     <div className="mt-6">
       <div className="flex justify-between items-center mb-2">
@@ -216,8 +269,37 @@ function PropertyMapSection({
           </span>
         )}
       </div>
-      <div className="bg-gray-50 p-2 rounded-lg mb-2 text-sm text-gray-600">
-        <p>Click anywhere on the map to set the property's coordinates. You can also zoom in for more precise location selection.</p>
+      <div className="bg-gray-50 p-2 rounded-lg mb-2 text-sm text-gray-600 space-y-2">
+        <p>
+          Search for a place or address and select a suggestion to update the map location, or click directly on the
+          map to fine-tune the coordinates.
+        </p>
+        <div className="relative">
+          <Input
+            value={mapSearchQuery}
+            onChange={handleMapSearchChange}
+            placeholder="Search place, address or city"
+            className="w-full"
+          />
+          {isSearchingMap && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">
+              Searching...
+            </div>
+          )}
+          {mapSearchResults.length > 0 && (
+            <ul className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-sm max-h-60 overflow-y-auto">
+              {mapSearchResults.map((result, index) => (
+                <li
+                  key={result.place_id ?? index}
+                  className="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
+                  onClick={() => handleMapResultSelect(result)}
+                >
+                  {result.display_name}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
       <div className="h-[300px] w-full rounded-lg overflow-hidden border">
         <FormMapPicker
@@ -766,6 +848,23 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
   };
 
 
+  const handleFormKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
+    if (e.key !== 'Enter') return
+    const target = e.target as HTMLElement
+    if (target.tagName === 'TEXTAREA') return
+    if ((target as HTMLButtonElement).type === 'submit') return
+    e.preventDefault()
+    const form = e.currentTarget
+    const focusable = Array.from(
+      form.querySelectorAll<HTMLElement>(
+        'input:not([type=hidden]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), [role="combobox"]'
+      )
+    ).filter((el) => el.offsetParent != null)
+    const idx = focusable.indexOf(document.activeElement as HTMLElement)
+    const nextIdx = idx < 0 ? 0 : (idx + 1) % focusable.length
+    ;(focusable[nextIdx] as HTMLElement)?.focus()
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -881,28 +980,27 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
   }
 
   const addRoom = () => {
-    setRooms(prevRooms => [
-      ...prevRooms,
-      {
-        id: Date.now().toString(),
-        name: '',
-        daily_rate: '0',
-        hourly_rate: '0',
-        monthly_rate: '0',
-        yearly_rate: '0',
-        discount: '0',
-        size: '0',
-        maxoccupancy: 0,
-        amenities: [],
-        bed_type: null,
-        private_bathroom: false,
-        smoking: false,
-        security_deposit: false,
-        number_of_rooms: 0,
-        roomImages: [],
-        gender_type: null,
-      }
-    ])
+    const newRoom = {
+      id: Date.now().toString(),
+      name: '',
+      daily_rate: '0',
+      hourly_rate: '0',
+      monthly_rate: '0',
+      yearly_rate: '0',
+      discount: '0',
+      size: '0',
+      maxoccupancy: 0,
+      amenities: [],
+      bed_type: null,
+      private_bathroom: false,
+      smoking: false,
+      security_deposit: false,
+      number_of_rooms: 0,
+      roomImages: [],
+      gender_type: null,
+    }
+    setRooms(prevRooms => [newRoom, ...prevRooms])
+    toast.success('Room added. Fill in the details above.')
   }
 
   const updateRoom = (index: number, updatedRoom: Partial<Room>) => {
@@ -990,7 +1088,7 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form onSubmit={handleSubmit} onKeyDown={handleFormKeyDown} className="space-y-8">
       {/* Note about required fields */}
       <div className="text-sm  text-gray-500 mb-4">
   <div className="flex items-center">
@@ -1265,16 +1363,6 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
                 Maintain a list of nearby attractions, transit points, or landmarks with their distance.
               </p>
             </div>
-            <Button
-              type="button"
-              variant="neutral"
-              size="sm"
-              onClick={addNearbyPlace}
-              className="flex items-center gap-2 self-start sm:self-auto"
-            >
-              <Plus className="h-4 w-4" />
-              Add Place
-            </Button>
           </div>
 
           {nearbyPlaces.length === 0 ? (
@@ -1283,56 +1371,74 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
               <p className="text-sm">Use the &quot;Add Place&quot; button to include nearby points of interest.</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {nearbyPlaces.map((place, index) => (
-                <div
-                  key={place.id}
-                  className="border border-dashed rounded-lg p-4 bg-gray-50 shadow-sm"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="font-medium text-base text-gray-700">Place {index + 1}</h4>
-                    <Button
-                      type="button"
-                      variant="neutral"
-                      size="sm"
-                      className="text-red-500 hover:text-red-600"
-                      onClick={() => removeNearbyPlace(index)}
-                    >
-                      <Trash className="h-4 w-4 mr-2" />
-                      Remove
-                    </Button>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor={`nearby-place-name-${place.id}`}>Name</Label>
-                      <Input
-                        id={`nearby-place-name-${place.id}`}
-                        value={place.name}
-                        onChange={(e) => updateNearbyPlace(index, 'name', e.target.value)}
-                        placeholder="Phoenix Market City Mall"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor={`nearby-place-category-${place.id}`}>Category</Label>
-                      <Input
-                        id={`nearby-place-category-${place.id}`}
-                        value={place.category}
-                        onChange={(e) => updateNearbyPlace(index, 'category', e.target.value)}
-                        placeholder="Shopping"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor={`nearby-place-distance-${place.id}`}>Distance</Label>
-                      <Input
-                        id={`nearby-place-distance-${place.id}`}
-                        value={place.distance}
-                        onChange={(e) => updateNearbyPlace(index, 'distance', e.target.value)}
-                        placeholder="1.5 km"
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="overflow-x-auto rounded-lg border border-gray-200">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-gray-50 text-gray-700 uppercase">
+                  <tr>
+                    <th scope="col" className="px-4 py-3 font-medium">Name</th>
+                    <th scope="col" className="px-4 py-3 font-medium">Category</th>
+                    <th scope="col" className="px-4 py-3 font-medium">Distance</th>
+                    <th scope="col" className="px-4 py-3 font-medium text-center w-24">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {nearbyPlaces.map((place, index) => (
+                    <tr key={place.id} className="bg-white hover:bg-gray-50">
+                      <td className="px-4 py-2">
+                        <Input
+                          id={`nearby-place-name-${place.id}`}
+                          value={place.name}
+                          onChange={(e) => updateNearbyPlace(index, 'name', e.target.value)}
+                          placeholder="e.g. Phoenix Market City Mall"
+                          className="h-9 w-full min-w-0"
+                        />
+                      </td>
+                      <td className="px-4 py-2">
+                        <Input
+                          id={`nearby-place-category-${place.id}`}
+                          value={place.category}
+                          onChange={(e) => updateNearbyPlace(index, 'category', e.target.value)}
+                          placeholder="e.g. Shopping"
+                          className="h-9 w-full min-w-0"
+                        />
+                      </td>
+                      <td className="px-4 py-2">
+                        <Input
+                          id={`nearby-place-distance-${place.id}`}
+                          value={place.distance}
+                          onChange={(e) => updateNearbyPlace(index, 'distance', e.target.value)}
+                          placeholder="e.g. 1.5 km"
+                          className="h-9 w-full min-w-0"
+                        />
+                      </td>
+                      <td className="px-4 py-2">
+                        <div className="flex items-center justify-center gap-1">
+                          <Button
+                            type="button"
+                            variant="neutral"
+                            size="icon"
+                            className="h-9 w-9 text-gray-600 hover:text-green-600"
+                            onClick={addNearbyPlace}
+                            title="Add row"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="neutral"
+                            size="icon"
+                            className="h-9 w-9 text-red-500 hover:text-red-600"
+                            onClick={() => removeNearbyPlace(index)}
+                            title="Delete row"
+                          >
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </CardContent>

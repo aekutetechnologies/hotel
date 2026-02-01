@@ -161,7 +161,7 @@ const PlaceCard = ({ type = "hotel" }: placeCardProps) => {
                 {
                   icon: <Users className="h-8 w-8 text-red-600" />,
                   label: "Happy Customers",
-                  value: 1000,
+                  value: 10000,
                 },
                 {
                   icon: <Star className="h-8 w-8 text-red-600" />,

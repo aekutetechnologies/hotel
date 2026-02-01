@@ -46,9 +46,12 @@ export function ImageCropper({ image, aspectRatio, onCropComplete, onCancel }: I
   }, [croppedAreaPixels, image, onCropComplete, aspectRatio])
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-4 rounded-lg w-96 h-96">
-        <div className="relative w-full h-80">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white p-4 rounded-lg w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden shadow-lg">
+        <p className="text-xs text-gray-500 mb-2 flex-shrink-0">
+          Drag the image to position; use the slider or scroll to zoom.
+        </p>
+        <div className="relative w-full flex-1 min-h-0 aspect-square max-h-[60vh]">
           <Cropper
             image={image}
             crop={crop}
@@ -57,11 +60,30 @@ export function ImageCropper({ image, aspectRatio, onCropComplete, onCancel }: I
             onCropChange={onCropChange}
             onZoomChange={onZoomChange}
             onCropComplete={onCropCompleteHandler}
+            minZoom={1}
+            maxZoom={3}
+            zoomWithScroll
           />
         </div>
-        <div className="mt-4 flex justify-between">
-          <Button onClick={onCancel} variant="neutral">Cancel</Button>
-          <Button onClick={showCroppedImage}>Crop</Button>
+        <div className="flex-shrink-0 mt-3 space-y-2">
+          <div className="flex items-center gap-2">
+            <label htmlFor="zoom-slider" className="text-xs font-medium text-gray-600 whitespace-nowrap">Zoom</label>
+            <input
+              id="zoom-slider"
+              type="range"
+              min={1}
+              max={3}
+              step={0.1}
+              value={zoom}
+              onChange={(e) => onZoomChange(Number(e.target.value))}
+              className="flex-1 h-2 rounded-lg appearance-none cursor-pointer bg-gray-200 accent-[#B11E43]"
+            />
+            <span className="text-xs text-gray-500 w-8">{Math.round(zoom * 100)}%</span>
+          </div>
+        </div>
+        <div className="flex-shrink-0 mt-4 flex justify-between gap-2">
+          <Button onClick={onCancel} variant="default" className="min-w-0 flex-1 sm:flex-initial">Cancel</Button>
+          <Button onClick={showCroppedImage} variant="green" className="min-w-0 flex-1 sm:flex-initial">Save</Button>
         </div>
       </div>
     </div>

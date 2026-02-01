@@ -1,0 +1,84 @@
+2026-01-30 11:14:32 - POST - views - Static login number detected: 8342091661, skipping OTP send
+2026-01-30 11:14:37 - POST - views - Static login verification for mobile: 8342091661, Expected OTP: 420916, Provided OTP: 123456
+2026-01-30 11:14:37 - POST - views - Invalid static OTP for mobile: 8342091661
+2026-01-30 11:14:38 - POST - views - Static login number detected: 8342091661, skipping OTP send
+2026-01-30 11:14:43 - POST - views - Static login number detected: 8342091661, skipping OTP send
+2026-01-30 11:16:39 - GET - property - get_all_properties called
+2026-01-30 11:16:39 - GET - property - Fetching top reviews
+2026-01-30 11:16:40 - GET - property - Retrieved 0 top reviews for property_type hotel
+2026-01-30 11:16:41 - GET - property - Retrieved 6 properties
+2026-01-30 11:25:28 - GET - property - amenity_list called with method GET
+2026-01-30 11:25:28 - GET - property - Retrieved 8 amenities
+2026-01-30 11:25:28 - GET - property - rule_list called with method GET
+2026-01-30 11:25:28 - GET - property - Retrieved 9 rules
+2026-01-30 11:25:28 - GET - property - documentation_list called with method GET
+2026-01-30 11:25:28 - GET - property - Retrieved 8 documentations
+2026-01-30 11:25:28 - GET - property - image_category_list called with method GET
+2026-01-30 11:25:28 - GET - property - Retrieved 12 image categories
+2026-01-30 13:42:35 - POST - views - Static login number detected: 8342091661, skipping OTP send
+2026-01-30 13:42:41 - POST - views - Static login verification for mobile: 8342091661, Expected OTP: 420916, Provided OTP: 420916
+2026-01-30 13:42:41 - POST - views - Static login successful for mobile: 8342091661
+2026-01-30 13:42:41 - POST - views - User 8342091661 logged in
+2026-01-30 13:42:45 - GET - property - property_list called with method GET
+2026-01-30 13:42:46 - GET - property - Retrieved 6 properties
+2026-01-30 13:42:46 - GET - views - list_users called
+2026-01-30 13:42:46 - GET - views - Retrieved 16 users
+2026-01-30 13:42:46 - GET - property - property_list called with method GET
+2026-01-30 13:42:47 - GET - property - Retrieved 6 properties
+2026-01-30 13:42:48 - GET - property - amenity_list called with method GET
+2026-01-30 13:42:48 - GET - property - Retrieved 8 amenities
+2026-01-30 13:42:48 - GET - property - rule_list called with method GET
+2026-01-30 13:42:48 - GET - property - Retrieved 9 rules
+2026-01-30 13:42:48 - GET - property - documentation_list called with method GET
+2026-01-30 13:42:48 - GET - property - Retrieved 8 documentations
+2026-01-30 13:42:48 - GET - property - list_states called
+2026-01-30 13:42:48 - GET - property - Retrieved 36 states
+2026-01-30 13:42:48 - GET - property - image_category_list called with method GET
+2026-01-30 13:42:49 - GET - property - Retrieved 12 image categories
+2026-01-30 13:42:49 - GET - property - amenity_list called with method GET
+2026-01-30 13:42:49 - GET - property - Retrieved 8 amenities
+2026-01-30 13:42:49 - GET - property - amenity_list called with method GET
+2026-01-30 13:42:49 - GET - property - rule_list called with method GET
+2026-01-30 13:42:49 - GET - property - Retrieved 8 amenities
+2026-01-30 13:42:49 - GET - property - Retrieved 9 rules
+2026-01-30 13:42:49 - GET - property - rule_list called with method GET
+2026-01-30 13:42:49 - GET - property - documentation_list called with method GET
+2026-01-30 13:42:49 - GET - property - Retrieved 9 rules
+2026-01-30 13:42:49 - GET - property - Retrieved 8 documentations
+2026-01-30 13:42:49 - GET - property - documentation_list called with method GET
+2026-01-30 13:42:49 - GET - property - list_states called
+2026-01-30 13:42:49 - GET - property - Retrieved 8 documentations
+2026-01-30 13:42:49 - GET - property - Retrieved 36 states
+2026-01-30 13:42:49 - GET - property - image_category_list called with method GET
+2026-01-30 13:42:49 - GET - property - list_states called
+2026-01-30 13:42:49 - GET - property - Retrieved 12 image categories
+2026-01-30 13:42:49 - GET - property - Retrieved 36 states
+2026-01-30 13:42:49 - GET - property - image_category_list called with method GET
+2026-01-30 13:42:49 - GET - property - Retrieved 12 image categories
+2026-01-30 13:42:49 - GET - property - amenity_list called with method GET
+2026-01-30 13:42:49 - GET - property - Retrieved 8 amenities
+2026-01-30 13:42:49 - GET - property - rule_list called with method GET
+2026-01-30 13:42:49 - GET - property - Retrieved 9 rules
+2026-01-30 13:42:49 - GET - property - documentation_list called with method GET
+2026-01-30 13:42:49 - GET - property - Retrieved 8 documentations
+2026-01-30 13:42:49 - GET - property - list_states called
+2026-01-30 13:42:49 - GET - property - Retrieved 36 states
+2026-01-30 13:42:49 - GET - property - image_category_list called with method GET
+2026-01-30 13:42:50 - GET - property - Retrieved 12 image categories
+2026-01-30 16:12:50 - GET - property - get_all_properties called
+2026-01-30 16:12:50 - GET - property - Fetching top reviews
+2026-01-30 16:12:50 - GET - property - Retrieved 0 top reviews for property_type hotel
+2026-01-30 16:12:51 - GET - property - Retrieved 6 properties
+2026-01-30 16:12:56 - GET - views - Profile viewed for user: 8342091661
+2026-01-30 16:13:00 - GET - property - get_all_properties called
+2026-01-30 16:13:00 - GET - property - Fetching top reviews
+2026-01-30 16:13:01 - GET - property - Retrieved 0 top reviews for property_type hotel
+2026-01-30 16:13:01 - GET - property - Retrieved 6 properties
+2026-01-30 16:16:29 - GET - property - get_all_properties called
+2026-01-30 16:16:29 - GET - property - Fetching top reviews
+2026-01-30 16:16:29 - GET - property - Retrieved 0 top reviews for property_type hotel
+2026-01-30 16:16:30 - GET - property - Retrieved 6 properties
+2026-01-30 16:59:48 - GET - property - get_all_properties called
+2026-01-30 16:59:48 - GET - property - Fetching top reviews
+2026-01-30 16:59:48 - GET - property - Retrieved 0 top reviews for property_type hotel
+2026-01-30 16:59:49 - GET - property - Retrieved 6 properties

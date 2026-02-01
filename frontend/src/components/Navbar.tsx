@@ -157,7 +157,7 @@ const Navbar: React.FC<NavbarProps> = ({
                     className="cursor-pointer text-base rounded-md my-1 hover:bg-gray-50 px-2 py-2 flex items-center"
                   >
                     <User className="mr-2 h-4 w-4" />
-                    <span>My Profile</span>
+                    <span>Log In/ Signup</span>
                   </div>
                 )}
 

@@ -18,6 +18,8 @@ const buttonVariants = cva(
           "text-white bg-[#B11E43] hover:bg-[#8f1836] shadow-lg",
         ghost:
           "text-white bg-[#B11E43] hover:bg-[#8f1836] shadow-lg",
+        green:
+          "text-white rounded-lg font-medium transition-colors text-sm shadow-lg bg-green-600 hover:bg-green-700",
       },
       size: {
         default: "h-10 px-4 py-2",

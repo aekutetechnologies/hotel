@@ -88,6 +88,11 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
     }
   }
 
+  const handleResendOTP = () => {
+    setOtp(['', '', '', '', '', ''])
+    handleSendOTP()
+  }
+
   const handleSendOTP = async () => {
     setMessage(null)
     setError(null)
@@ -189,6 +194,12 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
 
   const clearMessages = () => { setMessage(null); setError(null) }
 
+  const handleChangePhoneFromOtp = () => {
+    setOtp(["", "", "", "", "", ""])
+    setView("phone")
+    clearMessages()
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
@@ -250,7 +261,10 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
                 {isStaticLogin ? (
                   <p className="text-sm text-gray-600">
                     For <span className="font-medium">+91-{phoneNumber}</span>, enter the OTP.
-                    <button className="text-blue-600 ml-2 hover:underline" onClick={() => setView("phone")}>
+                    <button
+                      className="text-blue-600 ml-2 hover:underline"
+                      onClick={handleChangePhoneFromOtp}
+                    >
                       Change?
                     </button>
                   </p>
@@ -258,7 +272,10 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
                   <p className="text-sm text-gray-600">
                     We have sent the verification code to your mobile number{" "}
                     <span className="font-medium">+91-{phoneNumber}</span>
-                    <button className="text-blue-600 ml-2 hover:underline" onClick={() => setView("phone")}>
+                    <button
+                      className="text-blue-600 ml-2 hover:underline"
+                      onClick={handleChangePhoneFromOtp}
+                    >
                       Change?
                     </button>
                   </p>
@@ -287,7 +304,7 @@ export function LoginDialog({ isOpen, onClose, onLoginSuccess }: LoginDialogProp
                 <div className="text-center">
                   <button 
                     className="text-blue-600 text-sm hover:underline" 
-                    onClick={handleSendOTP}
+                    onClick={handleResendOTP}
                   >
                     Resend?
                   </button>

@@ -7,17 +7,21 @@ export interface DashboardStats {
   sales: {
     today: {
       total: number
+      pending_payments?: number
       confirmed: number
       completed: number
       cancelled: number
       pending: number
+      no_show?: number
     }
     month: {
       total: number
+      pending_payments?: number
       confirmed: number
       completed: number
       cancelled: number
       pending: number
+      no_show?: number
     }
   }
   expenses: {

@@ -376,6 +376,8 @@ export function AddPropertyForm() {
   const [images, setImages] = useState<{ id: string; image_url: string; categoryId: number | null }[]>([])
   const [imageCategories, setImageCategories] = useState<ImageCategory[]>([])
   const [selectedImageCategoryId, setSelectedImageCategoryId] = useState<string>(UNCATEGORIZED_IMAGE_CATEGORY)
+  const selectedImageCategoryIdRef = useRef<string>(UNCATEGORIZED_IMAGE_CATEGORY)
+  selectedImageCategoryIdRef.current = selectedImageCategoryId
   const [loading, setLoading] = useState(false)
   const [location, setLocation] = useState({
     address: '',
@@ -446,19 +448,20 @@ export function AddPropertyForm() {
     setImageCategories(categoriesResponse)
 
     const preferredIdString = preferredCategoryId != null ? String(preferredCategoryId) : null
+    const currentSelection = selectedImageCategoryIdRef.current
     if (preferredIdString && categoriesResponse.some(category => category.id === preferredCategoryId)) {
       setSelectedImageCategoryId(preferredIdString)
     } else if (
-      selectedImageCategoryId !== UNCATEGORIZED_IMAGE_CATEGORY &&
-      categoriesResponse.some(category => String(category.id) === selectedImageCategoryId)
+      currentSelection !== UNCATEGORIZED_IMAGE_CATEGORY &&
+      categoriesResponse.some(category => String(category.id) === currentSelection)
     ) {
-      // Keep existing selection
+      // Keep existing selection - do not overwrite
     } else if (categoriesResponse.length > 0) {
       setSelectedImageCategoryId(String(categoriesResponse[0].id))
     } else {
       setSelectedImageCategoryId(UNCATEGORIZED_IMAGE_CATEGORY)
     }
-  }, [selectedImageCategoryId])
+  }, [])
 
   useEffect(() => {
     async function loadData() {
@@ -1228,6 +1231,16 @@ export function AddPropertyForm() {
                 Add nearby attractions, transit points, or landmarks with their approximate distance.
               </p>
             </div>
+            <Button
+              type="button"
+              variant="neutral"
+              size="sm"
+              onClick={addNearbyPlace}
+              className="flex items-center gap-2 self-start sm:self-auto"
+            >
+              <Plus className="h-4 w-4" />
+              Add Place
+            </Button>
           </div>
 
           {nearbyPlaces.length === 0 ? (

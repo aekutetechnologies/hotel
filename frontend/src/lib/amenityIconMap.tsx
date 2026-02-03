@@ -20,7 +20,14 @@ import {
     CheckCircle2,
     MapPin,
     Newspaper,
-    ConciergeBell
+    ConciergeBell,
+    Droplets,
+    BookOpen,
+    Zap,
+    Sofa,
+    Stethoscope,
+    Shirt,
+    Users
 } from 'lucide-react'
 
 const icon = (el: React.ReactElement) => {
@@ -132,10 +139,40 @@ const map: Record<string, React.ReactElement> = {
 
     // Misc common
     'elevator': icon(<Building2 />),
+    'lift': icon(<Building2 />),
     'luggage storage': icon(<Building2 />),
+    'luggage storage available': icon(<Building2 />),
     'lost and found': icon(<Building2 />),
     'wake-up service': icon(<BellRing />),
     '24-hour front desk': icon(<ConciergeBell />),
+
+    // Additional amenities
+    'security guard': icon(<ShieldCheck />),
+    'outsourced kitchen': icon(<ChefHat />),
+    'air conditioner': icon(<AirVent />),
+    'free parking': icon(<Car />),
+    'power backup': icon(<BatteryCharging />),
+    'fire extinguishers': icon(<ShieldCheck />),
+    'wardrobe or closet': icon(<Shirt />),
+    'shuttle service': icon(<Car />),
+    'family rooms': icon(<Users />),
+    'private kitchen': icon(<ChefHat />),
+    'laundry & press': icon(<Shirt />),
+    'atm/cash machine on premises': icon(<Building />),
+    'shared kitchen/kitchenette': icon(<ChefHat />),
+    'kettle, fridge & oven': icon(<ChefHat />),
+    'fully furnished rooms': icon(<Sofa />),
+    'private entrance': icon(<Building />),
+    'socket near bed': icon(<Zap />),
+    'rooftop swimming pool': icon(<Building2 />),
+    'library space': icon(<BookOpen />),
+    'live kitchen/meal options': icon(<Utensils />),
+    'doctor on call': icon(<Stethoscope />),
+    'refrigerator (common)': icon(<Building />),
+    'drinking water (ro)': icon(<Droplets />),
+    'alternate days housekeeping': icon(<BellRing />),
+    'attached & non-attached washrooms': icon(<Heater />),
+    'cafeteria': icon(<Utensils />),
 }
 
 export function getAmenityIcon(name?: string) {

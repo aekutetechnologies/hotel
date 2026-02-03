@@ -643,8 +643,9 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
     }
   }
 
-  // Get today as ISO string (YYYY-MM-DD)
+  // Get today as ISO string (YYYY-MM-DD) - only restrict min date when creating new booking
   const today = new Date().toISOString().split('T')[0]
+  const isEditMode = !!initialData
   
   // Function to adjust checkout date when booking time or months changes
   useEffect(() => {
@@ -851,12 +852,12 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
                     name="checkIn"
                     type="date"
                     className="opacity-0 absolute inset-0 w-full h-full cursor-pointer z-10"
-                    value={booking.checkIn}
+                    value={booking.checkIn ? String(booking.checkIn).split('T')[0] : ''}
                     onChange={handleDateChange}
-                    min={today}
+                    min={isEditMode ? undefined : today}
                     required
                   />
-                  <div className="flex items-center justify-between w-full pr-2 border rounded-md px-3 py-2">
+                  <div className="flex items-center justify-between w-full pr-2 border rounded-md px-3 py-2 pointer-events-none">
                     <span className="text-sm">{booking.checkIn ? new Date(booking.checkIn).toLocaleDateString() : 'Select date'}</span>
                     <CalendarDays className="h-4 w-4 text-gray-500" />
                   </div>
@@ -871,12 +872,12 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
                     type="date"
                     ref={checkOutInputRef}
                     className="opacity-0 absolute inset-0 w-full h-full cursor-pointer z-10"
-                    value={booking.checkOut}
+                    value={booking.checkOut ? String(booking.checkOut).split('T')[0] : ''}
                     onChange={handleChange}
-                    min={booking.checkIn || today}
+                    min={booking.checkIn ? String(booking.checkIn).split('T')[0] : (isEditMode ? undefined : today)}
                     required
                   />
-                  <div className="flex items-center justify-between w-full pr-2 border rounded-md px-3 py-2">
+                  <div className="flex items-center justify-between w-full pr-2 border rounded-md px-3 py-2 pointer-events-none">
                     <span className="text-sm">{booking.checkOut ? new Date(booking.checkOut).toLocaleDateString() : 'Select date'}</span>
                     <CalendarDays className="h-4 w-4 text-gray-500" />
                   </div>

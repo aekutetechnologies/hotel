@@ -1,0 +1,499 @@
+diff --git a/frontend/src/app/admin/bookings/page.tsx b/frontend/src/app/admin/bookings/page.tsx
+index 32aa3af..fa31290 100644
+--- a/frontend/src/app/admin/bookings/page.tsx
++++ b/frontend/src/app/admin/bookings/page.tsx
+@@ -671,6 +671,7 @@ export default function Bookings() {
+               <TableHead>Booking ID</TableHead>
+               <TableHead>Property</TableHead>
+               <TableHead>Guest</TableHead>
++              <TableHead>Guest Name</TableHead>
+               <TableHead>Created At</TableHead>
+               <TableHead>Check-in</TableHead>
+               <TableHead>Status</TableHead>
+@@ -707,6 +708,7 @@ export default function Bookings() {
+                   <TableCell>
+                     {booking.user && typeof booking.user === 'object' ? booking.user.mobile : ''}
+                   </TableCell>
++                  <TableCell>{booking.user && typeof booking.user === 'object' ? booking.user.name : ''}</TableCell>
+                   <TableCell>{format(new Date(booking.created_at), 'dd MMM yyyy')}</TableCell>
+                   <TableCell>{format(new Date(booking.checkin_date), 'dd MMM yyyy')}</TableCell>
+                   <TableCell>
+diff --git a/frontend/src/app/admin/dashboard/page.tsx b/frontend/src/app/admin/dashboard/page.tsx
+index 5635b23..676a182 100644
+--- a/frontend/src/app/admin/dashboard/page.tsx
++++ b/frontend/src/app/admin/dashboard/page.tsx
+@@ -150,6 +150,7 @@ export default function Dashboard() {
+                   From {dashboardStats?.sales.today.confirmed || 0} confirmed bookings
+                 </span>
+               </div>
++              <p className="text-xs text-muted-foreground mt-1">Excludes pending, cancelled, no-show</p>
+             </CardContent>
+           </Card>
+           
+@@ -165,6 +166,7 @@ export default function Dashboard() {
+                   From {(dashboardStats?.sales.month.confirmed || 0) + (dashboardStats?.sales.month.completed || 0)} bookings
+                 </span>
+               </div>
++              <p className="text-xs text-muted-foreground mt-1">Excludes pending, cancelled, no-show</p>
+             </CardContent>
+           </Card>
+           
+@@ -185,14 +187,14 @@ export default function Dashboard() {
+           
+           <Card>
+             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+-              <CardTitle className="text-sm font-medium">Pending Bookings</CardTitle>
++              <CardTitle className="text-sm font-medium">Pending Payments</CardTitle>
+               <CreditCard className="h-4 w-4 text-muted-foreground" />
+             </CardHeader>
+             <CardContent>
+-              <div className="text-2xl font-bold">{dashboardStats?.sales.month.pending || 0}</div>
++              <div className="text-2xl font-bold">₹{(dashboardStats?.sales.month.pending_payments || 0).toLocaleString()}</div>
+               <div className="flex items-center pt-1">
+                 <span className="text-xs text-muted-foreground">
+-                  This month
++                  From {dashboardStats?.sales.month.pending || 0} pending bookings
+                 </span>
+               </div>
+             </CardContent>
+diff --git a/frontend/src/app/blog/[slug]/page.tsx b/frontend/src/app/blog/[slug]/page.tsx
+index a3bc567..30abd42 100644
+--- a/frontend/src/app/blog/[slug]/page.tsx
++++ b/frontend/src/app/blog/[slug]/page.tsx
+@@ -12,7 +12,6 @@ import { fetchRelatedBlogs } from '@/lib/api/fetchRelatedBlogs'
+ import { Blog } from '@/types/blog'
+ import Image from 'next/image'
+ import Link from 'next/link'
+-import { format } from 'date-fns'
+ import { LoadingIndicator } from '@/components/ui/LoadingIndicator'
+ import {
+   FacebookShareButton,
+@@ -207,7 +206,7 @@ export default function BlogDetailPage() {
+                 </div>
+                 <div className="flex items-center gap-1">
+                   <Calendar className="h-4 w-4" />
+-                  <span>{blog.published_at && format(new Date(blog.published_at), 'MMMM d, yyyy')}</span>
++                  <span>{blog.published_at && new Date(blog.published_at).toLocaleDateString('en-US', { timeZone: 'Asia/Kolkata', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                 </div>
+                 <div className="flex items-center gap-1">
+                   <Clock className="h-4 w-4" />
+diff --git a/frontend/src/app/property/[id]/book/page.tsx b/frontend/src/app/property/[id]/book/page.tsx
+index 0a95ab8..0382c57 100644
+--- a/frontend/src/app/property/[id]/book/page.tsx
++++ b/frontend/src/app/property/[id]/book/page.tsx
+@@ -520,9 +520,9 @@ export default function BookProperty() {
+         offer_id: selectedOffer?.id || 0,
+         discount: 0, // We would need to pass this from the property page
+         booking_time: booking.bookingType, // Use the selected booking type
+-        booking_type: 'online', // Same as booking_time
++        booking_type: 'walkin', // Same as booking_time
+         status: 'pending', // Default status
+-        payment_type: 'upi', // Default payment type, can be updated later
++        payment_type: 'cash', // Default payment type, can be updated later
+         checkin_date: booking.checkIn,
+         checkout_date: booking.bookingType === 'hourly' ? booking.checkIn : booking.checkOut,
+         checkin_time: booking.bookingType === 'hourly' ? booking.checkInTime : '12:00',
+diff --git a/frontend/src/app/property/[id]/page.tsx b/frontend/src/app/property/[id]/page.tsx
+index 8bf2f26..94df68d 100644
+--- a/frontend/src/app/property/[id]/page.tsx
++++ b/frontend/src/app/property/[id]/page.tsx
+@@ -1232,30 +1232,27 @@ export default function PropertyDetails() {
+             {property.nearby_places && property.nearby_places.length > 0 && (
+               <section className="property-section">
+                 <h2 className="text-xl font-semibold mb-3">Nearby Places</h2>
+-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
++                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                   {property.nearby_places
+                     .slice()
+                     .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+                     .map((place) => (
+                       <div
+                         key={place.id || `${place.name}-${place.category}-${place.distance}`}
+-                        className="rounded-xl border border-gray-100 bg-white p-4 shadow-lg transition-shadow hover:shadow-xl"
++                        className="flex items-center justify-between gap-2 rounded-lg border border-gray-100 bg-white px-3 py-2 shadow-sm transition-shadow hover:shadow"
+                       >
+-                        <div className="flex items-start gap-3">
+-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#B11E43]/10 text-[#B11E43]">
+-                            <MapPin className="h-5 w-5" />
++                        <div className="flex min-w-0 flex-1 items-center gap-2">
++                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#B11E43]/10 text-[#B11E43]">
++                            <MapPin className="h-4 w-4" />
+                           </div>
+-                          <div className="flex-1">
+-                            <p className="text-base font-semibold text-gray-900">{place.name}</p>
+-                            <p className="text-sm text-gray-500">{place.category}</p>
++                          <div className="min-w-0 flex-1">
++                            <p className="truncate text-sm font-medium text-gray-900">{place.name}</p>
++                            <p className="truncate text-xs text-gray-500">{place.category}</p>
+                           </div>
+                         </div>
+-                        <div className="mt-4 flex items-center justify-between">
+-                          <span className="text-sm font-medium text-gray-500">Distance</span>
+-                          <span className="text-base font-semibold text-[#B11E43]">
+-                            {place.distance}
+-                          </span>
+-                        </div>
++                        <span className="shrink-0 text-sm font-semibold text-[#B11E43]">
++                          {place.distance} km
++                        </span>
+                       </div>
+                     ))}
+                 </div>
+diff --git a/frontend/src/components/BookingCard.tsx b/frontend/src/components/BookingCard.tsx
+index 72fbabc..31bf5b3 100644
+--- a/frontend/src/components/BookingCard.tsx
++++ b/frontend/src/components/BookingCard.tsx
+@@ -104,6 +104,7 @@ export function BookingCard({
+   selectedRoomsCount: initialSelectedRoomsCount,
+   searchParams
+ }: BookingCardProps) {
++  const router = useRouter();
+   const parseLocalDate = (dateStr: string | null) => {
+     if (!dateStr) return undefined;
+     const [year, month, day] = dateStr.split('-').map(Number);
+@@ -683,19 +684,44 @@ export function BookingCard({
+   const handleDateChange = (newDate: Date | undefined) => {
+     if (!newDate) return;
+ 
+-    // Update search params with selected date immediately
++    let newCheckout: Date | undefined = checkOut;
++    const needsCheckoutUpdate =
++      !checkOut ||
++      checkOut < newDate ||
++      (bookingType === 'daily' && checkOut.getTime() <= newDate.getTime());
++
++    if (needsCheckoutUpdate) {
++      if (bookingType === 'hourly') {
++        newCheckout = new Date(newDate);
++      } else if (bookingType === 'monthly' && months > 0) {
++        newCheckout = new Date(newDate);
++        newCheckout.setMonth(newCheckout.getMonth() + months);
++      } else if (bookingType === 'yearly' && years > 0) {
++        newCheckout = new Date(newDate);
++        newCheckout.setMonth(newCheckout.getMonth() + years * 12);
++      } else {
++        // daily or fallback: checkout = checkin + 1 day
++        newCheckout = new Date(newDate);
++        newCheckout.setDate(newCheckout.getDate() + 1);
++      }
++    }
++
++    // Update search params with both dates
+     const newSearchParams = new URLSearchParams(searchParams.toString());
+     newSearchParams.set('checkInDate', format(newDate, 'yyyy-MM-dd'));
++    if (newCheckout) {
++      newSearchParams.set('checkOutDate', format(newCheckout, 'yyyy-MM-dd'));
++    }
+ 
+-    // Update URL before state change
+     const url = new URL(window.location.href);
+     url.search = newSearchParams.toString();
+-    window.history.pushState({}, '', url);
++    router.replace(`${url.pathname}?${newSearchParams.toString()}`, { scroll: false });
+ 
+-    // Now update state
+     setDate(newDate);
++    if (newCheckout && needsCheckoutUpdate) {
++      setCheckOutDate(newCheckout);
++    }
+ 
+-    // Close the popover
+     closePopover();
+   };
+ 
+diff --git a/frontend/src/components/BookingModal.tsx b/frontend/src/components/BookingModal.tsx
+index 681fc3c..8d9c6bc 100644
+--- a/frontend/src/components/BookingModal.tsx
++++ b/frontend/src/components/BookingModal.tsx
+@@ -643,8 +643,9 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
+     }
+   }
+ 
+-  // Get today as ISO string (YYYY-MM-DD)
++  // Get today as ISO string (YYYY-MM-DD) - only restrict min date when creating new booking
+   const today = new Date().toISOString().split('T')[0]
++  const isEditMode = !!initialData
+   
+   // Function to adjust checkout date when booking time or months changes
+   useEffect(() => {
+@@ -851,12 +852,12 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
+                     name="checkIn"
+                     type="date"
+                     className="opacity-0 absolute inset-0 w-full h-full cursor-pointer z-10"
+-                    value={booking.checkIn}
++                    value={booking.checkIn ? String(booking.checkIn).split('T')[0] : ''}
+                     onChange={handleDateChange}
+-                    min={today}
++                    min={isEditMode ? undefined : today}
+                     required
+                   />
+-                  <div className="flex items-center justify-between w-full pr-2 border rounded-md px-3 py-2">
++                  <div className="flex items-center justify-between w-full pr-2 border rounded-md px-3 py-2 pointer-events-none">
+                     <span className="text-sm">{booking.checkIn ? new Date(booking.checkIn).toLocaleDateString() : 'Select date'}</span>
+                     <CalendarDays className="h-4 w-4 text-gray-500" />
+                   </div>
+@@ -871,12 +872,12 @@ export function BookingModal({ isOpen, onClose, onSubmit, title, initialData, on
+                     type="date"
+                     ref={checkOutInputRef}
+                     className="opacity-0 absolute inset-0 w-full h-full cursor-pointer z-10"
+-                    value={booking.checkOut}
++                    value={booking.checkOut ? String(booking.checkOut).split('T')[0] : ''}
+                     onChange={handleChange}
+-                    min={booking.checkIn || today}
++                    min={booking.checkIn ? String(booking.checkIn).split('T')[0] : (isEditMode ? undefined : today)}
+                     required
+                   />
+-                  <div className="flex items-center justify-between w-full pr-2 border rounded-md px-3 py-2">
++                  <div className="flex items-center justify-between w-full pr-2 border rounded-md px-3 py-2 pointer-events-none">
+                     <span className="text-sm">{booking.checkOut ? new Date(booking.checkOut).toLocaleDateString() : 'Select date'}</span>
+                     <CalendarDays className="h-4 w-4 text-gray-500" />
+                   </div>
+diff --git a/frontend/src/components/InlineSearchForm.tsx b/frontend/src/components/InlineSearchForm.tsx
+index 92c3d21..e9ff173 100644
+--- a/frontend/src/components/InlineSearchForm.tsx
++++ b/frontend/src/components/InlineSearchForm.tsx
+@@ -104,7 +104,7 @@ export default function InlineSearchForm() {
+                                 setLocation(e.target.value);
+                                 // do not update URL on change; only on explicit Search
+                             }}
+-                            className="outline-none text-sm w-full"
++                            className="outline-none text-sm w-full pr-8"
+                         />
+                         <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                             <MapPin className="h-4 w-4 text-black" />
+diff --git a/frontend/src/components/SearchForm.tsx b/frontend/src/components/SearchForm.tsx
+index 3f9f86e..932cef1 100644
+--- a/frontend/src/components/SearchForm.tsx
++++ b/frontend/src/components/SearchForm.tsx
+@@ -28,7 +28,7 @@ export function SearchForm({ sectionType }: SearchFormProps) {
+   const [checkOutTime, setCheckOutTime] = useState("")
+   const [rooms, setRooms] = useState(1)
+   const [guests, setGuests] = useState(1)
+-  const [bookingType, setBookingType] = useState<"day" | "hour" | "month" | "year">(sectionType === "hostels" ? "month" : "day")
++  const [bookingType, setBookingType] = useState<"day" | "hour" | "month" | "year">(sectionType === "hostels" ? "year" : "day")
+   const [months, setMonths] = useState(1)
+   const [years, setYears] = useState(1)
+   const [isFocused, setIsFocused] = useState(false)
+@@ -947,19 +947,19 @@ export function SearchForm({ sectionType }: SearchFormProps) {
+           <div className="bg-white rounded-full p-1 inline-flex shadow-md">
+             <button
+               type="button"
+-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${bookingType === "month" ? "bg-black text-white" : "text-gray-700 hover:bg-gray-100"
++              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${bookingType === "year" ? "bg-black text-white" : "text-gray-700 hover:bg-gray-100"
+                 }`}
+-              onClick={() => handleBookingTypeChange("month")}
++              onClick={() => handleBookingTypeChange("year")}
+             >
+-              Book by Month
++              Book by Year
+             </button>
+             <button
+               type="button"
+-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${bookingType === "year" ? "bg-black text-white" : "text-gray-700 hover:bg-gray-100"
++              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${bookingType === "month" ? "bg-black text-white" : "text-gray-700 hover:bg-gray-100"
+                 }`}
+-              onClick={() => handleBookingTypeChange("year")}
++              onClick={() => handleBookingTypeChange("month")}
+             >
+-              Book by Year
++              Book by Month
+             </button>
+           </div>
+         )}
+diff --git a/frontend/src/components/admin/AddPropertyForm.tsx b/frontend/src/components/admin/AddPropertyForm.tsx
+index f383487..0a18889 100644
+--- a/frontend/src/components/admin/AddPropertyForm.tsx
++++ b/frontend/src/components/admin/AddPropertyForm.tsx
+@@ -376,6 +376,8 @@ export function AddPropertyForm() {
+   const [images, setImages] = useState<{ id: string; image_url: string; categoryId: number | null }[]>([])
+   const [imageCategories, setImageCategories] = useState<ImageCategory[]>([])
+   const [selectedImageCategoryId, setSelectedImageCategoryId] = useState<string>(UNCATEGORIZED_IMAGE_CATEGORY)
++  const selectedImageCategoryIdRef = useRef<string>(UNCATEGORIZED_IMAGE_CATEGORY)
++  selectedImageCategoryIdRef.current = selectedImageCategoryId
+   const [loading, setLoading] = useState(false)
+   const [location, setLocation] = useState({
+     address: '',
+@@ -446,19 +448,20 @@ export function AddPropertyForm() {
+     setImageCategories(categoriesResponse)
+ 
+     const preferredIdString = preferredCategoryId != null ? String(preferredCategoryId) : null
++    const currentSelection = selectedImageCategoryIdRef.current
+     if (preferredIdString && categoriesResponse.some(category => category.id === preferredCategoryId)) {
+       setSelectedImageCategoryId(preferredIdString)
+     } else if (
+-      selectedImageCategoryId !== UNCATEGORIZED_IMAGE_CATEGORY &&
+-      categoriesResponse.some(category => String(category.id) === selectedImageCategoryId)
++      currentSelection !== UNCATEGORIZED_IMAGE_CATEGORY &&
++      categoriesResponse.some(category => String(category.id) === currentSelection)
+     ) {
+-      // Keep existing selection
++      // Keep existing selection - do not overwrite
+     } else if (categoriesResponse.length > 0) {
+       setSelectedImageCategoryId(String(categoriesResponse[0].id))
+     } else {
+       setSelectedImageCategoryId(UNCATEGORIZED_IMAGE_CATEGORY)
+     }
+-  }, [selectedImageCategoryId])
++  }, [])
+ 
+   useEffect(() => {
+     async function loadData() {
+@@ -1228,6 +1231,16 @@ export function AddPropertyForm() {
+                 Add nearby attractions, transit points, or landmarks with their approximate distance.
+               </p>
+             </div>
++            <Button
++              type="button"
++              variant="neutral"
++              size="sm"
++              onClick={addNearbyPlace}
++              className="flex items-center gap-2 self-start sm:self-auto"
++            >
++              <Plus className="h-4 w-4" />
++              Add Place
++            </Button>
+           </div>
+ 
+           {nearbyPlaces.length === 0 ? (
+diff --git a/frontend/src/components/admin/EditPropertyForm.tsx b/frontend/src/components/admin/EditPropertyForm.tsx
+index 743c84d..e5f7d2c 100644
+--- a/frontend/src/components/admin/EditPropertyForm.tsx
++++ b/frontend/src/components/admin/EditPropertyForm.tsx
+@@ -403,6 +403,8 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
+   )
+   const [imageCategories, setImageCategories] = useState<ImageCategory[]>([])
+   const [selectedImageCategoryId, setSelectedImageCategoryId] = useState<string>(UNCATEGORIZED_IMAGE_CATEGORY)
++  const selectedImageCategoryIdRef = useRef<string>(UNCATEGORIZED_IMAGE_CATEGORY)
++  selectedImageCategoryIdRef.current = selectedImageCategoryId
+   const [loading, setLoading] = useState(false)
+   const [location, setLocation] = useState({
+     address: initialData.location || '',
+@@ -497,19 +499,20 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
+     setImageCategories(categoriesResponse)
+ 
+     const preferredIdString = preferredCategoryId != null ? String(preferredCategoryId) : null
++    const currentSelection = selectedImageCategoryIdRef.current
+     if (preferredIdString && categoriesResponse.some(category => category.id === preferredCategoryId)) {
+       setSelectedImageCategoryId(preferredIdString)
+     } else if (
+-      selectedImageCategoryId !== UNCATEGORIZED_IMAGE_CATEGORY &&
+-      categoriesResponse.some(category => String(category.id) === selectedImageCategoryId)
++      currentSelection !== UNCATEGORIZED_IMAGE_CATEGORY &&
++      categoriesResponse.some(category => String(category.id) === currentSelection)
+     ) {
+-      // keep current selection
++      // keep current selection - do not overwrite
+     } else if (categoriesResponse.length > 0) {
+       setSelectedImageCategoryId(String(categoriesResponse[0].id))
+     } else {
+       setSelectedImageCategoryId(UNCATEGORIZED_IMAGE_CATEGORY)
+     }
+-  }, [selectedImageCategoryId])
++  }, [])
+   const [manageAmenitiesOpen, setManageAmenitiesOpen] = useState(false)
+   const [managePoliciesOpen, setManagePoliciesOpen] = useState(false)
+   const [manageDocumentationOpen, setManageDocumentationOpen] = useState(false)
+@@ -1363,6 +1366,16 @@ export function EditPropertyForm({ initialData }: PropertyFormProps) {
+                 Maintain a list of nearby attractions, transit points, or landmarks with their distance.
+               </p>
+             </div>
++            <Button
++              type="button"
++              variant="neutral"
++              size="sm"
++              onClick={addNearbyPlace}
++              className="flex items-center gap-2 self-start sm:self-auto"
++            >
++              <Plus className="h-4 w-4" />
++              Add Place
++            </Button>
+           </div>
+ 
+           {nearbyPlaces.length === 0 ? (
+diff --git a/frontend/src/lib/amenityIconMap.tsx b/frontend/src/lib/amenityIconMap.tsx
+index 19958f6..ef4b60c 100644
+--- a/frontend/src/lib/amenityIconMap.tsx
++++ b/frontend/src/lib/amenityIconMap.tsx
+@@ -20,7 +20,14 @@ import {
+     CheckCircle2,
+     MapPin,
+     Newspaper,
+-    ConciergeBell
++    ConciergeBell,
++    Droplets,
++    BookOpen,
++    Zap,
++    Sofa,
++    Stethoscope,
++    Shirt,
++    Users
+ } from 'lucide-react'
+ 
+ const icon = (el: React.ReactElement) => {
+@@ -132,10 +139,40 @@ const map: Record<string, React.ReactElement> = {
+ 
+     // Misc common
+     'elevator': icon(<Building2 />),
++    'lift': icon(<Building2 />),
+     'luggage storage': icon(<Building2 />),
++    'luggage storage available': icon(<Building2 />),
+     'lost and found': icon(<Building2 />),
+     'wake-up service': icon(<BellRing />),
+     '24-hour front desk': icon(<ConciergeBell />),
++
++    // Additional amenities
++    'security guard': icon(<ShieldCheck />),
++    'outsourced kitchen': icon(<ChefHat />),
++    'air conditioner': icon(<AirVent />),
++    'free parking': icon(<Car />),
++    'power backup': icon(<BatteryCharging />),
++    'fire extinguishers': icon(<ShieldCheck />),
++    'wardrobe or closet': icon(<Shirt />),
++    'shuttle service': icon(<Car />),
++    'family rooms': icon(<Users />),
++    'private kitchen': icon(<ChefHat />),
++    'laundry & press': icon(<Shirt />),
++    'atm/cash machine on premises': icon(<Building />),
++    'shared kitchen/kitchenette': icon(<ChefHat />),
++    'kettle, fridge & oven': icon(<ChefHat />),
++    'fully furnished rooms': icon(<Sofa />),
++    'private entrance': icon(<Building />),
++    'socket near bed': icon(<Zap />),
++    'rooftop swimming pool': icon(<Building2 />),
++    'library space': icon(<BookOpen />),
++    'live kitchen/meal options': icon(<Utensils />),
++    'doctor on call': icon(<Stethoscope />),
++    'refrigerator (common)': icon(<Building />),
++    'drinking water (ro)': icon(<Droplets />),
++    'alternate days housekeeping': icon(<BellRing />),
++    'attached & non-attached washrooms': icon(<Heater />),
++    'cafeteria': icon(<Utensils />),
+ }
+ 
+ export function getAmenityIcon(name?: string) {
+diff --git a/frontend/src/lib/api/fetchDashboardStats.ts b/frontend/src/lib/api/fetchDashboardStats.ts
+index 634eca9..4b62f2c 100644
+--- a/frontend/src/lib/api/fetchDashboardStats.ts
++++ b/frontend/src/lib/api/fetchDashboardStats.ts
+@@ -7,17 +7,21 @@ export interface DashboardStats {
+   sales: {
+     today: {
+       total: number
++      pending_payments?: number
+       confirmed: number
+       completed: number
+       cancelled: number
+       pending: number
++      no_show?: number
+     }
+     month: {
+       total: number
++      pending_payments?: number
+       confirmed: number
+       completed: number
+       cancelled: number
+       pending: number
++      no_show?: number
+     }
+   }
+   expenses: {

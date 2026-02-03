@@ -1232,30 +1232,27 @@ export default function PropertyDetails() {
             {property.nearby_places && property.nearby_places.length > 0 && (
               <section className="property-section">
                 <h2 className="text-xl font-semibold mb-3">Nearby Places</h2>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {property.nearby_places
                     .slice()
                     .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
                     .map((place) => (
                       <div
                         key={place.id || `${place.name}-${place.category}-${place.distance}`}
-                        className="rounded-xl border border-gray-100 bg-white p-4 shadow-lg transition-shadow hover:shadow-xl"
+                        className="flex items-center justify-between gap-2 rounded-lg border border-gray-100 bg-white px-3 py-2 shadow-sm transition-shadow hover:shadow"
                       >
-                        <div className="flex items-start gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#B11E43]/10 text-[#B11E43]">
-                            <MapPin className="h-5 w-5" />
+                        <div className="flex min-w-0 flex-1 items-center gap-2">
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#B11E43]/10 text-[#B11E43]">
+                            <MapPin className="h-4 w-4" />
                           </div>
-                          <div className="flex-1">
-                            <p className="text-base font-semibold text-gray-900">{place.name}</p>
-                            <p className="text-sm text-gray-500">{place.category}</p>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium text-gray-900">{place.name}</p>
+                            <p className="truncate text-xs text-gray-500">{place.category}</p>
                           </div>
                         </div>
-                        <div className="mt-4 flex items-center justify-between">
-                          <span className="text-sm font-medium text-gray-500">Distance</span>
-                          <span className="text-base font-semibold text-[#B11E43]">
-                            {place.distance}
-                          </span>
-                        </div>
+                        <span className="shrink-0 text-sm font-semibold text-[#B11E43]">
+                          {place.distance} km
+                        </span>
                       </div>
                     ))}
                 </div>

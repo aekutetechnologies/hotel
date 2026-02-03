@@ -520,9 +520,9 @@ export default function BookProperty() {
         offer_id: selectedOffer?.id || 0,
         discount: 0, // We would need to pass this from the property page
         booking_time: booking.bookingType, // Use the selected booking type
-        booking_type: 'online', // Same as booking_time
+        booking_type: 'walkin', // Same as booking_time
         status: 'pending', // Default status
-        payment_type: 'upi', // Default payment type, can be updated later
+        payment_type: 'cash', // Default payment type, can be updated later
         checkin_date: booking.checkIn,
         checkout_date: booking.bookingType === 'hourly' ? booking.checkIn : booking.checkOut,
         checkin_time: booking.bookingType === 'hourly' ? booking.checkInTime : '12:00',

@@ -12,7 +12,6 @@ import { fetchRelatedBlogs } from '@/lib/api/fetchRelatedBlogs'
 import { Blog } from '@/types/blog'
 import Image from 'next/image'
 import Link from 'next/link'
-import { format } from 'date-fns'
 import { LoadingIndicator } from '@/components/ui/LoadingIndicator'
 import {
   FacebookShareButton,
@@ -207,7 +206,7 @@ export default function BlogDetailPage() {
                 </div>
                 <div className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
-                  <span>{blog.published_at && format(new Date(blog.published_at), 'MMMM d, yyyy')}</span>
+                  <span>{blog.published_at && new Date(blog.published_at).toLocaleDateString('en-US', { timeZone: 'Asia/Kolkata', year: 'numeric', month: 'long', day: 'numeric' })}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Clock className="h-4 w-4" />

@@ -104,7 +104,7 @@ export default function InlineSearchForm() {
                                 setLocation(e.target.value);
                                 // do not update URL on change; only on explicit Search
                             }}
-                            className="outline-none text-sm w-full"
+                            className="outline-none text-sm w-full pr-8"
                         />
                         <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                             <MapPin className="h-4 w-4 text-black" />

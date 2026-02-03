@@ -671,6 +671,7 @@ export default function Bookings() {
               <TableHead>Booking ID</TableHead>
               <TableHead>Property</TableHead>
               <TableHead>Guest</TableHead>
+              <TableHead>Guest Name</TableHead>
               <TableHead>Created At</TableHead>
               <TableHead>Check-in</TableHead>
               <TableHead>Status</TableHead>
@@ -707,6 +708,7 @@ export default function Bookings() {
                   <TableCell>
                     {booking.user && typeof booking.user === 'object' ? booking.user.mobile : ''}
                   </TableCell>
+                  <TableCell>{booking.user && typeof booking.user === 'object' ? booking.user.name : ''}</TableCell>
                   <TableCell>{format(new Date(booking.created_at), 'dd MMM yyyy')}</TableCell>
                   <TableCell>{format(new Date(booking.checkin_date), 'dd MMM yyyy')}</TableCell>
                   <TableCell>

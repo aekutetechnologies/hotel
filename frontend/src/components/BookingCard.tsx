@@ -104,6 +104,7 @@ export function BookingCard({
   selectedRoomsCount: initialSelectedRoomsCount,
   searchParams
 }: BookingCardProps) {
+  const router = useRouter();
   const parseLocalDate = (dateStr: string | null) => {
     if (!dateStr) return undefined;
     const [year, month, day] = dateStr.split('-').map(Number);
@@ -683,19 +684,44 @@ export function BookingCard({
   const handleDateChange = (newDate: Date | undefined) => {
     if (!newDate) return;
 
-    // Update search params with selected date immediately
+    let newCheckout: Date | undefined = checkOut;
+    const needsCheckoutUpdate =
+      !checkOut ||
+      checkOut < newDate ||
+      (bookingType === 'daily' && checkOut.getTime() <= newDate.getTime());
+
+    if (needsCheckoutUpdate) {
+      if (bookingType === 'hourly') {
+        newCheckout = new Date(newDate);
+      } else if (bookingType === 'monthly' && months > 0) {
+        newCheckout = new Date(newDate);
+        newCheckout.setMonth(newCheckout.getMonth() + months);
+      } else if (bookingType === 'yearly' && years > 0) {
+        newCheckout = new Date(newDate);
+        newCheckout.setMonth(newCheckout.getMonth() + years * 12);
+      } else {
+        // daily or fallback: checkout = checkin + 1 day
+        newCheckout = new Date(newDate);
+        newCheckout.setDate(newCheckout.getDate() + 1);
+      }
+    }
+
+    // Update search params with both dates
     const newSearchParams = new URLSearchParams(searchParams.toString());
     newSearchParams.set('checkInDate', format(newDate, 'yyyy-MM-dd'));
+    if (newCheckout) {
+      newSearchParams.set('checkOutDate', format(newCheckout, 'yyyy-MM-dd'));
+    }
 
-    // Update URL before state change
     const url = new URL(window.location.href);
     url.search = newSearchParams.toString();
-    window.history.pushState({}, '', url);
+    router.replace(`${url.pathname}?${newSearchParams.toString()}`, { scroll: false });
 
-    // Now update state
     setDate(newDate);
+    if (newCheckout && needsCheckoutUpdate) {
+      setCheckOutDate(newCheckout);
+    }
 
-    // Close the popover
     closePopover();
   };
 

@@ -70,17 +70,22 @@ def get_dashboard_stats(request):
             occupancy_percentage = round((occupied_rooms / total_rooms) * 100, 2)
         
         # Get sales statistics
+        # Revenue = only confirmed, checked_in, checked_out, completed (excludes pending, cancelled, no_show)
+        revenue_statuses = ['confirmed', 'checked_in', 'checked_out', 'completed']
+        
         # Today's sales
         today_sales = Booking.objects.filter(
             property_id__in=property_ids,
             created_at__date=today,
             is_active=True
         ).aggregate(
-            total=Sum('price'),
+            total=Sum('price', filter=Q(status__in=revenue_statuses)),
+            pending_payments=Sum('price', filter=Q(status='pending')),
             confirmed_count=Count('id', filter=Q(status='confirmed')),
             completed_count=Count('id', filter=Q(status='completed')),
             cancelled_count=Count('id', filter=Q(status='cancelled')),
-            pending_count=Count('id', filter=Q(status='pending'))
+            pending_count=Count('id', filter=Q(status='pending')),
+            no_show_count=Count('id', filter=Q(status='no_show'))
         )
         
         # Current month sales
@@ -91,11 +96,13 @@ def get_dashboard_stats(request):
             created_at__date__lte=today,
             is_active=True
         ).aggregate(
-            total=Sum('price'),
+            total=Sum('price', filter=Q(status__in=revenue_statuses)),
+            pending_payments=Sum('price', filter=Q(status='pending')),
             confirmed_count=Count('id', filter=Q(status='confirmed')),
             completed_count=Count('id', filter=Q(status='completed')),
             cancelled_count=Count('id', filter=Q(status='cancelled')),
-            pending_count=Count('id', filter=Q(status='pending'))
+            pending_count=Count('id', filter=Q(status='pending')),
+            no_show_count=Count('id', filter=Q(status='no_show'))
         )
         
         # Get expense statistics
@@ -130,36 +137,6 @@ def get_dashboard_stats(request):
             is_active=True
         ).count()
         
-        return Response({
-            'total_hotels': total_hotels,
-            'total_hostels': total_hostels,
-            'occupancy_percentage': occupancy_percentage,
-            'sales': {
-                'today': {
-                    'total': today_sales['total'] or 0,
-                    'confirmed': today_sales['confirmed_count'] or 0,
-                    'completed': today_sales['completed_count'] or 0,
-                    'cancelled': today_sales['cancelled_count'] or 0,
-                    'pending': today_sales['pending_count'] or 0
-                },
-                'month': {
-                    'total': current_month_sales['total'] or 0,
-                    'confirmed': current_month_sales['confirmed_count'] or 0,
-                    'completed': current_month_sales['completed_count'] or 0,
-                    'cancelled': current_month_sales['cancelled_count'] or 0,
-                    'pending': current_month_sales['pending_count'] or 0
-                }
-            },
-            'expenses': {
-                'today': today_expenses['total'] or 0,
-                'month': current_month_expenses['total'] or 0
-            },
-            'users': {
-                'total': total_users,
-                'new_today': new_users_today,
-                'new_month': new_users_month
-            }
-        })
         logger.info(f"Dashboard stats retrieved successfully for user {user.id}", extra={"request_method": request.method, "user_id": user.id, "is_admin": is_admin})
         return Response({
             'total_hotels': total_hotels,
@@ -168,17 +145,21 @@ def get_dashboard_stats(request):
             'sales': {
                 'today': {
                     'total': today_sales['total'] or 0,
+                    'pending_payments': today_sales['pending_payments'] or 0,
                     'confirmed': today_sales['confirmed_count'] or 0,
                     'completed': today_sales['completed_count'] or 0,
                     'cancelled': today_sales['cancelled_count'] or 0,
-                    'pending': today_sales['pending_count'] or 0
+                    'pending': today_sales['pending_count'] or 0,
+                    'no_show': today_sales['no_show_count'] or 0
                 },
                 'month': {
                     'total': current_month_sales['total'] or 0,
+                    'pending_payments': current_month_sales['pending_payments'] or 0,
                     'confirmed': current_month_sales['confirmed_count'] or 0,
                     'completed': current_month_sales['completed_count'] or 0,
                     'cancelled': current_month_sales['cancelled_count'] or 0,
-                    'pending': current_month_sales['pending_count'] or 0
+                    'pending': current_month_sales['pending_count'] or 0,
+                    'no_show': current_month_sales['no_show_count'] or 0
                 }
             },
             'expenses': {

@@ -28,7 +28,7 @@ export function SearchForm({ sectionType }: SearchFormProps) {
   const [checkOutTime, setCheckOutTime] = useState("")
   const [rooms, setRooms] = useState(1)
   const [guests, setGuests] = useState(1)
-  const [bookingType, setBookingType] = useState<"day" | "hour" | "month" | "year">(sectionType === "hostels" ? "month" : "day")
+  const [bookingType, setBookingType] = useState<"day" | "hour" | "month" | "year">(sectionType === "hostels" ? "year" : "day")
   const [months, setMonths] = useState(1)
   const [years, setYears] = useState(1)
   const [isFocused, setIsFocused] = useState(false)
@@ -947,19 +947,19 @@ export function SearchForm({ sectionType }: SearchFormProps) {
           <div className="bg-white rounded-full p-1 inline-flex shadow-md">
             <button
               type="button"
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${bookingType === "month" ? "bg-black text-white" : "text-gray-700 hover:bg-gray-100"
-                }`}
-              onClick={() => handleBookingTypeChange("month")}
-            >
-              Book by Month
-            </button>
-            <button
-              type="button"
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${bookingType === "year" ? "bg-black text-white" : "text-gray-700 hover:bg-gray-100"
                 }`}
               onClick={() => handleBookingTypeChange("year")}
             >
               Book by Year
+            </button>
+            <button
+              type="button"
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${bookingType === "month" ? "bg-black text-white" : "text-gray-700 hover:bg-gray-100"
+                }`}
+              onClick={() => handleBookingTypeChange("month")}
+            >
+              Book by Month
             </button>
           </div>
         )}

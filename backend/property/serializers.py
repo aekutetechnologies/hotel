@@ -332,13 +332,21 @@ class PropertySerializer(serializers.ModelSerializer):
         instance.documentation.set(documentation)
         instance.images.set(images)
 
+        # RoomSerializer strips read_only 'id' from validated_data - restore from initial_data
+        initial_rooms = self.initial_data.get('rooms', [])
+        for i, room_data in enumerate(rooms_data):
+            if i < len(initial_rooms) and isinstance(initial_rooms[i], dict) and 'id' in initial_rooms[i]:
+                room_data['id'] = initial_rooms[i]['id']
+
         existing_rooms = {room.id: room for room in instance.rooms.all()}
         for room_data in rooms_data:
-            room_id = room_data.get('id')
-            if room_id:
+            room_id = room_data.pop('id', None)
+            if room_id is not None:
+                # Normalize to int - JSON may send ids as strings
+                room_id = int(room_id) if not isinstance(room_id, int) else room_id
                 room = existing_rooms.get(room_id)
                 if room:
-                    instance = self.update_room(room, room_data)
+                    self.update_room(room, room_data)
                     del existing_rooms[room_id]
             else:
                 self.create_room(instance, room_data)
